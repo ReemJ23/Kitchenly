@@ -8,8 +8,6 @@ class StartupScreen extends StatefulWidget {
 }
 
 class _StartupScreenState extends State<StartupScreen> {
-  String? selectedLanguage;
-
   @override
   void initState() {
     super.initState();
@@ -19,17 +17,20 @@ class _StartupScreenState extends State<StartupScreen> {
   Future<void> _checkFirstTime() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool isFirstTime = prefs.getBool('isFirstTime') ?? true;
+    String? savedLanguage = prefs.getString('language') ?? 'en';
 
     if (!isFirstTime) {
-      // Navigate to SignUp or Profile Page directly
-      Navigator.pushReplacementNamed(context, '/signup');
+      Navigator.pushReplacementNamed(context, '/signup', arguments: savedLanguage);
     }
   }
 
   Future<void> _saveLanguagePreference(String languageCode) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('language', languageCode);
-    await prefs.setBool('isFirstTime', false); // Mark as not first time
+    await prefs.setBool('isFirstTime', false);
+
+    // Restart the app with the new language
+    Navigator.pushReplacementNamed(context, '/signup', arguments: languageCode);
   }
 
   @override
@@ -43,18 +44,12 @@ class _StartupScreenState extends State<StartupScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ElevatedButton(
-              onPressed: () async {
-                await _saveLanguagePreference('en'); // Save English preference
-                Navigator.pushReplacementNamed(context, '/signup');
-              },
+              onPressed: () => _saveLanguagePreference('en'),
               child: Text(AppLocalizations.of(context)!.english),
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () async {
-                await _saveLanguagePreference('ar'); // Save Arabic preference
-                Navigator.pushReplacementNamed(context, '/signup');
-              },
+              onPressed: () => _saveLanguagePreference('ar'),
               child: Text(AppLocalizations.of(context)!.arabic),
             ),
           ],

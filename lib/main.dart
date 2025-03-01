@@ -1,15 +1,16 @@
+import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:kitchenly/screens/Signup_screen.dart';
-import 'package:kitchenly/screens/profile_screen.dart';
-import 'package:kitchenly/screens/startup_screen.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'routes.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if(kIsWeb){
+
+  // Initialize Firebase
+  if (kIsWeb) {
     await Firebase.initializeApp(options: const FirebaseOptions(
         apiKey: "AIzaSyD1jIdAupxLfvAlbYObaBZpK73cM7stbq8",
         authDomain: "kitchenly-64259.firebaseapp.com",
@@ -17,42 +18,67 @@ void main() async{
         storageBucket: "kitchenly-64259.firebasestorage.app",
         messagingSenderId: "282277301073",
         appId: "1:282277301073:web:7500d13cd519364869a170"));
-  }else{
+  } else {
     await Firebase.initializeApp();
   }
 
-  runApp(const MyApp());
+  // Load the stored language preference
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String languageCode = prefs.getString('language') ?? 'en';
+
+  runApp(MyApp(initialLanguageCode: languageCode));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MyApp extends StatefulWidget {
+  final String initialLanguageCode;
 
-  // This widget is the root of your application.
+  const MyApp({Key? key, required this.initialLanguageCode}) : super(key: key);
+
+  static void setLocale(BuildContext context, String languageCode) {
+    final state = context.findAncestorStateOfType<_MyAppState>();
+    state?.changeLanguage(languageCode);
+  }
+
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late Locale _locale;
+
+  @override
+  void initState() {
+    super.initState();
+    _locale = Locale(widget.initialLanguageCode);
+  }
+
+  void changeLanguage(String languageCode) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('language', languageCode);
+
+    setState(() {
+      _locale = Locale(languageCode);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Kitchenly',
       debugShowCheckedModeBanner: false,
+      locale: _locale, // Apply the saved language preference
       localizationsDelegates: [
-        AppLocalizations.delegate, // Generated localization delegate
+        AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: [
-        Locale('en'), // English
-        Locale('ar'), // Arabic
+      supportedLocales: const [
+        Locale('en'),
+        Locale('ar'),
       ],
-      //home: StartupScreen(),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => StartupScreen(),
-        '/signup': (context) => SignUpScreen(),
-        '/profile': (context) => ProfileScreen(),
-      },
+      initialRoute: AppRoutes.login,
+      onGenerateRoute: AppRoutes.generateRoute,
     );
   }
 }
-
-
-

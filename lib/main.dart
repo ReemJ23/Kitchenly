@@ -5,6 +5,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'routes.dart';
+import 'package:kitchenly/screens/welcome_screen.dart';
+import 'package:kitchenly/screens/profile_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,17 +24,26 @@ void main() async {
     await Firebase.initializeApp();
   }
 
-  // Load the stored language preference
+  // Load the stored language preference and login status
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String languageCode = prefs.getString('language') ?? 'en';
+  bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
-  runApp(MyApp(initialLanguageCode: languageCode));
+  runApp(MyApp(
+    initialLanguageCode: languageCode,
+    isLoggedIn: isLoggedIn,
+  ));
 }
 
 class MyApp extends StatefulWidget {
   final String initialLanguageCode;
+  final bool isLoggedIn;
 
-  const MyApp({Key? key, required this.initialLanguageCode}) : super(key: key);
+  const MyApp({
+    Key? key,
+    required this.initialLanguageCode,
+    required this.isLoggedIn,
+  }) : super(key: key);
 
   static void setLocale(BuildContext context, String languageCode) {
     final state = context.findAncestorStateOfType<_MyAppState>();
@@ -77,7 +88,7 @@ class _MyAppState extends State<MyApp> {
         Locale('en'),
         Locale('ar'),
       ],
-      initialRoute: AppRoutes.login,
+      initialRoute: widget.isLoggedIn ? AppRoutes.profile : AppRoutes.welcome,
       onGenerateRoute: AppRoutes.generateRoute,
     );
   }

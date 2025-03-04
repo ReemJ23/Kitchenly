@@ -6,6 +6,10 @@ import '../main.dart';
 import '../utils/colors.dart';
 
 class SignUpScreen extends StatefulWidget {
+  final String language;  // Accept language as a parameter
+
+  const SignUpScreen({Key? key, required this.language}) : super(key: key);
+
   @override
   _SignUpScreenState createState() => _SignUpScreenState();
 }
@@ -15,7 +19,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _usernameController = TextEditingController();
-  String selectedLanguage = 'en';
 
   String? emailError;
   String? passwordError;
@@ -28,22 +31,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   void initState() {
     super.initState();
-    _loadLanguagePreference();
-  }
-
-  Future<void> _loadLanguagePreference() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      selectedLanguage = prefs.getString('language') ?? 'en';
-    });
-  }
-
-  void _changeLanguage(String languageCode) {
-    setState(() {
-      selectedLanguage = languageCode;
-    });
-
-    MyApp.setLocale(context, languageCode);
+    MyApp.setLocale(context, widget.language); // Set the language when the screen is initialized
   }
 
   Future<void> _signUp() async {
@@ -66,7 +54,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       email: _emailController.text.trim(),
       password: _passwordController.text.trim(),
       username: _usernameController.text.trim(),
-      language: selectedLanguage,
+      language: widget.language,
     );
 
     if (result == "email_taken") {
@@ -79,8 +67,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
       });
     } else if (result == null) {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString('language', selectedLanguage);
-      Navigator.pushReplacementNamed(context, '/profile', arguments: selectedLanguage);
+      await prefs.setString('language', widget.language);  // Store the language
+      Navigator.pushReplacementNamed(context, '/profile', arguments: widget.language);
     }
   }
 
@@ -95,25 +83,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              // 🔹 Language Selector
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Radio(
-                    value: 'en',
-                    groupValue: selectedLanguage,
-                    onChanged: (value) => _changeLanguage(value as String),
-                  ),
-                  Text("English"),
-                  Radio(
-                    value: 'ar',
-                    groupValue: selectedLanguage,
-                    onChanged: (value) => _changeLanguage(value as String),
-                  ),
-                  Text("العربية"),
-                ],
-              ),
-        
               Form(
                 key: _formKey,
                 child: Column(
@@ -123,52 +92,40 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       controller: _emailController,
                       decoration: InputDecoration(
                         labelText: localizations.email,
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: isEmailEmpty ? AppColors.textFieldBorderError : AppColors.textFieldBorder,
-                          ),
-                        ),
-                        errorText: emailError ?? (isEmailEmpty ? localizations.enterEmail : null),
+                        border: OutlineInputBorder(),
+                        errorText: emailError,
                       ),
                     ),
                     SizedBox(height: 10),
-        
+
                     // Username Field
                     TextFormField(
                       controller: _usernameController,
                       decoration: InputDecoration(
                         labelText: localizations.username,
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: isUsernameEmpty ? AppColors.textFieldBorderError : AppColors.textFieldBorder,
-                          ),
-                        ),
-                        errorText: usernameError ?? (isUsernameEmpty ? localizations.enterUsername : null),
+                        border: OutlineInputBorder(),
+                        errorText: usernameError,
                       ),
                     ),
                     SizedBox(height: 10),
-        
+
                     // Password Field
                     TextFormField(
                       controller: _passwordController,
                       obscureText: true,
                       decoration: InputDecoration(
                         labelText: localizations.password,
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: isPasswordEmpty ? AppColors.textFieldBorderError : AppColors.textFieldBorder,
-                          ),
-                        ),
-                        errorText: passwordError ?? (isPasswordEmpty ? localizations.enterPassword : null),
+                        border: OutlineInputBorder(),
+                        errorText: passwordError,
                       ),
                     ),
                     SizedBox(height: 20),
-        
+
                     ElevatedButton(onPressed: _signUp, child: Text(localizations.signUp)),
-        
+
                     TextButton(
                       onPressed: () {
-                        Navigator.pushReplacementNamed(context, '/login');
+                        Navigator.pushReplacementNamed(context, '/login', arguments: widget.language);
                       },
                       child: Text(localizations.alreadyHaveAccount),
                     ),

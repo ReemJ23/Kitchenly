@@ -22,11 +22,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isFirstTime', true);
-    await prefs.remove('language');
+    await prefs.remove('language');  // Remove the stored language preference
+    await prefs.remove('isLoggedIn');  // Remove the logged-in status (optional, if you're using it)
 
-    Navigator.pushReplacementNamed(context, '/');
+    // Navigate to the Welcome Screen
+    Navigator.pushReplacementNamed(context, '/welcome');
   }
+
 
   @override
   Widget build(BuildContext context) {

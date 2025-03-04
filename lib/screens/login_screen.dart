@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../main.dart';
-import '../services/auth_service.dart';
-import '../utils/colors.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginScreen extends StatefulWidget {
+  final String language;  // Accept language as a parameter
+
+  const LoginScreen({Key? key, required this.language}) : super(key: key);
+
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }
@@ -14,7 +17,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _userController = TextEditingController();
   final _passwordController = TextEditingController();
-  String selectedLanguage = 'en';
 
   String? usernameOrEmailError;
   String? passwordError;
@@ -22,26 +24,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool isUserEmpty = false;
   bool isPasswordEmpty = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadLanguagePreference();
-  }
-
-  Future<void> _loadLanguagePreference() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      selectedLanguage = prefs.getString('language') ?? 'en';
-    });
-  }
-
-  void _changeLanguage(String languageCode) {
-    setState(() {
-      selectedLanguage = languageCode;
-    });
-
-    MyApp.setLocale(context, languageCode);
-  }
+  // Firebase Authentication instance
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<void> _login() async {
     setState(() {
@@ -55,23 +39,48 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    String? result = await AuthService().login(
-      usernameOrEmail: _userController.text.trim(),
-      password: _passwordController.text.trim(),
-    );
+    String email = _userController.text.trim();
+    String password = _passwordController.text.trim();
 
-    if (result == "user_not_found") {
-      setState(() {
-        usernameOrEmailError = AppLocalizations.of(context)!.userNotFound;
-      });
-    } else if (result == "wrong_password") {
-      setState(() {
-        passwordError = AppLocalizations.of(context)!.incorrectPassword;
-      });
-    } else if (result == null) {
+    try {
+      UserCredential userCredential;
+
+      if (email.contains('@')) {
+        // If email is entered, use FirebaseAuth directly
+        userCredential = await _auth.signInWithEmailAndPassword(email: email, password: password);
+      } else {
+        // If username is entered, query Firestore to get the email associated with the username
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(email).get();
+        if (!userDoc.exists) {
+          setState(() {
+            usernameOrEmailError = AppLocalizations.of(context)!.userNotFound;
+          });
+          return;
+        }
+
+        // Get the email from Firestore document
+        email = userDoc['email'];
+
+        // Log in with the email fetched from Firestore
+        userCredential = await _auth.signInWithEmailAndPassword(email: email, password: password);
+      }
+
+      // If successful login, save language preference and navigate to profile
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString('language', selectedLanguage);
-      Navigator.pushReplacementNamed(context, '/profile', arguments: selectedLanguage);
+      await prefs.setString('language', widget.language);
+      Navigator.pushReplacementNamed(context, '/profile', arguments: widget.language);
+
+    } on FirebaseAuthException catch (e) {
+      // Handle errors
+      setState(() {
+        if (e.code == 'user-not-found') {
+          usernameOrEmailError = AppLocalizations.of(context)!.userNotFound;
+        } else if (e.code == 'wrong-password') {
+          passwordError = AppLocalizations.of(context)!.incorrectPassword;
+        } else {
+          usernameOrEmailError = 'An error occurred: ${e.message}';
+        }
+      });
     }
   }
 
@@ -86,25 +95,6 @@ class _LoginScreenState extends State<LoginScreen> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              // 🔹 Language Selector
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Radio(
-                    value: 'en',
-                    groupValue: selectedLanguage,
-                    onChanged: (value) => _changeLanguage(value as String),
-                  ),
-                  Text("English"),
-                  Radio(
-                    value: 'ar',
-                    groupValue: selectedLanguage,
-                    onChanged: (value) => _changeLanguage(value as String),
-                  ),
-                  Text("العربية"),
-                ],
-              ),
-
               Form(
                 key: _formKey,
                 child: Column(
@@ -114,12 +104,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _userController,
                       decoration: InputDecoration(
                         labelText: localizations.emailOrUsername,
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: isUserEmpty ? AppColors.textFieldBorderError : AppColors.textFieldBorder,
-                          ),
-                        ),
-                        errorText: usernameOrEmailError ?? (isUserEmpty ? localizations.enterUsernameOrEmail : null),
+                        border: OutlineInputBorder(),
+                        errorText: usernameOrEmailError,
                       ),
                     ),
                     SizedBox(height: 10),
@@ -130,12 +116,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       obscureText: true,
                       decoration: InputDecoration(
                         labelText: localizations.password,
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: isPasswordEmpty ? AppColors.textFieldBorderError : AppColors.textFieldBorder,
-                          ),
-                        ),
-                        errorText: passwordError ?? (isPasswordEmpty ? localizations.enterPassword : null),
+                        border: OutlineInputBorder(),
+                        errorText: passwordError,
                       ),
                     ),
                     SizedBox(height: 20),
@@ -144,7 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     TextButton(
                       onPressed: () {
-                        Navigator.pushReplacementNamed(context, '/signup');
+                        Navigator.pushReplacementNamed(context, '/signup', arguments: widget.language);
                       },
                       child: Text(localizations.dontHaveAccount),
                     ),

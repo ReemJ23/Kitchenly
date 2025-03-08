@@ -68,7 +68,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     } else if (result == null) {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('language', widget.language);  // Store the language
-      Navigator.pushReplacementNamed(context, '/profile', arguments: widget.language);
+      Navigator.pushNamedAndRemoveUntil(context, '/onboarding_allergies', (route) => false, arguments:  widget.language);
     }
   }
 

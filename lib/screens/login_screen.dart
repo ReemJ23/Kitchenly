@@ -46,8 +46,10 @@ class _LoginScreenState extends State<LoginScreen> {
       UserCredential userCredential;
 
       if (input.contains('@')) {
+        // ✅ If input is an email, authenticate directly
         userCredential = await _auth.signInWithEmailAndPassword(email: input, password: password);
       } else {
+        // ✅ If input is a username, query Firestore to get the email
         QuerySnapshot userQuery = await FirebaseFirestore.instance
             .collection('users')
             .where('username', isEqualTo: input)
@@ -61,15 +63,18 @@ class _LoginScreenState extends State<LoginScreen> {
           return;
         }
 
+        // ✅ Retrieve email associated with the username
         String email = userQuery.docs.first['email'];
+
+        // ✅ Authenticate with email retrieved from Firestore
         userCredential = await _auth.signInWithEmailAndPassword(email: email, password: password);
       }
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('language', widget.language);
 
-
-      Navigator.pushNamedAndRemoveUntil(context, '/profile', (route) => false, arguments: widget.language);
+      // ✅ Redirect to Main Screen after login
+      Navigator.pushNamedAndRemoveUntil(context, '/main', (route) => false, arguments: widget.language);
 
     } on FirebaseAuthException catch (e) {
       setState(() {
@@ -83,6 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
       });
     }
   }
+
 
 
 

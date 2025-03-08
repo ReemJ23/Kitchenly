@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../utils/localization_helper.dart'; // ✅ Import the helper
 
 class OnboardingInventoryScreen extends StatefulWidget {
   final String language;
@@ -20,6 +21,18 @@ class _OnboardingInventoryScreenState extends State<OnboardingInventoryScreen> {
     "Grains": ["Rice", "Pasta", "Bread"]
   };
 
+  final Map<String, String> units = {
+    "Tomato": "kg",
+    "Carrot": "kg",
+    "Potato": "kg",
+    "Milk": "liters",
+    "Cheese": "grams",
+    "Yogurt": "grams",
+    "Rice": "kg",
+    "Pasta": "grams",
+    "Bread": "pieces"
+  };
+
   void _submitInventory() async {
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -31,7 +44,7 @@ class _OnboardingInventoryScreenState extends State<OnboardingInventoryScreen> {
             .doc(item.key)
             .set(item.value);
       }
-      Navigator.pushNamedAndRemoveUntil(context, '/inventory', (route) => false, arguments: widget.language);
+      Navigator.pushNamedAndRemoveUntil(context, '/main', (route) => false, arguments: widget.language);
     }
   }
 
@@ -44,10 +57,26 @@ class _OnboardingInventoryScreenState extends State<OnboardingInventoryScreen> {
       body: ListView(
         children: categorizedItems.entries.map((category) {
           return ExpansionTile(
-            title: Text(localizations.getString(category.key)),
+            title: Text(LocalizationHelper.getLocalizedString(localizations, category.key)), // ✅ Fixed
             children: category.value.map((item) {
               return ListTile(
-                title: Text(localizations.getString(item)),
+                title: Text(LocalizationHelper.getLocalizedString(localizations, item)), // ✅ Fixed
+                subtitle: DropdownButtonFormField<String>(
+                  value: selectedItems[item]?['unit'] ?? units[item],
+                  onChanged: (value) {
+                    setState(() {
+                      if (selectedItems.containsKey(item)) {
+                        selectedItems[item]!['unit'] = value!;
+                      }
+                    });
+                  },
+                  items: ["kg", "grams", "liters", "pieces"]
+                      .map((unit) => DropdownMenuItem(
+                    value: unit,
+                    child: Text(unit),
+                  ))
+                      .toList(),
+                ),
                 trailing: SizedBox(
                   width: 100,
                   child: TextField(
@@ -56,7 +85,11 @@ class _OnboardingInventoryScreenState extends State<OnboardingInventoryScreen> {
                     onChanged: (value) {
                       setState(() {
                         if (value.isNotEmpty) {
-                          selectedItems[item] = {"category": category.key, "quantity": int.parse(value)};
+                          selectedItems[item] = {
+                            "category": category.key,
+                            "quantity": int.parse(value),
+                            "unit": units[item] ?? "pieces"
+                          };
                         } else {
                           selectedItems.remove(item);
                         }

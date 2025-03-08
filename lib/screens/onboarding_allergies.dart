@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+import '../utils/localization_helper.dart';
+
 class OnboardingAllergiesScreen extends StatefulWidget {
   final String language;
 
@@ -41,7 +43,7 @@ class _OnboardingAllergiesScreenState extends State<OnboardingAllergiesScreen> {
               itemCount: allAllergies.length,
               itemBuilder: (context, index) {
                 return CheckboxListTile(
-                  title: Text(localizations.getString(allAllergies[index])),
+                  title: Text(LocalizationHelper.getLocalizedString(localizations, allAllergies[index])),
                   value: selectedAllergies.contains(allAllergies[index]),
                   onChanged: (bool? value) {
                     setState(() {

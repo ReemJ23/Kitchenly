@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,9 +25,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.remove('language');  // Remove the stored language preference
     await prefs.remove('isLoggedIn');  // Remove the logged-in status (optional, if you're using it)
-
-    // Navigate to the Welcome Screen
-    Navigator.pushReplacementNamed(context, '/welcome');
+    await FirebaseAuth.instance.signOut();
+    // ✅ Redirect to Welcome Screen after logout
+    Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
   }
 
 

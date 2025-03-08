@@ -88,7 +88,7 @@ class _MyAppState extends State<MyApp> {
         Locale('en'),
         Locale('ar'),
       ],
-      initialRoute: widget.isLoggedIn ? AppRoutes.profile : AppRoutes.welcome,
+      initialRoute: widget.isLoggedIn ? AppRoutes.main : AppRoutes.welcome,
       onGenerateRoute: AppRoutes.generateRoute,
     );
   }

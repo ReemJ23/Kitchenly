@@ -48,7 +48,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(localizations.welcome),
+        title: Text(localizations.welcomeMessage),
         automaticallyImplyLeading: false,  // Disable the back button
       ),
       body: Padding(

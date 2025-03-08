@@ -39,39 +39,39 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    String email = _userController.text.trim();
+    String input = _userController.text.trim();
     String password = _passwordController.text.trim();
 
     try {
       UserCredential userCredential;
 
-      if (email.contains('@')) {
-        // If email is entered, use FirebaseAuth directly
-        userCredential = await _auth.signInWithEmailAndPassword(email: email, password: password);
+      if (input.contains('@')) {
+        userCredential = await _auth.signInWithEmailAndPassword(email: input, password: password);
       } else {
-        // If username is entered, query Firestore to get the email associated with the username
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(email).get();
-        if (!userDoc.exists) {
+        QuerySnapshot userQuery = await FirebaseFirestore.instance
+            .collection('users')
+            .where('username', isEqualTo: input)
+            .limit(1)
+            .get();
+
+        if (userQuery.docs.isEmpty) {
           setState(() {
             usernameOrEmailError = AppLocalizations.of(context)!.userNotFound;
           });
           return;
         }
 
-        // Get the email from Firestore document
-        email = userDoc['email'];
-
-        // Log in with the email fetched from Firestore
+        String email = userQuery.docs.first['email'];
         userCredential = await _auth.signInWithEmailAndPassword(email: email, password: password);
       }
 
-      // If successful login, save language preference and navigate to profile
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('language', widget.language);
-      Navigator.pushReplacementNamed(context, '/profile', arguments: widget.language);
+
+
+      Navigator.pushNamedAndRemoveUntil(context, '/profile', (route) => false, arguments: widget.language);
 
     } on FirebaseAuthException catch (e) {
-      // Handle errors
       setState(() {
         if (e.code == 'user-not-found') {
           usernameOrEmailError = AppLocalizations.of(context)!.userNotFound;
@@ -83,6 +83,8 @@ class _LoginScreenState extends State<LoginScreen> {
       });
     }
   }
+
+
 
   @override
   Widget build(BuildContext context) {

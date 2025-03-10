@@ -61,7 +61,7 @@ class AppRoutes {
       builder: (context) => Scaffold(
         appBar: AppBar(
           title: Text("Error"),
-          automaticallyImplyLeading: false, // ✅ Removes back arrow
+          automaticallyImplyLeading: false,
         ),
         body: Center(
           child: Column(
@@ -71,7 +71,7 @@ class AppRoutes {
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
-                  // ✅ Redirect back to the welcome screen
+
                   Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
                 },
                 child: Text("Go to Home"),

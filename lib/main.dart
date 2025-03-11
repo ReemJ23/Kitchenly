@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'routes.dart';
 import 'package:kitchenly/screens/welcome_screen.dart';
 import 'package:kitchenly/screens/profile_screen.dart';
+import 'package:kitchenly/utils/font_helper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -88,6 +89,14 @@ class _MyAppState extends State<MyApp> {
         Locale('en'),
         Locale('ar'),
       ],
+      theme: ThemeData(
+        textTheme: TextTheme(
+          bodyLarge: TextStyle(fontFamily: FontHelper.getDefaultFontFamily(_locale), fontSize: 18),
+          bodyMedium: TextStyle(fontFamily: FontHelper.getDefaultFontFamily(_locale), fontSize: 16),
+          bodySmall: TextStyle(fontFamily: FontHelper.getDefaultFontFamily(_locale), fontSize: 14),
+          titleLarge: TextStyle(fontFamily: FontHelper.getDefaultFontFamily(_locale), fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+      ),
       initialRoute: widget.isLoggedIn ? AppRoutes.main : AppRoutes.welcome,
       onGenerateRoute: AppRoutes.generateRoute,
     );

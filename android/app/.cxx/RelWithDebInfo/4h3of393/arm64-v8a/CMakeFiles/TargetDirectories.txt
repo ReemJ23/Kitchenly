@@ -1,0 +1,2 @@
+C:/Users/User/Documents/GitHub/Kitchenly/android/app/.cxx/RelWithDebInfo/4h3of393/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/User/Documents/GitHub/Kitchenly/android/app/.cxx/RelWithDebInfo/4h3of393/arm64-v8a/CMakeFiles/rebuild_cache.dir

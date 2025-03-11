@@ -1,0 +1,2 @@
+C:/Users/User/Documents/GitHub/Kitchenly/android/app/.cxx/RelWithDebInfo/4h3of393/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/User/Documents/GitHub/Kitchenly/android/app/.cxx/RelWithDebInfo/4h3of393/armeabi-v7a/CMakeFiles/rebuild_cache.dir

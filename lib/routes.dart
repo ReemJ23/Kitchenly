@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kitchenly/screens/shopping_list_screen.dart';
 import 'package:kitchenly/screens/welcome_screen.dart';
 import 'package:kitchenly/screens/signup_screen.dart';
 import 'package:kitchenly/screens/login_screen.dart';
@@ -7,12 +8,13 @@ import 'package:kitchenly/screens/onboarding_inventory.dart';
 import 'package:kitchenly/screens/main_screen.dart';
 
 class AppRoutes {
-  static const String welcome = '/';
+  static const String welcome = '/welcome';
   static const String signup = '/signup';
   static const String login = '/login';
   static const String onboardingAllergies = '/onboarding_allergies';
   static const String onboardingInventory = '/onboarding_inventory';
   static const String main = '/main';
+  static const String shoppingList = '/shoppingList';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     final args = settings.arguments;
@@ -30,6 +32,12 @@ class AppRoutes {
       case login:
         if (args is String) {
           return MaterialPageRoute(builder: (_) => LoginScreen(language: args));
+        }
+        return _errorRoute();
+
+      case shoppingList:
+        if (args is String) {
+          return MaterialPageRoute(builder: (_) => ShoppingListScreen(language: args));
         }
         return _errorRoute();
 

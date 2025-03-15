@@ -53,5 +53,22 @@
   "shoppingList": "Shopping List",
   "recipes": "Recipes",
   "browsing": "Browsing",
-  "mealPlan": "Meal Plan"
+  "mealPlan": "Meal Plan",
+  "addItem": "Add Item",
+  "itemName": "Item Name",
+  "quantity": "Quantity",
+  "expirationDate": "Expiration Date",
+  "pickExpirationDate": "Pick Expiration Date",
+  "addCategory": "Add Category",
+  "categories": "Categories",
+  "noItems": "No items available",
+  "add": "Add",
+  "selectCategory": "Select Category",
+  "newCategory": "New Category",
+  "expirationDate": "Expiration Date",
+  "pickExpirationDate": "Pick Expiration Date",
+  "shoppingList": "Shopping List",
+  "deleteCheckedItems": "Delete Checked Items",
+  "addToInventory": "Add to Inventory",
+  "uncategorizedItems": "Uncategorized Items"
 }

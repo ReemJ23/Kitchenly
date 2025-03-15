@@ -53,5 +53,22 @@
   "shoppingList": "قائمة التسوق",
   "recipes": "الوصفات",
   "browsing": "التصفح",
-  "mealPlan": "خطة الوجبات"
+  "mealPlan": "خطة الوجبات",
+  "addItem": "إضافة عنصر",
+  "itemName": "اسم العنصر",
+  "quantity": "الكمية",
+  "expirationDate": "تاريخ الانتهاء",
+  "pickExpirationDate": "اختر تاريخ الانتهاء",
+  "addCategory": "إضافة فئة",
+  "categories": "الفئات",
+  "noItems": "لا توجد عناصر متاحة",
+  "add": "إضافة",
+  "selectCategory": "اختر الفئة",
+  "newCategory": "فئة جديدة",
+  "expirationDate": "تاريخ الانتهاء",
+  "pickExpirationDate": "اختر تاريخ الانتهاء",
+  "shoppingList": "قائمة التسوق",
+  "deleteCheckedItems": "حذف العناصر المحددة",
+  "addToInventory": "إضافة إلى المخزون",
+  "uncategorizedItems": "عناصر غير مصنفة"
 }

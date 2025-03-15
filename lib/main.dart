@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
@@ -25,26 +26,18 @@ void main() async {
     await Firebase.initializeApp();
   }
 
-  // Load the stored language preference and login status
+  User? user = FirebaseAuth.instance.currentUser;
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  String languageCode = prefs.getString('language') ?? 'en';
-  bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+  String? selectedLanguage = prefs.getString('language') ?? 'en';
 
-  runApp(MyApp(
-    initialLanguageCode: languageCode,
-    isLoggedIn: isLoggedIn,
-  ));
+  runApp(MyApp(isLoggedIn: user != null, language: selectedLanguage));
 }
 
 class MyApp extends StatefulWidget {
-  final String initialLanguageCode;
   final bool isLoggedIn;
+  final String language;
 
-  const MyApp({
-    Key? key,
-    required this.initialLanguageCode,
-    required this.isLoggedIn,
-  }) : super(key: key);
+  const MyApp({Key? key, required this.isLoggedIn, required this.language}) : super(key: key);
 
   static void setLocale(BuildContext context, String languageCode) {
     final state = context.findAncestorStateOfType<_MyAppState>();
@@ -61,7 +54,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    _locale = Locale(widget.initialLanguageCode);
+    _locale = Locale(widget.language);
   }
 
   void changeLanguage(String languageCode) async {
@@ -97,8 +90,32 @@ class _MyAppState extends State<MyApp> {
           titleLarge: TextStyle(fontFamily: FontHelper.getDefaultFontFamily(_locale), fontSize: 24, fontWeight: FontWeight.bold),
         ),
       ),
-      initialRoute: widget.isLoggedIn ? AppRoutes.main : AppRoutes.welcome,
+      home: InitialScreen(isLoggedIn: widget.isLoggedIn, language: widget.language),
       onGenerateRoute: AppRoutes.generateRoute,
     );
+  }
+}
+class InitialScreen extends StatefulWidget {
+  final bool isLoggedIn;
+  final String language;
+
+  const InitialScreen({Key? key, required this.isLoggedIn, required this.language}) : super(key: key);
+
+  @override
+  _InitialScreenState createState() => _InitialScreenState();
+}
+
+class _InitialScreenState extends State<InitialScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(Duration.zero, () {
+      Navigator.pushReplacementNamed(context, widget.isLoggedIn ? '/main' : '/welcome', arguments: widget.language);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(body: Center(child: CircularProgressIndicator())); // Show loading while redirecting
   }
 }

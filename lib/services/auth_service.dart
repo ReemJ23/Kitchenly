@@ -89,4 +89,12 @@ class AuthService {
       return e.message ?? "loginFailed";
     }
   }
+  Future<void> signOut() async {
+    await _auth.signOut();
+  }
+
+  // Ensures Firebase remembers the user session
+  Future<void> enablePersistence() async {
+    await _auth.setPersistence(Persistence.LOCAL);
+  }
 }

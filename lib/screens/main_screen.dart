@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kitchenly/screens/profile_screen.dart';
 import 'package:kitchenly/screens/inventory_screen.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:kitchenly/screens/shopping_list_screen.dart';
 
 import 'inventory_screen.dart';
 
@@ -24,7 +25,7 @@ class _MainScreenState extends State<MainScreen> {
     super.initState();
     _pages.add(ProfileScreen(language: widget.language));
     _pages.add(InventoryScreen(language: widget.language));
-    _pages.add(Container()); // Placeholder for Shopping List
+    _pages.add(ShoppingListScreen(language: widget.language)); // Placeholder for Shopping List
     _pages.add(Container()); // Placeholder for Recipes
     _pages.add(Container()); // Placeholder for Browsing
     _pages.add(Container()); // Placeholder for Meal Plan

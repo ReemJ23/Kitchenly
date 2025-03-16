@@ -56,7 +56,6 @@
   "mealPlan": "Meal Plan",
   "addItem": "Add Item",
   "itemName": "Item Name",
-  "quantity": "Quantity",
   "expirationDate": "Expiration Date",
   "pickExpirationDate": "Pick Expiration Date",
   "addCategory": "Add Category",
@@ -70,5 +69,18 @@
   "shoppingList": "Shopping List",
   "deleteCheckedItems": "Delete Checked Items",
   "addToInventory": "Add to Inventory",
-  "uncategorizedItems": "Uncategorized Items"
-}
+  "uncategorizedItems": "Uncategorized Items",
+  "addItem": "Add Item",
+  "itemName": "Item Name",
+  "unit": "Unit",
+  "error": "Error",
+  "invalidQuantity": "Invalid quantity. It must be a positive number and less than 1000.",
+  "categoryConflict": "You cannot select both a category and a new category name at the same time.",
+  "kg": "Kilogram",
+  "g": "Gram",
+  "lb": "Pound",
+  "oz": "Ounce",
+  "liter": "Liter",
+  "pieces": "Pieces",
+  "ok": "Ok"
+ }

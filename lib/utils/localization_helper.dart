@@ -22,7 +22,13 @@ class LocalizationHelper {
       "Bread": localizations.bread,
       "Vegetables": localizations.vegetables,
       "Dairy": localizations.dairy,
-      "Grains": localizations.grains
+      "Grains": localizations.grains,
+      "kg": localizations.kg,
+      "g": localizations.g,
+      "lb": localizations.lb,
+      "oz": localizations.oz,
+      "liter": localizations.liter,
+      "pieces":localizations.pieces
     };
 
     return localizedStrings[key] ?? key; // If no translation is found, return the original key

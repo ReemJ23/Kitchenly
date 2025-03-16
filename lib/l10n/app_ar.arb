@@ -70,5 +70,18 @@
   "shoppingList": "قائمة التسوق",
   "deleteCheckedItems": "حذف العناصر المحددة",
   "addToInventory": "إضافة إلى المخزون",
-  "uncategorizedItems": "عناصر غير مصنفة"
+  "uncategorizedItems": "عناصر غير مصنفة",
+  "addItem": "إضافة عنصر",
+  "itemName": "اسم العنصر",
+  "unit": "الوحدة",
+  "error": "خطأ",
+  "invalidQuantity": "الكمية غير صحيحة. يجب أن تكون قيمة إيجابية وأقل من 1000.",
+  "categoryConflict": "لا يمكنك اختيار الفئة وكتابة اسم فئة جديدة في نفس الوقت.",
+  "kg": "كيلوغرام",
+  "g": "غرام",
+  "lb": "رطل",
+  "oz": "أونصة",
+  "liter": "لتر",
+  "pieces": "قطع",
+  "ok": "تم"
 }

@@ -25,7 +25,7 @@ class _MainScreenState extends State<MainScreen> {
     super.initState();
     _pages.add(ProfileScreen(language: widget.language));
     _pages.add(InventoryScreen(language: widget.language));
-    _pages.add(ShoppingListScreen(language: widget.language)); // Placeholder for Shopping List
+    _pages.add(ShoppingListScreen()); // Placeholder for Shopping List
     _pages.add(Container()); // Placeholder for Recipes
     _pages.add(Container()); // Placeholder for Browsing
     _pages.add(Container()); // Placeholder for Meal Plan

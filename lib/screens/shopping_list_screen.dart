@@ -3,10 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-class ShoppingListScreen extends StatefulWidget {
-  final String language;
+import '../utils/localization_helper.dart';
 
-  const ShoppingListScreen({Key? key, required this.language}) : super(key: key);
+class ShoppingListScreen extends StatefulWidget {
+  const ShoppingListScreen({Key? key}) : super(key: key);
 
   @override
   _ShoppingListScreenState createState() => _ShoppingListScreenState();
@@ -18,87 +18,55 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   String? _selectedUnit = "kg";
   User? user = FirebaseAuth.instance.currentUser;
 
+  // ✅ Add item to Shopping List
   void _addItem() async {
-    if (_itemNameController.text.trim().isNotEmpty &&
-        _quantityController.text.trim().isNotEmpty) {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user!.uid)
-          .collection('shopping_list')
-          .add({
-        'name': _itemNameController.text.trim(),
-        'quantity': int.parse(_quantityController.text.trim()),
-        'unit': _selectedUnit,
-        'checked': false,
-      });
+    String itemName = _itemNameController.text.trim();
+    String quantityText = _quantityController.text.trim();
+    int quantity = int.tryParse(quantityText) ?? 0;
 
-      _itemNameController.clear();
-      _quantityController.clear();
-      setState(() {
-        _selectedUnit = "kg"; // Reset unit selection
-      });
+    if (itemName.isEmpty || quantity <= 0 || quantity > 999) {
+      _showErrorDialog(AppLocalizations.of(context)!.invalidQuantity);
+      return;
     }
-  }
 
-  void _toggleItemChecked(String itemId, bool isChecked) async {
     await FirebaseFirestore.instance
         .collection('users')
         .doc(user!.uid)
-        .collection('shopping_list')
-        .doc(itemId)
-        .update({'checked': isChecked});
+        .collection('shoppingList')
+        .add({
+      'name': itemName,
+      'quantity': quantity,
+      'unit': _selectedUnit,
+      'checked': false
+    });
+
+    _itemNameController.clear();
+    _quantityController.clear();
+    setState(() {
+      _selectedUnit = "kg";
+    });
   }
 
-  void _deleteItem(String itemId) async {
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user!.uid)
-        .collection('shopping_list')
-        .doc(itemId)
-        .delete();
-  }
+  // ✅ Check or uncheck item
+  void _toggleCheckItem(DocumentSnapshot itemDoc) async {
+    Map<String, dynamic> itemData = itemDoc.data() as Map<String, dynamic>;
+    bool isChecked = itemData['checked'];
 
-  void _deleteCheckedItems() async {
-    var checkedItems = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user!.uid)
-        .collection('shopping_list')
-        .where('checked', isEqualTo: true)
-        .get();
+    await itemDoc.reference.update({'checked': !isChecked});
 
-    for (var doc in checkedItems.docs) {
-      await doc.reference.delete();
-    }
-  }
-
-  void _moveCheckedItemsToInventory() async {
-    var checkedItems = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user!.uid)
-        .collection('shopping_list')
-        .where('checked', isEqualTo: true)
-        .get();
-
-    for (var item in checkedItems.docs) {
-      var itemData = item.data();
-      var existingItemQuery = await FirebaseFirestore.instance
+    if (!isChecked) {
+      // ✅ If item is checked, add it to inventory
+      QuerySnapshot existingItems = await FirebaseFirestore.instance
           .collection('users')
           .doc(user!.uid)
           .collection('inventory')
           .where('name', isEqualTo: itemData['name'])
           .get();
 
-      if (existingItemQuery.docs.isNotEmpty) {
-        var existingItem = existingItemQuery.docs.first;
-        int newQuantity =
-            existingItem['quantity'] + itemData['quantity'];
-
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user!.uid)
-            .collection('inventory')
-            .doc(existingItem.id)
-            .update({'quantity': newQuantity});
+      if (existingItems.docs.isNotEmpty) {
+        var existingItem = existingItems.docs.first;
+        int newQuantity = existingItem['quantity'] + itemData['quantity'];
+        await existingItem.reference.update({'quantity': newQuantity});
       } else {
         await FirebaseFirestore.instance
             .collection('users')
@@ -108,11 +76,41 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           'name': itemData['name'],
           'quantity': itemData['quantity'],
           'unit': itemData['unit'],
-          'category': "Uncategorized",
+          'category': '',
         });
       }
-      await item.reference.delete();
     }
+  }
+
+  // ✅ Delete all checked-off items
+  void _deleteCheckedItems() async {
+    QuerySnapshot checkedItems = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .collection('shoppingList')
+        .where('checked', isEqualTo: true)
+        .get();
+
+    for (var doc in checkedItems.docs) {
+      await doc.reference.delete();
+    }
+  }
+
+  // ✅ Show error dialog
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocalizations.of(context)!.error),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppLocalizations.of(context)!.ok),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -125,98 +123,123 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         onPressed: () => _showAddItemDialog(),
         child: Icon(Icons.add),
       ),
-      bottomNavigationBar: BottomAppBar(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            IconButton(
-              icon: Icon(Icons.delete),
-              onPressed: _deleteCheckedItems,
-              tooltip: localizations.deleteCheckedItems,
-            ),
-            IconButton(
-              icon: Icon(Icons.check_circle),
-              onPressed: _moveCheckedItemsToInventory,
-              tooltip: localizations.addToInventory,
-            ),
-          ],
-        ),
-      ),
-      body: StreamBuilder(
-        stream: FirebaseFirestore.instance
-            .collection('users')
-            .doc(user!.uid)
-            .collection('shopping_list')
-            .snapshots(),
-        builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (!snapshot.hasData) return CircularProgressIndicator();
+      body: Column(
+        children: [
+          // ✅ Checked-off items dropdown
+          StreamBuilder(
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .doc(user!.uid)
+                .collection('shoppingList')
+                .where('checked', isEqualTo: true)
+                .snapshots(),
+            builder: (context, AsyncSnapshot<QuerySnapshot> checkedSnapshot) {
+              if (!checkedSnapshot.hasData) return CircularProgressIndicator();
 
-          return ListView(
-            children: snapshot.data!.docs.map((itemDoc) {
-              var itemData = itemDoc.data() as Map<String, dynamic>;
+              var checkedItems = checkedSnapshot.data!.docs;
 
-              return Dismissible(
-                key: Key(itemDoc.id),
-                direction: DismissDirection.startToEnd,
-                onDismissed: (direction) => _deleteItem(itemDoc.id),
-                background: Container(
-                  color: Colors.red,
-                  alignment: Alignment.centerLeft,
-                  padding: EdgeInsets.only(left: 20),
-                  child: Icon(Icons.delete, color: Colors.white),
-                ),
-                child: CheckboxListTile(
-                  title: Text(
-                    itemData['name'],
-                    style: TextStyle(
-                        decoration: itemData['checked']
-                            ? TextDecoration.lineThrough
-                            : TextDecoration.none),
-                  ),
-                  subtitle: Text("${itemData['quantity']} ${itemData['unit']}"),
-                  value: itemData['checked'],
-                  onChanged: (value) =>
-                      _toggleItemChecked(itemDoc.id, value ?? false),
-                ),
+              return ExpansionTile(
+                title: Text(localizations.checkedItems),
+                children: [
+                  ...checkedItems.map((itemDoc) {
+                    Map<String, dynamic> itemData =
+                    itemDoc.data() as Map<String, dynamic>;
+                    return ListTile(
+                      title: Text(itemData['name']),
+                      subtitle:
+                      Text("${itemData['quantity']} ${itemData['unit']}"),
+                      leading: Checkbox(
+                        value: true,
+                        onChanged: (_) => _toggleCheckItem(itemDoc),
+                      ),
+                    );
+                  }).toList(),
+                  TextButton(
+                    onPressed: _deleteCheckedItems,
+                    child: Text(localizations.deleteAll),
+                  )
+                ],
               );
-            }).toList(),
-          );
-        },
+            },
+          ),
+
+          // ✅ Shopping List
+          Expanded(
+            child: StreamBuilder(
+              stream: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(user!.uid)
+                  .collection('shoppingList')
+                  .where('checked', isEqualTo: false)
+                  .snapshots(),
+              builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                if (!snapshot.hasData) return CircularProgressIndicator();
+
+                return ListView(
+                  children: snapshot.data!.docs.map((itemDoc) {
+                    Map<String, dynamic> itemData =
+                    itemDoc.data() as Map<String, dynamic>;
+
+                    return ListTile(
+                      title: Text(itemData['name']),
+                      subtitle:
+                      Text("${itemData['quantity']} ${itemData['unit']}"),
+                      leading: Checkbox(
+                        value: false,
+                        onChanged: (_) => _toggleCheckItem(itemDoc),
+                      ),
+                      trailing: IconButton(
+                        icon: Icon(Icons.delete),
+                        onPressed: () => itemDoc.reference.delete(),
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
 
+  // ✅ Add item dialog
   void _showAddItemDialog() {
+    final localizations = AppLocalizations.of(context)!;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.addItem),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _itemNameController,
-                decoration: InputDecoration(labelText: AppLocalizations.of(context)!.itemName),
-              ),
-              TextField(
-                controller: _quantityController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(labelText: AppLocalizations.of(context)!.quantity),
-              ),
-              DropdownButtonFormField<String>(
-                value: _selectedUnit,
-                items: ["kg", "grams", "liters", "pieces"]
-                    .map((unit) => DropdownMenuItem(value: unit, child: Text(unit)))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedUnit = value;
-                  });
-                },
-              ),
-            ],
-          ),
+        title: Text(localizations.addItem),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _itemNameController,
+              decoration: InputDecoration(labelText: localizations.itemName),
+            ),
+            TextField(
+              controller: _quantityController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(labelText: localizations.quantity),
+            ),
+            DropdownButtonFormField<String>(
+              value: _selectedUnit,
+              decoration: InputDecoration(labelText: localizations.unit),
+              items: ['kg', 'g', 'lb', 'oz', 'liter', 'pieces'].map((unit) {
+                return DropdownMenuItem(
+                  value: unit,
+                  child: Text(LocalizationHelper.getLocalizedString(
+                      localizations, unit)),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedUnit = value;
+                });
+              },
+            ),
+          ],
         ),
         actions: [
           ElevatedButton(
@@ -224,7 +247,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               _addItem();
               Navigator.pop(context);
             },
-            child: Text(AppLocalizations.of(context)!.add),
+            child: Text(localizations.add),
           ),
         ],
       ),

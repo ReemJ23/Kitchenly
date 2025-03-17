@@ -37,7 +37,7 @@ class AppRoutes {
 
       case shoppingList:
         if (args is String) {
-          return MaterialPageRoute(builder: (_) => ShoppingListScreen(language: args));
+          return MaterialPageRoute(builder: (_) => ShoppingListScreen());
         }
         return _errorRoute();
 

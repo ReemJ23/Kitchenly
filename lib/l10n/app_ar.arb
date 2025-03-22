@@ -59,6 +59,7 @@
   "quantity": "الكمية",
   "expirationDate": "تاريخ الانتهاء",
   "pickExpirationDate": "اختر تاريخ الانتهاء",
+  "category": "الفئة",
   "addCategory": "إضافة فئة",
   "categories": "الفئات",
   "noItems": "لا توجد عناصر متاحة",
@@ -70,7 +71,7 @@
   "shoppingList": "قائمة التسوق",
   "deleteCheckedItems": "حذف العناصر المحددة",
   "addToInventory": "إضافة إلى المخزون",
-  "uncategorizedItems": "عناصر غير مصنفة",
+  "uncategorized": "غير مصنفة",
   "addItem": "إضافة عنصر",
   "itemName": "اسم العنصر",
   "unit": "الوحدة",
@@ -87,5 +88,13 @@
   "oz": "أونصة",
   "liter": "لتر",
   "pieces": "قطع",
-  "ok": "تم"
+  "ok": "تم",
+  "editItem": "تعديل العنصر",
+  "save": "حفظ",
+  "addToMainList": "إضافة إلى القائمة الرئيسية",
+  "addItemsTooltip": "إضافة العناصر إلى القائمة الرئيسية",
+  "emptySublistTooltip": "القائمة الفرعية فارغة",
+  "addListName": "إضافة اسم القائمة",
+  "renameList": "إعادة تسمية القائمة",
+  "listName": "اسم القائمة"
 }

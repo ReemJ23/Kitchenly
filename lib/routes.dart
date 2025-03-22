@@ -36,10 +36,7 @@ class AppRoutes {
         return _errorRoute();
 
       case shoppingList:
-        if (args is String) {
-          return MaterialPageRoute(builder: (_) => ShoppingListScreen());
-        }
-        return _errorRoute();
+        return MaterialPageRoute(builder: (_) => ShoppingListScreen());
 
       case onboardingAllergies:
         if (args is String) {

@@ -1,0 +1,2 @@
+C:/Users/User/Documents/GitHub/Kitchenly/android/app/.cxx/Debug/v4v5c6i3/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/User/Documents/GitHub/Kitchenly/android/app/.cxx/Debug/v4v5c6i3/x86_64/CMakeFiles/rebuild_cache.dir

@@ -67,18 +67,47 @@ flutter:
   generate: true
 
   assets:
-    - assets/images/bg_with_drawings.png
+    - assets/images/pasta.png
+    - assets/images/steak.png
+    - assets/images/hummus.webp
+    - assets/images/pancake.webp
+    - assets/images/eggs.png
+    - assets/images/salad.png
 
   fonts:
-    - family: AveriaSerifLibre
+    - family: Mulish
       fonts:
-        - asset: assets/fonts/english_font/AveriaSerifLibre-Regular.ttf
-        - asset: assets/fonts/english_font/AveriaSerifLibre-Bold.ttf
+        - asset: assets/fonts/english_font/Mulish-VariableFont_wght.ttf
+        - asset: assets/fonts/english_font/Mulish-Italic-VariableFont_wght.ttf
+        - asset: assets/fonts/english_font/static/Mulish-Black.ttf
+        - asset: assets/fonts/english_font/static/Mulish-BlackItalic.ttf
+        - asset: assets/fonts/english_font/static/Mulish-Bold.ttf
+        - asset: assets/fonts/english_font/static/Mulish-BoldItalic.ttf
+        - asset: assets/fonts/english_font/static/Mulish-ExtraBold.ttf
+        - asset: assets/fonts/english_font/static/Mulish-ExtraBoldItalic.ttf
+        - asset: assets/fonts/english_font/static/Mulish-ExtraLight.ttf
+        - asset: assets/fonts/english_font/static/Mulish-ExtraLightItalic.ttf
+        - asset: assets/fonts/english_font/static/Mulish-Italic.ttf
+        - asset: assets/fonts/english_font/static/Mulish-Light.ttf
+        - asset: assets/fonts/english_font/static/Mulish-LightItalic.ttf
+        - asset: assets/fonts/english_font/static/Mulish-Medium.ttf
+        - asset: assets/fonts/english_font/static/Mulish-MediumItalic.ttf
+        - asset: assets/fonts/english_font/static/Mulish-Regular.ttf
+        - asset: assets/fonts/english_font/static/Mulish-SemiBold.ttf
+        - asset: assets/fonts/english_font/static/Mulish-SemiBoldItalic.ttf
           weight: 700
-    - family: Harmattan
+    - family: NotoSansArabic
       fonts:
-        - asset: assets/fonts/arabic_font/Harmattan-Regular.ttf
-        - asset: assets/fonts/arabic_font/Harmattan-Bold.ttf
+        - asset: assets/fonts/arabic_font/NotoSansArabic-VariableFont_wdth,wght.ttf
+        - asset: assets/fonts/arabic_font/static/NotoSansArabic-Regular.ttf
+        - asset: assets/fonts/arabic_font/static/NotoSansArabic-Black.ttf
+        - asset: assets/fonts/arabic_font/static/NotoSansArabic-Bold.ttf
+        - asset: assets/fonts/arabic_font/static/NotoSansArabic-ExtraBold.ttf
+        - asset: assets/fonts/arabic_font/static/NotoSansArabic-ExtraLight.ttf
+        - asset: assets/fonts/arabic_font/static/NotoSansArabic-Light.ttf
+        - asset: assets/fonts/arabic_font/static/NotoSansArabic-Medium.ttf
+        - asset: assets/fonts/arabic_font/static/NotoSansArabic-SemiBold.ttf
+        - asset: assets/fonts/arabic_font/static/NotoSansArabic-Thin.ttf
           weight: 700
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -1,26 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:kitchenly/routes.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:kitchenly/utils/base_screen.dart';
 import 'package:kitchenly/utils/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kitchenly/utils/font_helper.dart';
-
+import 'dart:async';
 import '../main.dart';
+
 
 class WelcomeScreen extends StatefulWidget {
   @override
   _WelcomeScreenState createState() => _WelcomeScreenState();
 }
 
-class _WelcomeScreenState extends State<WelcomeScreen> {
-  String selectedLanguage = 'en';  // Default language
+class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateMixin{
+String selectedLanguage = 'en';  // Default language
+late AnimationController _rotationController;
+int _currentIndex = 0;
+double _opacity = 1.0;
+late Timer _carouselTimer;
+
+  List<String> dishImages = [
+    "assets/images/pasta.png",
+    "assets/images/steak.png",
+    "assets/images/hummus.webp",
+    "assets/images/pancake.webp",
+    "assets/images/eggs.png",
+    "assets/images/salad.png"
+  ];
+
 
   @override
   void initState() {
     super.initState();
     _loadLanguagePreference();  // Load saved language on screen initialization
-  }
+    _startImageAnimation();
+
+
+}
 
   // Load the stored language preference from SharedPreferences
   Future<void> _loadLanguagePreference() async {
@@ -45,104 +62,132 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     });
   }
 
+void _startImageAnimation() {
+  _carouselTimer = Timer.periodic(Duration(seconds: 3), (timer) {
+    setState(() {
+      _opacity = 0.0;
+    });
+
+    Future.delayed(Duration(milliseconds: 500), () {
+      setState(() {
+        _currentIndex = (_currentIndex + 1) % dishImages.length;
+        _opacity = 1.0;
+      });
+    });
+  });
+}
+
+  @override
+  void dispose() {
+   _carouselTimer.cancel();
+    super.dispose();
+    }
+
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
-
-    return BaseScreen(
-      hasIllustrations: true,
-
-
-      // body: Padding(
-      //   padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              localizations.welcomeMessage,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: AppColors.heading1,
+    return Scaffold(
+      backgroundColor: AppColors.bgColor,
+      body: Stack(
+        children: [
+          Positioned(
+            top: MediaQuery.of(context).size.height * 0.2, // Moves image higher
+            left: 0,
+            right: 0,
+            child: Center(
+              child: AnimatedOpacity(
+                duration: Duration(milliseconds: 500),
+                opacity: _opacity,
+                child: Image.asset(
+                  dishImages[_currentIndex],
+                  width: 220,
+                  height: 220,
+                  fit: BoxFit.contain,
+                ),
             ),
-            textAlign: TextAlign.center,
             ),
-            SizedBox(height: 20),
+          ),
 
-            // Language Selector with Radio buttons
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+          Positioned(
+            bottom: 80,
+            left: 30,
+            right: 30,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                Text(
+                  localizations.welcomeMessage,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: AppColors.heading1,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                  ),
+                ),
+                SizedBox(height: 5),
+                Text(
+                  localizations.welcomeSubMessage,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.heading2,
+                  fontSize: 16,
+                ),
+                ),
+                SizedBox(height: 20),
+                Column(
                   children: [
-                    Radio(
-                      value: 'en',
-                      groupValue: selectedLanguage,
-                      onChanged: (value) => _changeLanguage(value as String),
-                      activeColor: AppColors.radioButtonActive,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Radio(
+                          value: 'en',
+                          groupValue: selectedLanguage,
+                          onChanged: (value) => _changeLanguage(value as String),
+                        ),
+                        Text("English", style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.heading2)),
+                      ],
                     ),
-                    Text("English", style: Theme.of(context).textTheme.bodyLarge),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Radio(
+                          value: 'ar',
+                          groupValue: selectedLanguage,
+                          onChanged: (value) => _changeLanguage(value as String),
+                        ),
+                        Text("العربية", style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.heading2)),
+                      ],
+                    ),
                   ],
                 ),
+                SizedBox(height: 20),
 
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Radio(
-                      value: 'ar',
-                      groupValue: selectedLanguage,
-                      onChanged: (value) => _changeLanguage(value as String),
-                      activeColor: AppColors.radioButtonActive,
-                    ),
-                    Text("العربية", style: Theme.of(context).textTheme.bodyLarge),
-                  ],
+                // 🔹 Sign Up Button
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, AppRoutes.signup, arguments: selectedLanguage);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: Size(double.infinity, 50),
+
+                  ),
+                  child: Text(localizations.signUp),
+                ),
+                SizedBox(height: 10),
+
+                // 🔹 Login Button
+                TextButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, AppRoutes.login, arguments: selectedLanguage);
+                  },
+                  style: TextButton.styleFrom(
+                    minimumSize: Size(double.infinity, 50),
+                    foregroundColor: AppColors.buttonText,
+                  ),
+                  child: Text(localizations.login),
                 ),
               ],
             ),
-
-
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(context, AppRoutes.signup, arguments: selectedLanguage);
-              },
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.resolveWith<Color?>(
-                      (Set<MaterialState> states) {
-                    if (states.contains(MaterialState.pressed)) {
-                      return AppColors.buttonBgOnPressed;
-                    }
-                    return AppColors.buttonBg;
-                  },
-                ),
-                foregroundColor: MaterialStateProperty.all(AppColors.buttonText),
-                textStyle: MaterialStateProperty.all(
-                  Theme.of(context).textTheme.bodySmall,
-                ),
-              ),
-              child: Text(localizations.signUp),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pushNamed(context, AppRoutes.login, arguments: selectedLanguage);
-              },
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.resolveWith<Color?>(
-                      (Set<MaterialState> states) {
-                    if (states.contains(MaterialState.pressed)) {
-                      return AppColors.buttonBgOnPressed;
-                    }
-                    return Colors.transparent;
-                  },
-                ),
-                foregroundColor: MaterialStateProperty.all(AppColors.buttonText),
-                textStyle: MaterialStateProperty.all(
-                  Theme.of(context).textTheme.bodySmall,
-                ),
-                padding: MaterialStateProperty.all(EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
-              ),
-              child: Text(localizations.login),
-            ),
-          ],
-        // ),
+          ),
+        ],
       ),
     );
   }

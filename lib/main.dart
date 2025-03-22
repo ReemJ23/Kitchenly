@@ -9,6 +9,7 @@ import 'routes.dart';
 import 'package:kitchenly/screens/welcome_screen.dart';
 import 'package:kitchenly/screens/profile_screen.dart';
 import 'package:kitchenly/utils/font_helper.dart';
+import 'package:kitchenly/utils/colors.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -88,6 +89,68 @@ class _MyAppState extends State<MyApp> {
           bodyMedium: TextStyle(fontFamily: FontHelper.getDefaultFontFamily(_locale), fontSize: 16),
           bodySmall: TextStyle(fontFamily: FontHelper.getDefaultFontFamily(_locale), fontSize: 14),
           titleLarge: TextStyle(fontFamily: FontHelper.getDefaultFontFamily(_locale), fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          labelStyle: TextStyle(color: AppColors.defaultLabel), // Default label color
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: AppColors.bottomBorder), // Bottom border
+          ),
+          focusedBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: AppColors.focusedBorder, width: 2), // Blue border when focused
+          ),
+          errorBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: AppColors.error), // Red border when there's an error
+          ),
+          focusedErrorBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: AppColors.error, width: 2), // Thicker red border on focus
+          ),
+          hintStyle: TextStyle(color: AppColors.hint),
+    ),
+
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: AppColors.toggleActive,
+          primary: AppColors.toggleActive,
+        ),
+
+
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            minimumSize: Size(350, 55),
+            backgroundColor: AppColors.buttonBg,
+            textStyle: TextStyle(
+              fontFamily: FontHelper.getDefaultFontFamily(_locale),
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            foregroundColor: AppColors.buttonText,
+          ),
+        ),
+
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            minimumSize: Size(350, 55),
+            textStyle: TextStyle(
+              fontFamily: FontHelper.getDefaultFontFamily(_locale),
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            foregroundColor: AppColors.buttonText,
+          ),
+        ),
+
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            minimumSize: Size(350, 55),
+            textStyle: TextStyle(
+              fontFamily: FontHelper.getDefaultFontFamily(_locale),
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            foregroundColor: AppColors.buttonText,
+          ),
         ),
       ),
       home: InitialScreen(isLoggedIn: widget.isLoggedIn, language: widget.language),

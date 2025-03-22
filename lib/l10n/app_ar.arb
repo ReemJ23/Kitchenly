@@ -87,5 +87,10 @@
   "oz": "أونصة",
   "liter": "لتر",
   "pieces": "قطع",
-  "ok": "تم"
+  "ok": "تم",
+  "signupMessage": "لنبدأ...",
+  "signupSubMessage": "قم بإدخال المعلومات التالية",
+  "loginMessage": "أهلًا بك مجددًا!",
+  "loginSubMessage": "جاهز للطهي؟",
+  "welcomeSubMessage": "خطوة أقرب لتنظيم وجباتك."
 }

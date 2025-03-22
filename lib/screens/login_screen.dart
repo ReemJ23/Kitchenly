@@ -4,6 +4,8 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../utils/colors.dart';
+
 class LoginScreen extends StatefulWidget {
   final String language;  // Accept language as a parameter
 
@@ -46,10 +48,10 @@ class _LoginScreenState extends State<LoginScreen> {
       UserCredential userCredential;
 
       if (input.contains('@')) {
-        // ✅ If input is an email, authenticate directly
+
         userCredential = await _auth.signInWithEmailAndPassword(email: input, password: password);
       } else {
-        // ✅ If input is a username, query Firestore to get the email
+
         QuerySnapshot userQuery = await FirebaseFirestore.instance
             .collection('users')
             .where('username', isEqualTo: input)
@@ -63,17 +65,17 @@ class _LoginScreenState extends State<LoginScreen> {
           return;
         }
 
-        // ✅ Retrieve email associated with the username
+
         String email = userQuery.docs.first['email'];
 
-        // ✅ Authenticate with email retrieved from Firestore
+
         userCredential = await _auth.signInWithEmailAndPassword(email: email, password: password);
       }
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('language', widget.language);
 
-      // ✅ Redirect to Main Screen after login
+
       Navigator.pushNamedAndRemoveUntil(context, '/main', (route) => false, arguments: widget.language);
 
     } on FirebaseAuthException catch (e) {
@@ -97,12 +99,33 @@ class _LoginScreenState extends State<LoginScreen> {
     final localizations = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: Text(localizations.login)),
+      appBar: AppBar(title: Text(" ")),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              Text(
+                localizations.loginMessage,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: AppColors.heading1,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold
+
+                ),
+              ),
+              SizedBox(height: 5), // Small spacing between texts
+              Text(
+                localizations.loginSubMessage,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.heading2,
+                  fontSize: 16,
+                ),
+                textAlign: TextAlign.right,
+              ),
+
+              SizedBox(height: 10),
               Form(
                 key: _formKey,
                 child: Column(
@@ -130,12 +153,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     SizedBox(height: 20),
 
-                    ElevatedButton(onPressed: _login, child: Text(localizations.login)),
-
+                    ElevatedButton(onPressed: _login,
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: Size(350, 55),
+                        ),
+                        child: Text(localizations.login) ),
+                    SizedBox(height: 10),
                     TextButton(
                       onPressed: () {
                         Navigator.pushReplacementNamed(context, '/signup', arguments: widget.language);
                       },
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: Size(350, 55)),
                       child: Text(localizations.dontHaveAccount),
                     ),
                   ],

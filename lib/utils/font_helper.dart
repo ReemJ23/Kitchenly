@@ -5,9 +5,9 @@ class FontHelper {
     // Detect if the text contains Arabic characters
     bool isArabic = RegExp(r'[\u0600-\u06FF]').hasMatch(text);
 
-    return isArabic ? 'Harmattan' : 'AveriaSerifLibre';
+    return isArabic ? 'NotoSansArabic' : 'Mulish';
   }
   static String getDefaultFontFamily(Locale locale) {
-    return locale.languageCode == 'ar' ? 'Harmattan' : 'AveriaSerifLibre';
+    return locale.languageCode == 'ar' ? 'NotoSansArabic' : 'Mulish';
   }
 }

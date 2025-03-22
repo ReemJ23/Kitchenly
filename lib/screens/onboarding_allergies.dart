@@ -25,7 +25,7 @@ class _OnboardingAllergiesScreenState extends State<OnboardingAllergiesScreen> {
         'allergies': selectedAllergies,
       });
 
-      // ✅ Pass the language to the next page
+
       Navigator.pushReplacementNamed(context, '/onboarding_inventory', arguments: widget.language);
     }
   }

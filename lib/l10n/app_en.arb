@@ -88,6 +88,7 @@
   "liter": "Liter",
   "pieces": "Pieces",
   "ok": "Ok",
+<<<<<<< HEAD
   "editItem": "Edit Item",
   "save": "Save",
   "addToMainList": "Add to Main List",
@@ -96,4 +97,11 @@
   "addListName": "Add List Name",
   "renameList": "Rename List",
   "listName": "List Name"
+=======
+  "signupMessage": "Let's get started...",
+  "signupSubMessage": "Enter the following information",
+  "loginMessage": "Welcome back!",
+  "loginSubMessage": "Ready to cook?",
+  "welcomeSubMessage": "A step closer to more organized meals."
+>>>>>>> 98047d796970dddf07ed7218379800a0e23b6eb6
  }

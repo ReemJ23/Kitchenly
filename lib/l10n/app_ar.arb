@@ -89,7 +89,6 @@
   "liter": "لتر",
   "pieces": "قطع",
   "ok": "تم",
-<<<<<<< HEAD
   "editItem": "تعديل العنصر",
   "save": "حفظ",
   "addToMainList": "إضافة إلى القائمة الرئيسية",
@@ -97,12 +96,10 @@
   "emptySublistTooltip": "القائمة الفرعية فارغة",
   "addListName": "إضافة اسم القائمة",
   "renameList": "إعادة تسمية القائمة",
-  "listName": "اسم القائمة"
-=======
+  "listName": "اسم القائمة",
   "signupMessage": "لنبدأ...",
   "signupSubMessage": "قم بإدخال المعلومات التالية",
   "loginMessage": "أهلًا بك مجددًا!",
   "loginSubMessage": "جاهز للطهي؟",
   "welcomeSubMessage": "خطوة أقرب لتنظيم وجباتك."
->>>>>>> 98047d796970dddf07ed7218379800a0e23b6eb6
 }

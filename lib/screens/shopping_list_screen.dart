@@ -21,7 +21,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
   final TextEditingController _categoryController = TextEditingController();
   String? _selectedUnit = "kg";
   User? user = FirebaseAuth.instance.currentUser;
-  List<String> _tabs = ['Main'];
+  List<String> _tabs = [];
   TabController? _tabController;
 
   @override
@@ -51,7 +51,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
         .get();
 
     setState(() {
-      _tabs = ['Main'];
+      _tabs = [AppLocalizations.of(context)!.main];
       _tabs.addAll(snapshot.docs.map((doc) => doc.id));
       _tabController = TabController(length: _tabs.length, vsync: this);
     });
@@ -161,7 +161,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
 
   void _removeTab(int index) async {
     String listKey = _tabs[index];
-    if (listKey != 'Main') {
+    if (listKey != AppLocalizations.of(context)!.main) {
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user!.uid)
@@ -184,10 +184,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
       return;
     }
 
-    String category = (listKey == 'Main') ? _categoryController.text.trim() : '';
+    String category = (listKey == AppLocalizations.of(context)!.main) ? _categoryController.text.trim() : '';
 
     String collectionPath =
-    listKey == 'Main' ? 'shoppingList' : 'sublists/$listKey/items';
+    listKey == AppLocalizations.of(context)!.main ? 'shoppingList' : 'sublists/$listKey/items';
 
     await FirebaseFirestore.instance
         .collection('users')
@@ -198,7 +198,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
       'quantity': quantity,
       'unit': _selectedUnit,
       'checked': false,
-      if (listKey == 'Main' && category.isNotEmpty) 'category': category
+      if (listKey == AppLocalizations.of(context)!.main && category.isNotEmpty) 'category': category
     });
     _itemNameController.clear();
     _quantityController.clear();
@@ -319,6 +319,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
       ),
     );
   }
+
   Widget _buildListView(String listKey) {
     final path = 'sublists/$listKey/items';
     return StreamBuilder<QuerySnapshot>(
@@ -334,21 +335,22 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
         return ListView(
           children: docs.map((doc) {
             final data = doc.data() as Map<String, dynamic>;
-            return ListTile(
-              title: Text(data['name']),
-              subtitle: Text("${data['quantity']} ${data['unit']}"),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.edit),
-                    onPressed: () => _editItem(doc, listKey),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.delete),
-                    onPressed: () async => await doc.reference.delete(),
-                  )
-                ],
+            return Dismissible(
+              key: Key(doc.id),
+              direction: DismissDirection.endToStart,
+              background: Container(
+                color: Colors.red,
+                alignment: Alignment.centerRight,
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Icon(Icons.delete, color: Colors.white),
+              ),
+              onDismissed: (direction) async {
+                await doc.reference.delete();
+              },
+              child: ListTile(
+                title: Text(data['name']),
+                subtitle: Text("${data['quantity']} ${data['unit']}"),
+                onTap: () => _editItem(doc, listKey),
               ),
             );
           }).toList(),
@@ -356,6 +358,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
       },
     );
   }
+
   Widget _buildCheckedItemsDropdown() {
     final localizations = AppLocalizations.of(context)!;
     return StreamBuilder<QuerySnapshot>(
@@ -386,6 +389,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                 ),
               );
             }).toList(),
+            ElevatedButton(
+              onPressed: () async {
+                for (var doc in docs) {
+                  await doc.reference.delete();
+                }
+              },
+              child: Text(localizations.deleteCheckedItems),
+            ),
           ],
         );
       },
@@ -429,28 +440,29 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                 ),
                 ...entry.value.map((doc) {
                   final data = doc.data() as Map<String, dynamic>;
-                  return ListTile(
-                    title: Text(data['name']),
-                    subtitle: Text("${data['quantity']} ${data['unit']}"),
-                    leading: Checkbox(
-                      value: data['checked'],
-                      onChanged: (_) async {
-                        await doc.reference.update({'checked': true});
-                        await _updateInventory(doc);
-                      },
+                  return Dismissible(
+                    key: Key(doc.id),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      color: Colors.red,
+                      alignment: Alignment.centerRight,
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: Icon(Icons.delete, color: Colors.white),
                     ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.edit),
-                          onPressed: () => _editItem(doc, 'Main'),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.delete),
-                          onPressed: () async => await doc.reference.delete(),
-                        )
-                      ],
+                    onDismissed: (direction) async {
+                      await doc.reference.delete();
+                    },
+                    child: ListTile(
+                      title: Text(data['name']),
+                      subtitle: Text("${data['quantity']} ${data['unit']}"),
+                      leading: Checkbox(
+                        value: data['checked'],
+                        onChanged: (_) async {
+                          await doc.reference.update({'checked': true});
+                          await _updateInventory(doc);
+                        },
+                      ),
+                      onTap: () => _editItem(doc, 'Main'),
                     ),
                   );
                 }).toList(),
@@ -469,7 +481,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
       return Center(child: CircularProgressIndicator());
     }
 
-    final isMainTab = _tabs[_tabController!.index] == 'Main';
+    bool isMainTab = _tabs[_tabController!.index] == localizations.main;
 
     return Scaffold(
       appBar: AppBar(
@@ -479,12 +491,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
           isScrollable: true, // Make the TabBar scrollable
           tabs: List.generate(_tabs.length, (i) {
             return GestureDetector(
-              onLongPress: _tabs[i] != 'Main' ? () => _renameTab(i) : null,
+              onLongPress: _tabs[i] != localizations.main ? () => _renameTab(i) : null,
               child: Tab(
                 child: Row(
                   children: [
                     Text(_tabs[i]),
-                    if (_tabs[i] != 'Main')
+                    if (_tabs[i] != localizations.main)
                       IconButton(
                         icon: Icon(Icons.close),
                         onPressed: () => _removeTab(i),
@@ -509,7 +521,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
       body: TabBarView(
         controller: _tabController,
         children: _tabs.map((key) {
-          if (key == 'Main') {
+          if (key == localizations.main) {
             return Column(
               children: [
                 Expanded(child: _buildCategorizedMainList()),
@@ -517,39 +529,41 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
               ],
             );
           } else {
-            return _buildListView(key); // Use _buildListView for sublists
+            return Column(
+              children: [
+                Expanded(child: _buildListView(key)),
+                StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user!.uid)
+                      .collection('sublists')
+                      .doc(key)
+                      .collection('items')
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    final hasItems = snapshot.hasData && snapshot.data!.docs.isNotEmpty;
+                    return Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Tooltip(
+                        message: hasItems
+                            ? localizations.addItemsTooltip
+                            : localizations.emptySublistTooltip,
+                        child: ElevatedButton.icon(
+                          icon: Icon(Icons.upload),
+                          label: Text(localizations.addToMainList),
+                          onPressed: hasItems
+                              ? () => _addSublistToMain(key)
+                              : null, // Disable the button if the sublist is empty
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            );
           }
         }).toList(),
       ),
-      bottomNavigationBar: !isMainTab
-          ? StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('users')
-            .doc(user!.uid)
-            .collection('sublists')
-            .doc(_tabs[_tabController!.index])
-            .collection('items')
-            .snapshots(),
-        builder: (context, snapshot) {
-          final hasItems = snapshot.hasData && snapshot.data!.docs.isNotEmpty;
-          return Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Tooltip(
-              message: hasItems
-                  ? localizations.addItemsTooltip
-                  : localizations.emptySublistTooltip,
-              child: ElevatedButton.icon(
-                icon: Icon(Icons.upload),
-                label: Text(localizations.addToMainList),
-                onPressed: hasItems
-                    ? () => _addSublistToMain(_tabs[_tabController!.index])
-                    : null, // Disable the button if the sublist is empty
-              ),
-            ),
-          );
-        },
-      )
-          : null,
     );
   }
 
@@ -587,7 +601,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                 });
               },
             ),
-            if (listKey == 'Main')
+            if (listKey == localizations.main)
               TextField(
                 controller: _categoryController,
                 decoration: InputDecoration(

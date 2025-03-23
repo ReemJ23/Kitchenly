@@ -101,5 +101,6 @@
   "signupSubMessage": "قم بإدخال المعلومات التالية",
   "loginMessage": "أهلًا بك مجددًا!",
   "loginSubMessage": "جاهز للطهي؟",
-  "welcomeSubMessage": "خطوة أقرب لتنظيم وجباتك."
+  "welcomeSubMessage": "خطوة أقرب لتنظيم وجباتك.",
+  "main": "رئيسية"
 }

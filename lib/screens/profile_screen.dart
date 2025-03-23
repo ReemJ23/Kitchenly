@@ -27,7 +27,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await prefs.remove('isLoggedIn');  // Remove the logged-in status (optional, if you're using it)
     await FirebaseAuth.instance.signOut();
     // ✅ Redirect to Welcome Screen after logout
-    Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+    Navigator.pushNamedAndRemoveUntil(context, '/welcome', (route) => false);
   }
 
 

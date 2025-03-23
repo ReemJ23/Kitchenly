@@ -278,24 +278,34 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 ),
               ...uncategorizedItems.map((itemDoc) {
                 Map<String, dynamic> itemData = itemDoc.data() as Map<String, dynamic>;
-                return ListTile(
-                  title: Text(itemData['name'] ?? "Unnamed Item"),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("${itemData['quantity']} ${itemData['unit']}"),
-                      if (itemData.containsKey('expirationDate') && itemData['expirationDate'] != null)
-                        Text(
-                          "${localizations.expirationDate}: ${DateFormat.yMd().format((itemData['expirationDate'] as Timestamp).toDate())}",
-                          style: TextStyle(color: Colors.red),
-                        ),
-                    ],
+                return Dismissible(
+                  key: Key(itemDoc.id), // Unique key for each item
+                  direction: DismissDirection.endToStart, // Swipe from right to left
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: Icon(Icons.delete, color: Colors.white),
                   ),
-                  trailing: IconButton(
-                    icon: Icon(Icons.close),
-                    onPressed: () => itemDoc.reference.delete(),
+                  onDismissed: (direction) {
+                    // Delete the item from Firestore
+                    itemDoc.reference.delete();
+                  },
+                  child: ListTile(
+                    title: Text(itemData['name'] ?? "Unnamed Item"),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("${itemData['quantity']} ${itemData['unit']}"),
+                        if (itemData.containsKey('expirationDate') && itemData['expirationDate'] != null)
+                          Text(
+                            "${localizations.expirationDate}: ${DateFormat.yMd().format((itemData['expirationDate'] as Timestamp).toDate())}",
+                            style: TextStyle(color: Colors.red),
+                          ),
+                      ],
+                    ),
+                    onTap: () => _showEditItemDialog(itemDoc), // Open edit dialog on tap
                   ),
-                  onTap: () => _showEditItemDialog(itemDoc), // Open edit dialog on tap
                 );
               }).toList(),
 
@@ -313,24 +323,34 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     ),
                     ...entry.value.map((itemDoc) {
                       Map<String, dynamic> itemData = itemDoc.data() as Map<String, dynamic>;
-                      return ListTile(
-                        title: Text(itemData['name'] ?? "Unnamed Item"),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("${itemData['quantity']} ${itemData['unit']}"),
-                            if (itemData.containsKey('expirationDate') && itemData['expirationDate'] != null)
-                              Text(
-                                "${localizations.expirationDate}: ${DateFormat.yMd().format((itemData['expirationDate'] as Timestamp).toDate())}",
-                                style: TextStyle(color: Colors.red),
-                              ),
-                          ],
+                      return Dismissible(
+                        key: Key(itemDoc.id), // Unique key for each item
+                        direction: DismissDirection.endToStart, // Swipe from right to left
+                        background: Container(
+                          color: Colors.red,
+                          alignment: Alignment.centerRight,
+                          padding: EdgeInsets.symmetric(horizontal: 20),
+                          child: Icon(Icons.delete, color: Colors.white),
                         ),
-                        trailing: IconButton(
-                          icon: Icon(Icons.close),
-                          onPressed: () => itemDoc.reference.delete(),
+                        onDismissed: (direction) {
+                          // Delete the item from Firestore
+                          itemDoc.reference.delete();
+                        },
+                        child: ListTile(
+                          title: Text(itemData['name'] ?? "Unnamed Item"),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("${itemData['quantity']} ${itemData['unit']}"),
+                              if (itemData.containsKey('expirationDate') && itemData['expirationDate'] != null)
+                                Text(
+                                  "${localizations.expirationDate}: ${DateFormat.yMd().format((itemData['expirationDate'] as Timestamp).toDate())}",
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                            ],
+                          ),
+                          onTap: () => _showEditItemDialog(itemDoc), // Open edit dialog on tap
                         ),
-                        onTap: () => _showEditItemDialog(itemDoc), // Open edit dialog on tap
                       );
                     }).toList(),
                   ],

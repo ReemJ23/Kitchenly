@@ -100,5 +100,6 @@
   "signupSubMessage": "Enter the following information",
   "loginMessage": "Welcome back!",
   "loginSubMessage": "Ready to cook?",
-  "welcomeSubMessage": "A step closer to more organized meals."
+  "welcomeSubMessage": "A step closer to more organized meals.",
+  "main": "Main"
  }

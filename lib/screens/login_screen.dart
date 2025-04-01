@@ -122,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   color: AppColors.heading2,
                   fontSize: 16,
                 ),
-                textAlign: TextAlign.right,
+
               ),
 
               SizedBox(height: 10),

@@ -102,5 +102,7 @@
   "loginMessage": "أهلًا بك مجددًا!",
   "loginSubMessage": "جاهز للطهي؟",
   "welcomeSubMessage": "خطوة أقرب لتنظيم وجباتك.",
-  "main": "رئيسية"
+  "main": "الرئيسية",
+  "onboardingAllergiesMessage": "دعنا نتعرف عليك أكثر...",
+  "onboardingAllergiesSubMessage": "قم باختيار أي حساسية لديك، إن وجد."
 }

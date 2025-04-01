@@ -24,7 +24,6 @@
   "usernameTaken": "This username is taken",
   "incorrectPassword": "Incorrect password",
   "userNotFound": "User not found. Please check your email or username.",
-  "selectAllergies": "Select Your Allergies",
   "selectKitchenItems": "Select Kitchen Items",
   "inventory": "Inventory",
   "quantity": "Quantity",
@@ -101,5 +100,7 @@
   "loginMessage": "Welcome back!",
   "loginSubMessage": "Ready to cook?",
   "welcomeSubMessage": "A step closer to more organized meals.",
-  "main": "Main"
- }
+  "main": "Main",
+  "onboardingAllergiesMessage": "Getting to know more about you...",
+  "onboardingAllergiesSubMessage": "Select your allergies, if any."
+}

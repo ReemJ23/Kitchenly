@@ -71,8 +71,16 @@ flutter:
     - assets/images/steak.png
     - assets/images/hummus.webp
     - assets/images/pancake.webp
-    - assets/images/eggs.png
+    - assets/images/eggs_dish.png
     - assets/images/salad.png
+    - assets/images/peanuts.png
+    - assets/images/sesame.png
+    - assets/images/shellfish.png
+    - assets/images/soy.png
+    - assets/images/treenuts.png
+    - assets/images/eggs.png
+    - assets/images/gluten.png
+    - assets/images/dairy.png
 
   fonts:
     - family: Mulish

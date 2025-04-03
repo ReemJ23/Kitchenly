@@ -3,8 +3,7 @@ import 'package:kitchenly/screens/profile_screen.dart';
 import 'package:kitchenly/screens/inventory_screen.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:kitchenly/screens/shopping_list_screen.dart';
-
-import 'inventory_screen.dart';
+import '../utils/colors.dart';
 
 class MainScreen extends StatefulWidget {
   final String language;

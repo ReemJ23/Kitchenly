@@ -37,7 +37,7 @@ class _OnboardingAllergiesScreenState extends State<OnboardingAllergiesScreen> {
       });
 
 
-      Navigator.pushReplacementNamed(context, '/onboarding_inventory', arguments: widget.language);
+      Navigator.pushNamed(context, '/onboarding_inventory', arguments: widget.language);
     }
   }
 
@@ -46,10 +46,10 @@ class _OnboardingAllergiesScreenState extends State<OnboardingAllergiesScreen> {
     final localizations = AppLocalizations.of(context)!;
 
     return Scaffold(
-
-      body: SafeArea(
-        child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+        appBar: AppBar(title: Text(" ")
+        ),
+      body: Padding(
+        padding: EdgeInsets.all(16),
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
     children: [
@@ -130,7 +130,7 @@ class _OnboardingAllergiesScreenState extends State<OnboardingAllergiesScreen> {
           ),
         ],
       ),
-    ),
+
           ),
     );
   }

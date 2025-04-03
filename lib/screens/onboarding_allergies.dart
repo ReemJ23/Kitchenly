@@ -19,14 +19,14 @@ class _OnboardingAllergiesScreenState extends State<OnboardingAllergiesScreen> {
   final List<String> allAllergies = ["Peanuts", "Dairy", "Gluten", "Soy", "Shellfish", "Eggs", "Tree Nuts", "Sesame"];
 
   final Map<String, String> allergyImages = {
-    "Peanuts": "assets/images/peanuts.png",
-    "Dairy": "assets/images/dairy.png",
-    "Gluten": "assets/images/gluten.png",
-    "Soy": "assets/images/soy.png",
-    "Shellfish": "assets/images/shellfish.png",
-    "Eggs": "assets/images/eggs.png",
-    "Tree Nuts": "assets/images/treenuts.png",
-    "Sesame": "assets/images/sesame.png",
+    "Peanuts": "assets/images/allergies/peanuts.png",
+    "Dairy": "assets/images/allergies/dairy.png",
+    "Gluten": "assets/images/allergies/gluten.png",
+    "Soy": "assets/images/allergies/soy.png",
+    "Shellfish": "assets/images/allergies/shellfish.png",
+    "Eggs": "assets/images/allergies/eggs.png",
+    "Tree Nuts": "assets/images/allergies/treenuts.png",
+    "Sesame": "assets/images/allergies/sesame.png",
   };
 
   void _submitAllergies() async {

@@ -21,12 +21,12 @@ double _opacity = 1.0;
 late Timer _carouselTimer;
 
   List<String> dishImages = [
-    "assets/images/pasta.png",
-    "assets/images/steak.png",
-    "assets/images/hummus.webp",
-    "assets/images/pancake.webp",
-    "assets/images/eggs.png",
-    "assets/images/salad.png"
+    "assets/images/dishes/pasta.png",
+    "assets/images/dishes/steak.png",
+    "assets/images/dishes/hummus.webp",
+    "assets/images/dishes/pancake.webp",
+    "assets/images/dishes/eggs_dish.png",
+    "assets/images/dishes/salad.png"
   ];
 
 

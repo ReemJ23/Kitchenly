@@ -67,20 +67,20 @@ flutter:
   generate: true
 
   assets:
-    - assets/images/pasta.png
-    - assets/images/steak.png
-    - assets/images/hummus.webp
-    - assets/images/pancake.webp
-    - assets/images/eggs_dish.png
-    - assets/images/salad.png
-    - assets/images/peanuts.png
-    - assets/images/sesame.png
-    - assets/images/shellfish.png
-    - assets/images/soy.png
-    - assets/images/treenuts.png
-    - assets/images/eggs.png
-    - assets/images/gluten.png
-    - assets/images/dairy.png
+    - assets/images/dishes/pasta.png
+    - assets/images/dishes/steak.png
+    - assets/images/dishes/hummus.webp
+    - assets/images/dishes/pancake.webp
+    - assets/images/dishes/eggs_dish.png
+    - assets/images/dishes/salad.png
+    - assets/images/allergies/peanuts.png
+    - assets/images/allergies/sesame.png
+    - assets/images/allergies/shellfish.png
+    - assets/images/allergies/soy.png
+    - assets/images/allergies/treenuts.png
+    - assets/images/allergies/eggs.png
+    - assets/images/allergies/gluten.png
+    - assets/images/allergies/dairy.png
 
   fonts:
     - family: Mulish

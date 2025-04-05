@@ -124,6 +124,7 @@ class _MyAppState extends State<MyApp> {
             ),
             padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             foregroundColor: AppColors.buttonText,
+             overlayColor: AppColors.buttonBgOnPressed
           ),
         ),
 
@@ -137,6 +138,7 @@ class _MyAppState extends State<MyApp> {
             ),
             padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             foregroundColor: AppColors.buttonText,
+              overlayColor: AppColors.buttonBgOnPressed
           ),
         ),
 
@@ -150,6 +152,7 @@ class _MyAppState extends State<MyApp> {
             ),
             padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             foregroundColor: AppColors.buttonText,
+            overlayColor: AppColors.buttonBgOnPressed
           ),
         ),
       ),

@@ -64,7 +64,7 @@
   "noItems": "لا توجد عناصر متاحة",
   "add": "إضافة",
   "selectCategory": "اختر الفئة",
-  "newCategory": "فئة جديدة",
+  "categoryName": "اسم الفئة",
   "expirationDate": "تاريخ الانتهاء",
   "pickExpirationDate": "اختر تاريخ الانتهاء",
   "shoppingList": "قائمة التسوق",
@@ -105,5 +105,8 @@
   "onboardingAllergiesMessage": "دعنا نتعرف عليك أكثر...",
   "onboardingAllergiesSubMessage": "قم باختيار أي حساسية لديك، إن وجد.",
   "onboardingInventoryMessage": "ماذا يوجد في مطبخك؟",
-  "onboardingInventorySubMessage": "بإمكانك إضافة المزيد من العناصر للمخزون لاحقًا."
+  "onboardingInventorySubMessage": "بإمكانك إضافة المزيد من العناصر للمخزون لاحقًا.",
+  "sortByExpirationDate": "تاريخ الانتهاء",
+  "sortAlphabetically": "أبجديًّا",
+  "editExpirationDate": "تعديل تاريخ الانتهاء"
 }

@@ -62,7 +62,7 @@
   "noItems": "No items available",
   "add": "Add",
   "selectCategory": "Select Category",
-  "newCategory": "New Category",
+  "categoryName": "Category Name",
   "expirationDate": "Expiration Date",
   "pickExpirationDate": "Pick Expiration Date",
   "shoppingList": "Shopping List",
@@ -103,5 +103,8 @@
   "onboardingAllergiesMessage": "Getting to know more about you...",
   "onboardingAllergiesSubMessage": "Select your allergies, if any.",
   "onboardingInventoryMessage": "What's in your kitchen?",
-  "onboardingInventorySubMessage": "You can add more items to your inventory later."
+  "onboardingInventorySubMessage": "You can add more items to your inventory later.",
+  "sortByExpirationDate": "Expiration Date",
+  "sortAlphabetically": "Alphabetically",
+  "editExpirationDate": "Edit Expiration Date"
 }

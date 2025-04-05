@@ -15,6 +15,8 @@ class InventoryScreen extends StatefulWidget {
   _InventoryScreenState createState() => _InventoryScreenState();
 }
 
+// enum SortOption { expirationDate, dateAdded, alphabetically }
+
 class _InventoryScreenState extends State<InventoryScreen> {
   final TextEditingController _itemNameController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
@@ -27,7 +29,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
   DateTime? _expirationDate;
   User? user = FirebaseAuth.instance.currentUser;
   String? _userLanguage;
-
+  //String _currentSort = 'alphabetical';
+  Set<String> expandedCategories = {};
   @override
   void initState() {
     super.initState();
@@ -37,6 +40,24 @@ class _InventoryScreenState extends State<InventoryScreen> {
       });
     });
   }
+
+  // void _applySorting(List<QueryDocumentSnapshot> items) {
+  //   if (_currentSort == 'alphabetical') {
+  //     items.sort((a, b) =>
+  //         (a['name'] as String).toLowerCase().compareTo((b['name'] as String).toLowerCase()));
+  //   } else if (_currentSort == 'expiration') {
+  //     items.sort((a, b) {
+  //       Timestamp? aExp = a['expirationDate'];
+  //       Timestamp? bExp = b['expirationDate'];
+  //
+  //       if (aExp == null && bExp == null) return 0;
+  //       if (aExp == null) return 1;
+  //       if (bExp == null) return -1;
+  //
+  //       return aExp.toDate().compareTo(bExp.toDate());
+  //     });
+  //   }
+  // }
 
   // Fetch the user's preferred language from Firestore
   Future<String> _fetchUserLanguage() async {
@@ -169,11 +190,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 controller: _editItemNameController,
                 decoration: InputDecoration(labelText: localizations.itemName),
               ),
+              SizedBox(height: 10),
               TextField(
                 controller: _editQuantityController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(labelText: localizations.quantity),
               ),
+              SizedBox(height: 10),
               DropdownButtonFormField<String>(
                 value: _selectedUnit,
                 decoration: InputDecoration(labelText: localizations.unit),
@@ -191,38 +214,40 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   });
                 },
               ),
+              SizedBox(height: 10),
               TextField(
                 controller: _editCategoryController,
                 decoration: InputDecoration(labelText: localizations.category),
               ),
-              ElevatedButton(
+              SizedBox(height: 20),
+              TextButton(
                 onPressed: _pickExpirationDate,
                 child: Text(_expirationDate != null
-                    ? "${localizations.expirationDate}: ${DateFormat.yMd().format(_expirationDate!)}"
+                    ? localizations.editExpirationDate
                     : localizations.pickExpirationDate),
+              ),
+              SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
+                  // Update the item in Firestore
+                  itemDoc.reference.update({
+                    'name': _editItemNameController.text.trim(),
+                    'quantity': int.tryParse(_editQuantityController.text.trim()) ?? 0,
+                    'unit': _selectedUnit,
+                    'category': _editCategoryController.text.trim(),
+                    'expirationDate': _expirationDate != null ? Timestamp.fromDate(_expirationDate!) : null,
+                  });
+                  Navigator.pop(context);
+                },
+                child: Text(localizations.save),
               ),
             ],
           ),
         ),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              // Update the item in Firestore
-              itemDoc.reference.update({
-                'name': _editItemNameController.text.trim(),
-                'quantity': int.tryParse(_editQuantityController.text.trim()) ?? 0,
-                'unit': _selectedUnit,
-                'category': _editCategoryController.text.trim(),
-                'expirationDate': _expirationDate != null ? Timestamp.fromDate(_expirationDate!) : null,
-              });
-              Navigator.pop(context);
-            },
-            child: Text(localizations.save),
-          ),
-        ],
       ),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -231,11 +256,25 @@ class _InventoryScreenState extends State<InventoryScreen> {
         : AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: Text(localizations.inventory)),
+      appBar: AppBar(title: Text(localizations.inventory),
+
+        //ASK DR. FIRAS
+        actions: [
+          IconButton(
+            icon: Icon(Icons.sort),
+            onPressed: () {
+              // Sorting options will go here in the future
+              // For now, it does nothing
+            },
+          ),
+        ],
+      centerTitle: true,),
+
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddItemDialog(),
         child: Icon(Icons.add),
       ),
+
       body: StreamBuilder(
         stream: FirebaseFirestore.instance
             .collection('users')
@@ -254,7 +293,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
             if (data == null || !data.containsKey('name')) {
               continue;
             }
-
+            // _applySorting(uncategorizedItems);
+            // for (var list in categorizedItems.values) {
+            //   _applySorting(list);
+            // }
             String category = data['category'] ?? '';
 
             if (category.isEmpty) {
@@ -266,7 +308,25 @@ class _InventoryScreenState extends State<InventoryScreen> {
               categorizedItems[category]!.add(doc);
             }
           }
+          for (var entry in categorizedItems.entries) {
+            entry.value.sort((a, b) {
+              DateTime? aDate = (a['expirationDate'] as Timestamp?)?.toDate();
+              DateTime? bDate = (b['expirationDate'] as Timestamp?)?.toDate();
+              if (aDate == null && bDate == null) return 0;
+              if (aDate == null) return 1;
+              if (bDate == null) return -1;
+              return aDate.compareTo(bDate);
+            });
+          }
 
+          uncategorizedItems.sort((a, b) {
+            DateTime? aDate = (a['expirationDate'] as Timestamp?)?.toDate();
+            DateTime? bDate = (b['expirationDate'] as Timestamp?)?.toDate();
+            if (aDate == null && bDate == null) return 0;
+            if (aDate == null) return 1;
+            if (bDate == null) return -1;
+            return aDate.compareTo(bDate);
+          });
           return ListView(
             children: [
               // Uncategorized items
@@ -284,7 +344,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   key: Key(itemDoc.id), // Unique key for each item
                   direction: DismissDirection.endToStart, // Swipe from right to left
                   background: Container(
-                    color: Colors.red,
+                    color: AppColors.deleteBg,
                     alignment: Alignment.centerRight,
                     padding: EdgeInsets.symmetric(horizontal: 20),
                     child: Icon(Icons.delete, color: Colors.white),
@@ -302,7 +362,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         if (itemData.containsKey('expirationDate') && itemData['expirationDate'] != null)
                           Text(
                             "${localizations.expirationDate}: ${DateFormat.yMd().format((itemData['expirationDate'] as Timestamp).toDate())}",
-                            style: TextStyle(color: Colors.red),
+                            style: TextStyle(
+                              color: (itemData['expirationDate'] as Timestamp).toDate().isBefore(DateTime.now())
+                                  ? AppColors.pastExpirationDate
+                                  : AppColors.futureExpirationDate,
+                            ),
                           ),
                       ],
                     ),
@@ -313,51 +377,60 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
               // Categorized items
               ...categorizedItems.entries.map((entry) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        entry.key, // Category name
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                final isExpanded = expandedCategories.contains(entry.key);
+
+                return ExpansionTile(
+                  key: PageStorageKey(entry.key), // preserve state on scroll
+                  title: Text(
+                    entry.key,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  initiallyExpanded: isExpanded,
+                  onExpansionChanged: (expanded) {
+                    setState(() {
+                      if (expanded) {
+                        expandedCategories.add(entry.key);
+                      } else {
+                        expandedCategories.remove(entry.key);
+                      }
+                    });
+                  },
+                  children: entry.value.map((itemDoc) {
+                    Map<String, dynamic> itemData = itemDoc.data() as Map<String, dynamic>;
+                    return Dismissible(
+                      key: Key(itemDoc.id),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        color: AppColors.deleteBg,
+                        alignment: Alignment.centerRight,
+                        padding: EdgeInsets.symmetric(horizontal: 20),
+                        child: Icon(Icons.delete, color: Colors.white),
                       ),
-                    ),
-                    ...entry.value.map((itemDoc) {
-                      Map<String, dynamic> itemData = itemDoc.data() as Map<String, dynamic>;
-                      return Dismissible(
-                        key: Key(itemDoc.id), // Unique key for each item
-                        direction: DismissDirection.endToStart, // Swipe from right to left
-                        background: Container(
-                          color: Colors.red,
-                          alignment: Alignment.centerRight,
-                          padding: EdgeInsets.symmetric(horizontal: 20),
-                          child: Icon(Icons.delete, color: Colors.white),
-                        ),
-                        onDismissed: (direction) {
-                          // Delete the item from Firestore
-                          itemDoc.reference.delete();
-                        },
-                        child: ListTile(
-                          title: Text(itemData['name'] ?? "Unnamed Item"),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("${itemData['quantity']} ${itemData['unit']}"),
-                              if (itemData.containsKey('expirationDate') && itemData['expirationDate'] != null)
-                                Text(
-                                  "${localizations.expirationDate}: ${DateFormat.yMd().format((itemData['expirationDate'] as Timestamp).toDate())}",
-                                  style: TextStyle(color: Colors.red),
+                      onDismissed: (_) => itemDoc.reference.delete(),
+                      child: ListTile(
+                        title: Text(itemData['name'] ?? "Unnamed Item"),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("${itemData['quantity']} ${itemData['unit']}"),
+                            if (itemData['expirationDate'] != null)
+                              Text(
+                                "${localizations.expirationDate}: ${DateFormat.yMd().format((itemData['expirationDate'] as Timestamp).toDate())}",
+                                style: TextStyle(
+                                  color: (itemData['expirationDate'] as Timestamp).toDate().isBefore(DateTime.now())
+                                      ? AppColors.pastExpirationDate
+                                      : AppColors.futureExpirationDate,
                                 ),
-                            ],
-                          ),
-                          onTap: () => _showEditItemDialog(itemDoc), // Open edit dialog on tap
+                              ),
+                          ],
                         ),
-                      );
-                    }).toList(),
-                  ],
+                        onTap: () => _showEditItemDialog(itemDoc),
+                      ),
+                    );
+                  }).toList(),
                 );
               }).toList(),
+
             ],
           );
         },
@@ -383,11 +456,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 controller: _itemNameController,
                 decoration: InputDecoration(labelText: localizations.itemName),
               ),
+              SizedBox(height: 10),
               TextField(
                 controller: _quantityController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(labelText: localizations.quantity),
               ),
+              SizedBox(height: 10),
               DropdownButtonFormField<String>(
                 value: _selectedUnit,
                 decoration: InputDecoration(labelText: localizations.unit),
@@ -405,33 +480,35 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   });
                 },
               ),
+              SizedBox(height: 10),
               TextField(
                 controller: _newCategoryController,
-                decoration: InputDecoration(labelText: localizations.newCategory),
+                decoration: InputDecoration(labelText: localizations.categoryName),
                 onChanged: (value) {
                   setState(() {
                     _selectedCategory = null;
                   });
                 },
               ),
-              ElevatedButton(
+              SizedBox(height: 20),
+              TextButton(
                 onPressed: _pickExpirationDate,
                 child: Text(_expirationDate != null
                     ? "${localizations.expirationDate}: ${DateFormat.yMd().format(_expirationDate!)}"
                     : localizations.pickExpirationDate),
               ),
+              SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
+                  _addItem();
+                  Navigator.pop(context);
+                },
+                child: Text(localizations.add),
+              ),
             ],
           ),
         ),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              _addItem();
-              Navigator.pop(context);
-            },
-            child: Text(localizations.add),
-          ),
-        ],
+
       ),
     );
   }

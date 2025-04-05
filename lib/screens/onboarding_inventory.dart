@@ -39,13 +39,25 @@ class _OnboardingInventoryScreenState extends State<OnboardingInventoryScreen> {
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       for (var item in selectedItems.entries) {
+        String itemName = item.key;
+        var itemData = item.value;
+
+
+        if (itemData['quantity'].toString().isEmpty) continue;
+
         await FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
             .collection('inventory')
-            .doc(item.key)
-            .set(item.value);
+            .add({
+          'name': itemName,
+          'quantity': itemData['quantity'],
+          'unit': itemData['unit'],
+          'category': itemData['category'],
+          'expirationDate': null,
+        });
       }
+
       Navigator.pushNamedAndRemoveUntil(
           context, '/main', (route) => false, arguments: widget.language);
     }

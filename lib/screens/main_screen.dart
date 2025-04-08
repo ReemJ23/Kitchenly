@@ -4,6 +4,7 @@ import 'package:kitchenly/screens/inventory_screen.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:kitchenly/screens/shopping_list_screen.dart';
 import '../utils/colors.dart';
+import 'myrecipes_screen.dart';
 
 class MainScreen extends StatefulWidget {
   final String language;
@@ -22,10 +23,10 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
-    _pages.add(ProfileScreen(language: widget.language));
+    _pages.add(ProfileScreen());
     _pages.add(InventoryScreen());
-    _pages.add(ShoppingListScreen()); // Placeholder for Shopping List
-    _pages.add(Container()); // Placeholder for Recipes
+    _pages.add(ShoppingListScreen());
+    _pages.add(MyRecipesScreen());
     _pages.add(Container()); // Placeholder for Browsing
     _pages.add(Container()); // Placeholder for Meal Plan
   }

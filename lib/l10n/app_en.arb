@@ -62,7 +62,7 @@
   "noItems": "No items available",
   "add": "Add",
   "selectCategory": "Select Category",
-  "newCategory": "New Category",
+  "categoryName": "Category Name",
   "expirationDate": "Expiration Date",
   "pickExpirationDate": "Pick Expiration Date",
   "shoppingList": "Shopping List",
@@ -104,6 +104,7 @@
   "onboardingAllergiesSubMessage": "Select your allergies, if any.",
   "onboardingInventoryMessage": "What's in your kitchen?",
   "onboardingInventorySubMessage": "You can add more items to your inventory later.",
+<<<<<<< HEAD
   "myRecipes": "My Recipes",
   "searchRecipes": "Search recipes...",
   "noRecipesFound": "No recipes found",
@@ -160,3 +161,9 @@
   "chinese": "Chinese",
   "mediterranean": "Mediterranean"
   }
+=======
+  "sortByExpirationDate": "Expiration Date",
+  "sortAlphabetically": "Alphabetically",
+  "editExpirationDate": "Edit Expiration Date"
+}
+>>>>>>> 27d2111b17ec66b579a3b1923c188d0b95d7d0b9

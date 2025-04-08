@@ -64,7 +64,7 @@
   "noItems": "لا توجد عناصر متاحة",
   "add": "إضافة",
   "selectCategory": "اختر الفئة",
-  "newCategory": "فئة جديدة",
+  "categoryName": "اسم الفئة",
   "expirationDate": "تاريخ الانتهاء",
   "pickExpirationDate": "اختر تاريخ الانتهاء",
   "shoppingList": "قائمة التسوق",
@@ -106,6 +106,7 @@
   "onboardingAllergiesSubMessage": "قم باختيار أي حساسية لديك، إن وجد.",
   "onboardingInventoryMessage": "ماذا يوجد في مطبخك؟",
   "onboardingInventorySubMessage": "بإمكانك إضافة المزيد من العناصر للمخزون لاحقًا.",
+<<<<<<< HEAD
   "myRecipes": "وصفاتي",
   "searchRecipes": "ابحث في الوصفات...",
   "noRecipesFound": "لا توجد وصفات",
@@ -158,4 +159,9 @@
   "indian": "هندي",
   "chinese": "صيني",
   "mediterranean": "متوسطي"
+=======
+  "sortByExpirationDate": "تاريخ الانتهاء",
+  "sortAlphabetically": "أبجديًّا",
+  "editExpirationDate": "تعديل تاريخ الانتهاء"
+>>>>>>> 27d2111b17ec66b579a3b1923c188d0b95d7d0b9
 }

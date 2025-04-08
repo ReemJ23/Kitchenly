@@ -16,5 +16,9 @@ class AppColors {
   static const Color bottomBorder = Color(0xFF716F6F);
   static const Color focusedBorder = Color(0xFF51271D);
   static const Color transparent = Colors.transparent;
+  static const Color futureExpirationDate= Color(0xFF51271D);
+  static const Color pastExpirationDate= Color(0xFFFF0000);
+  static const Color categoryExpandedBg= Color(0x99BF8E73);
+  static const Color deleteBg= Color(0xFFFF0000);
   static const Color hint = Color(0xFF716F6F);
 }

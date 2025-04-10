@@ -24,7 +24,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
   final TextEditingController _editItemNameController = TextEditingController();
   final TextEditingController _editQuantityController = TextEditingController();
   final TextEditingController _editCategoryController = TextEditingController();
-  String? _selectedUnit = "kg";
+  String? _selectedUnit = "g";
   String? _selectedCategory;
   DateTime? _expirationDate;
   User? user = FirebaseAuth.instance.currentUser;
@@ -201,7 +201,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 value: _selectedUnit,
                 decoration: InputDecoration(labelText: localizations.unit),
                 items: [
-                  'kg', 'g', 'lb', 'oz', 'liter','pieces'
+                  'g', 'lb', 'oz', 'liter','pieces','packs','cups'
                 ].map((unit) {
                   return DropdownMenuItem(
                     value: unit,
@@ -467,7 +467,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 value: _selectedUnit,
                 decoration: InputDecoration(labelText: localizations.unit),
                 items: [
-                  'kg', 'g', 'lb', 'oz', 'liter','pieces'
+                  'g', 'lb', 'oz', 'liter', 'pieces','packs','cups'
                 ].map((unit) {
                   return DropdownMenuItem(
                     value: unit,

@@ -79,12 +79,13 @@
   "selectSublist": "Select Sublist",
   "deleteAll": "Delete All",
   "checkedItems": "Checked Items",
-  "kg": "Kilogram",
   "g": "Gram",
   "lb": "Pound",
   "oz": "Ounce",
   "liter": "Liter",
   "pieces": "Pieces",
+  "pack": "Packs",
+  "cups": "Cups",
   "ok": "Ok",
   "editItem": "Edit Item",
   "save": "Save",
@@ -104,7 +105,6 @@
   "onboardingAllergiesSubMessage": "Select your allergies, if any.",
   "onboardingInventoryMessage": "What's in your kitchen?",
   "onboardingInventorySubMessage": "You can add more items to your inventory later.",
-<<<<<<< HEAD
   "myRecipes": "My Recipes",
   "searchRecipes": "Search recipes...",
   "noRecipesFound": "No recipes found",
@@ -159,11 +159,26 @@
   "mexican": "Mexican",
   "indian": "Indian",
   "chinese": "Chinese",
-  "mediterranean": "Mediterranean"
-  }
-=======
+  "mediterranean": "Mediterranean",
   "sortByExpirationDate": "Expiration Date",
   "sortAlphabetically": "Alphabetically",
-  "editExpirationDate": "Edit Expiration Date"
-}
->>>>>>> 27d2111b17ec66b579a3b1923c188d0b95d7d0b9
+  "editExpirationDate": "Edit Expiration Date",
+  "selectIngredients": "Select Ingredients",
+  "ingredients": "Ingredients",
+  "cancel": "Cancel",
+  "noImageSelected": "No Image Selected",
+  "step": "Step",
+  "ingredientsForThisStep": "Ingredients for this step:",
+  "recipeComplete": "Recipe Complete!",
+  "adjustYourInventory": "Adjust your inventory:",
+  "quantityToDeduct": "Quantity to deduct",
+  "addToShoppingListIfZero": "Add to shopping list if inventory reaches zero",
+  "confirmAdjustments": "Confirm Adjustments",
+  "previous": "Previous",
+  "next": "Next",
+  "finish": "Finish",
+  "quantitiesCannotBeNegative": "Quantities cannot be negative",
+  "inventoryUpdatedSuccessfully": "Inventory updated successfully",
+  "failedToUpdateInventory": "Failed to update inventory",
+  "startcooking": "Start Cooking"
+ }

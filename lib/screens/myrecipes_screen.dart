@@ -3,8 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:kitchenly/screens/recipe_stepper.dart';
+import '../models/recipeStep.dart';
 import '../utils/localization_helper.dart';
 import 'edit_add_recipe_screen.dart';
+import 'dart:convert'; // for base64Decode
 String? lang;
 class _RecipeCardData {
   final int availableIngredients;
@@ -244,24 +247,26 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
               child: Row(
                 children: [
                   // Recipe image or placeholder
-                  if (data['imageUrl'] != null)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: CachedNetworkImage(
-                        imageUrl: data['imageUrl'],
-                        width: 60,
-                        height: 60,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          width: 60,
+                  if (data['imageBase64'] != null && data['imageBase64'].toString().isNotEmpty)
+                    Center(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: data['imageBase64'].toString().startsWith('http')
+                            ? CachedNetworkImage(
+                          imageUrl: data['imageBase64'],
                           height: 60,
-                          color: Colors.grey[200],
+                          fit: BoxFit.cover,
+                          errorWidget: (context, url, error) => Icon(Icons.error),
+                        )
+                            : Image.memory(
+                          base64Decode(data['imageBase64'].split(',').last),
+                          height: 60,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Icon(Icons.error),
                         ),
-                        errorWidget: (context, url, error) => Icon(Icons.fastfood),
                       ),
                     )
-                  else
-                    Container(
+                    else Container(
                       width: 60,
                       height: 60,
                       decoration: BoxDecoration(
@@ -408,113 +413,224 @@ class RecipeDetailsSheet extends StatelessWidget {
         : AppLocalizations.of(context)!;
     final data = recipe.data() as Map<String, dynamic>;
 
-    return Container(
-      padding: EdgeInsets.all(16),
-      height: MediaQuery.of(context).size.height * 0.85,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                data['name'] ?? localizations.untitledRecipe,
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              IconButton(
-                icon: Icon(Icons.edit),
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => EditRecipePage(recipe: recipe)));
-                },
-              ),
-            ],
-          ),
-          if (data['imageUrl'] != null)
-            Center(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: CachedNetworkImage(
-                  imageUrl: data['imageUrl'],
-                  height: 150,
-                  fit: BoxFit.cover,
+    return SingleChildScrollView(
+      child: Container(
+        padding: EdgeInsets.all(16),
+        height: MediaQuery.of(context).size.height * 0.85,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  data['name'] ?? localizations.untitledRecipe,
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  icon: Icon(Icons.edit),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => EditRecipePage(recipe: recipe)));
+                  },
+                ),
+              ],
+            ),
+            if (data['imageBase64'] != null && data['imageBase64'].toString().isNotEmpty)
+              Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: data['imageBase64'].toString().startsWith('http')
+                      ? CachedNetworkImage(
+                    imageUrl: data['imageBase64'],
+                    height: 150,
+                    fit: BoxFit.cover,
+                    errorWidget: (context, url, error) => Icon(Icons.error),
+                  )
+                      : Image.memory(
+                    base64Decode(data['imageBase64'].split(',').last),
+                    height: 150,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Icon(Icons.error),
+                  ),
                 ),
               ),
+            SizedBox(height: 16),
+            // Recipe metadata
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                if (data['preparationTime'] != null)
+                  _buildMetadataItem(Icons.timer, '${data['preparationTime']} ${localizations.minutes}'),
+                if (data['difficulty'] != null)
+                  _buildMetadataItem(Icons.star, LocalizationHelper.getLocalizedString(localizations, 'difficulty')),
+                if (data['servingSize'] != null)
+                  _buildMetadataItem(Icons.people, '${data['servingSize']} ${localizations.servings}'),
+                if (data['category'] != null)
+                  _buildMetadataItem(Icons.category, data['category']),
+              ],
             ),
-          SizedBox(height: 16),
-          // Recipe metadata
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            children: [
-              if (data['preparationTime'] != null)
-                _buildMetadataItem(Icons.timer, '${data['preparationTime']} ${localizations.minutes}'),
-              if (data['difficulty'] != null)
-                _buildMetadataItem(Icons.star, LocalizationHelper.getLocalizedString(localizations, 'difficulty')),
-              if (data['servingSize'] != null)
-                _buildMetadataItem(Icons.people, '${data['servingSize']} ${localizations.servings}'),
-              if (data['category'] != null)
-                _buildMetadataItem(Icons.category, data['category']),
-            ],
-          ),
-          SizedBox(height: 16),
-          // Ingredients section
-          Text(
-            localizations.ingredients,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          StreamBuilder<QuerySnapshot>(
-            stream: recipe.reference.collection('ingredients').snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) return CircularProgressIndicator();
-              return Column(
-                children: snapshot.data!.docs.map((ingredientDoc) {
-                  final ingredient = ingredientDoc.data() as Map<String, dynamic>;
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Icon(Icons.circle, size: 8),
-                    title: Text('${ingredient['quantity']} ${ingredient['unit']} ${ingredient['name']}'),
-                  );
-                }).toList(),
-              );
-            },
-          ),
-          SizedBox(height: 16),
-          // Steps section
-          Text(
-            localizations.steps,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: recipe.reference.collection('steps').orderBy('order').snapshots(),
+            SizedBox(height: 16),
+            // Ingredients section
+            Text(
+              localizations.ingredients,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            StreamBuilder<QuerySnapshot>(
+              stream: recipe.reference.collection('ingredients').snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) return CircularProgressIndicator();
-                return ListView.builder(
-                  itemCount: snapshot.data!.docs.length,
-                  itemBuilder: (context, index) {
-                    final step = snapshot.data!.docs[index];
-                    final stepData = step.data() as Map<String, dynamic>;
+                return Column(
+                  children: snapshot.data!.docs.map((ingredientDoc) {
+                    final ingredient = ingredientDoc.data() as Map<String, dynamic>;
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: CircleAvatar(
-                        radius: 12,
-                        backgroundColor: Theme.of(context).primaryColor,
-                        child: Text('${index + 1}', style: TextStyle(color: Colors.white)),
-                      ),
-                      title: Text(stepData['text'] ?? ''),
+                      leading: Icon(Icons.circle, size: 8),
+                      title: Text('${ingredient['quantity']} ${ingredient['unit']} ${ingredient['name']}'),
                     );
-                  },
+                  }).toList(),
                 );
               },
             ),
-          ),
-        ],
+            SizedBox(height: 16),
+            // Steps section
+            Text(
+              localizations.steps,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: recipe.reference.collection('steps').orderBy('order').snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return CircularProgressIndicator();
+                  return ListView.builder(
+                    itemCount: snapshot.data!.docs.length,
+                    itemBuilder: (context, index) {
+                      final step = snapshot.data!.docs[index];
+                      final stepData = step.data() as Map<String, dynamic>;
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: CircleAvatar(
+                          radius: 12,
+                          backgroundColor: Theme.of(context).primaryColor,
+                          child: Text('${index + 1}', style: TextStyle(color: Colors.white)),
+                        ),
+                        title: Text(stepData['text'] ?? ''),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final user = FirebaseAuth.instance.currentUser;
+                if (user == null) return;
+
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => Center(child: CircularProgressIndicator()),
+                );
+
+                try {
+                  // 1. Get reference to the user's specific recipe document
+                  final recipeRef = FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user.uid)
+                      .collection('recipes')
+                      .doc(recipe.id);
+
+                  // 2. Fetch all ingredients from the recipe's ingredients subcollection
+                  final ingredientsSnapshot = await recipeRef
+                      .collection('ingredients')
+                      .get();
+
+                  final ingredientsMap = {
+                    for (var doc in ingredientsSnapshot.docs)
+                      doc.id: doc.data()
+                  };
+
+                  // 3. Fetch steps from the recipe's steps subcollection
+                  final stepsSnapshot = await recipeRef
+                      .collection('steps')
+                      .orderBy('order')
+                      .get();
+
+                  // 4. Build steps with their ingredients
+                  List<RecipeStep> steps = [];
+                  for (var stepDoc in stepsSnapshot.docs) {
+                    final stepData = stepDoc.data();
+
+                    List<Ingredient> stepIngredients = [];
+                    if (stepData['ingredients'] != null) {
+                      for (var id in List<String>.from(stepData['ingredients'])) {
+                        if (ingredientsMap.containsKey(id)) {
+                          final ing = ingredientsMap[id]!;
+                          stepIngredients.add(Ingredient(
+                            id: id,
+                            name: ing['name'] ?? 'Unknown',
+                            quantity: ing['quantity'] ?? 0,
+                            unit: ing['unit'] ?? '',
+                          ));
+                        }
+                      }
+                    }
+
+                    steps.add(RecipeStep(
+                      stepNumber: stepData['order'] ?? steps.length + 1,
+                      instructions: stepData['text'] ?? '',
+                      ingredients: stepIngredients,
+                    ));
+                  }
+
+                  Navigator.pop(context); // Close loading dialog
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => RecipeStepper(
+                        steps: steps,
+                        recipeName: data['name'] ?? localizations.untitledRecipe,
+                      ),
+                    ),
+                  );
+                } catch (e) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: ${e.toString()}')),
+                  );
+                }
+              },
+              child: Text(localizations.startcooking),
+            ),
+          ],
+        ),
       ),
     );
   }
+
+  List<RecipeStep> _parseSteps(Map<String, dynamic> recipeData) {
+    // Implement parsing logic based on your database structure
+    // Example:
+    List<RecipeStep> steps = [];
+    for (var step in recipeData['steps']) {
+      steps.add(RecipeStep(
+        stepNumber: step['stepNumber'],
+        instructions: step['instructions'],
+        ingredients: step['ingredients'].map<Ingredient>((ing) => Ingredient(
+          id: ing['id'],
+          name: ing['name'],
+          quantity: ing['quantity'],
+          unit: ing['unit'],
+        )).toList(),
+      ));
+    }
+    return steps;
+  }
+}
 
   Widget _buildMetadataItem(IconData icon, String text) {
     return Row(
@@ -526,4 +642,3 @@ class RecipeDetailsSheet extends StatelessWidget {
       ],
     );
   }
-}

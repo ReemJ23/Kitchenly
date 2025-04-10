@@ -21,7 +21,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
   final TextEditingController _editQtyController = TextEditingController();
   final TextEditingController _renameTabController = TextEditingController();
   final TextEditingController _categoryController = TextEditingController();
-  String? _selectedUnit = "kg";
+  String? _selectedUnit = "g";
   User? user = FirebaseAuth.instance.currentUser;
   List<String> _tabs = [];
   TabController? _tabController;
@@ -205,7 +205,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
     _itemNameController.clear();
     _quantityController.clear();
     _categoryController.clear();
-    setState(() => _selectedUnit = "kg");
+    setState(() => _selectedUnit = "g");
   }
 
   void _editItem(DocumentSnapshot itemDoc, String currentListKey) {
@@ -590,7 +590,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
             DropdownButtonFormField<String>(
               value: _selectedUnit,
               decoration: InputDecoration(labelText: localizations.unit),
-              items: ['kg', 'g', 'lb', 'oz', 'liter', 'pieces'].map((unit) {
+              items: ['g', 'lb', 'oz', 'liter', 'pieces','packs','cups'].map((unit) {
                 return DropdownMenuItem(
                   value: unit,
                   child: Text(LocalizationHelper.getLocalizedString(

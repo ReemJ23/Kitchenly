@@ -81,12 +81,13 @@
   "selectSublist": "اختر القائمة الفرعية",
   "deleteAll": "حذف الكل",
   "checkedItems": "العناصر المحددة",
-  "kg": "كيلوغرام",
   "g": "غرام",
   "lb": "رطل",
   "oz": "أونصة",
   "liter": "لتر",
   "pieces": "قطع",
+  "pack": "علب",
+  "cups": "كاسات",
   "ok": "تم",
   "editItem": "تعديل العنصر",
   "save": "حفظ",
@@ -106,7 +107,6 @@
   "onboardingAllergiesSubMessage": "قم باختيار أي حساسية لديك، إن وجد.",
   "onboardingInventoryMessage": "ماذا يوجد في مطبخك؟",
   "onboardingInventorySubMessage": "بإمكانك إضافة المزيد من العناصر للمخزون لاحقًا.",
-<<<<<<< HEAD
   "myRecipes": "وصفاتي",
   "searchRecipes": "ابحث في الوصفات...",
   "noRecipesFound": "لا توجد وصفات",
@@ -158,10 +158,27 @@
   "mexican": "مكسيكي",
   "indian": "هندي",
   "chinese": "صيني",
-  "mediterranean": "متوسطي"
-=======
+  "mediterranean": "متوسطي",
   "sortByExpirationDate": "تاريخ الانتهاء",
   "sortAlphabetically": "أبجديًّا",
-  "editExpirationDate": "تعديل تاريخ الانتهاء"
->>>>>>> 27d2111b17ec66b579a3b1923c188d0b95d7d0b9
+  "editExpirationDate": "تعديل تاريخ الانتهاء",
+  "selectIngredients": "اختر المكون",
+  "ingredients": "المكونات",
+  "cancel": "الغاء",
+  "noImageSelected": "لم يتم تحديد صورة",
+  "step": "خطوة",
+  "ingredientsForThisStep": "المكونات لهذه الخطوة:",
+  "recipeComplete": "تم الانتهاء من الوصفة!",
+  "adjustYourInventory": "ضبط المخزون:",
+  "quantityToDeduct": "الكمية المطلوب خصمها",
+  "addToShoppingListIfZero": "أضف إلى قائمة التسوق إذا وصل المخزون إلى الصفر",
+  "confirmAdjustments": "تأكيد التعديلات",
+  "previous": "السابق",
+  "next": "التالي",
+  "finish": "إنهاء",
+  "quantitiesCannotBeNegative": "لا يمكن أن تكون الكميات سالبة",
+  "inventoryUpdatedSuccessfully": "تم تحديث المخزون بنجاح",
+  "failedToUpdateInventory": "فشل تحديث المخزون",
+  "startcooking": "ابدأ الطبخ"
+
 }

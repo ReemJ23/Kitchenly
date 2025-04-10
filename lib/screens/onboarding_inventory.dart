@@ -24,13 +24,13 @@ class _OnboardingInventoryScreenState extends State<OnboardingInventoryScreen> {
   };
 
   final Map<String, String> units = {
-    "Tomato": "kg",
-    "Carrot": "kg",
-    "Potato": "kg",
+    "Tomato": "g",
+    "Carrot": "g",
+    "Potato": "g",
     "Milk": "liters",
     "Cheese": "grams",
     "Yogurt": "grams",
-    "Rice": "kg",
+    "Rice": "g",
     "Pasta": "grams",
     "Bread": "pieces"
   };
@@ -126,7 +126,7 @@ class _OnboardingInventoryScreenState extends State<OnboardingInventoryScreen> {
                         selectedItems[item]!['unit'] = value!;
                       });
                     },
-                    items: ["kg", "grams", "liters", "pieces"]
+                    items: ['g', 'lb', 'oz', 'liter', 'pieces','packs','cups']
                         .map((unit) =>
                         DropdownMenuItem(
                           value: unit,

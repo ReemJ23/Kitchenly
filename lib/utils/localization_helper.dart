@@ -23,12 +23,15 @@ class LocalizationHelper {
       "Bread": localizations.bread,
       "Vegetables": localizations.vegetables,
       "Grains": localizations.grains,
-      "kg": localizations.kg,
+
+      //Units
       "g": localizations.g,
       "lb": localizations.lb,
       "oz": localizations.oz,
       "liter": localizations.liter,
       "pieces": localizations.pieces,
+      "packs": localizations.pack,
+      "cups": localizations.cups,
 
       // New entries for recipes page
       "all": localizations.all,

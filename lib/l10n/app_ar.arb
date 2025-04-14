@@ -179,6 +179,16 @@
   "quantitiesCannotBeNegative": "لا يمكن أن تكون الكميات سالبة",
   "inventoryUpdatedSuccessfully": "تم تحديث المخزون بنجاح",
   "failedToUpdateInventory": "فشل تحديث المخزون",
-  "startcooking": "ابدأ الطبخ"
-
+  "startcooking": "ابدأ الطبخ",
+  "addToShoppingList": "إضافة إلى قائمة التسوق",
+  "updateInventory": "تحديث المخزون",
+  "quantity": "الكمية",
+  "noItemsSelectedForShoppingList": "لم يتم تحديد عناصر لإضافتها إلى قائمة التسوق",
+  "itemsAddedToShoppingList": "تمت إضافة العناصر إلى قائمة التسوق",
+  "failedToAddToShoppingList": "فشل إضافة العناصر إلى قائمة التسوق",
+  "inventoryUpdatedSuccessfully": "تم تحديث المخزون بنجاح",
+  "failedToUpdateInventory": "فشل تحديث المخزون",
+  "notSignedIn": "لم يتم تسجيل الدخول",
+  "manageIngredients": "إدارة المكونات",
+  "noItemsSelected": "لم يتم تحديد أي عناصر"
 }

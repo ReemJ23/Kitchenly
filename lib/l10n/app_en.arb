@@ -180,5 +180,16 @@
   "quantitiesCannotBeNegative": "Quantities cannot be negative",
   "inventoryUpdatedSuccessfully": "Inventory updated successfully",
   "failedToUpdateInventory": "Failed to update inventory",
-  "startcooking": "Start Cooking"
+  "startcooking": "Start Cooking",
+  "addToShoppingList": "Add to Shopping List",
+  "updateInventory": "Update Inventory",
+  "quantity": "Quantity",
+  "noItemsSelectedForShoppingList": "No items selected for shopping list",
+  "itemsAddedToShoppingList": "Items added to shopping list",
+  "failedToAddToShoppingList": "Failed to add items to shopping list",
+  "inventoryUpdatedSuccessfully": "Inventory updated successfully",
+  "failedToUpdateInventory": "Failed to update inventory",
+  "notSignedIn": "Not Signed In",
+  "noItemsSelected": "No items selected",
+  "manageIngredients": "Manage Ingredients"
  }

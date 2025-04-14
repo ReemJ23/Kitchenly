@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../models/recipeStep.dart';
+import '../utils/colors.dart';
 
 class RecipeStepper extends StatefulWidget {
   final List<RecipeStep> steps;
@@ -18,8 +21,9 @@ class RecipeStepper extends StatefulWidget {
 
 class _RecipeStepperState extends State<RecipeStepper> {
   int _currentStep = 0;
-  Map<String, double> inventoryDeductions = {};
-  Map<String, bool> addToShoppingList = {};
+  final Map<String, double> _ingredientQuantities = {};
+  final Map<String, bool> _selectedIngredients = {};
+  User? _user = FirebaseAuth.instance.currentUser;
 
   @override
   Widget build(BuildContext context) {
@@ -31,31 +35,31 @@ class _RecipeStepperState extends State<RecipeStepper> {
       ),
       body: _currentStep < widget.steps.length
           ? _buildStepContent(widget.steps[_currentStep], loc)
-          : _buildInventoryAdjustment(loc),
+          : _buildCompletionScreen(loc),
       persistentFooterButtons: _buildNavigationButtons(loc),
     );
   }
 
   Widget _buildStepContent(RecipeStep step, AppLocalizations loc) {
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
             '${loc.step} ${step.stepNumber}',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             step.instructions,
-            style: TextStyle(fontSize: 16),
+            style: const TextStyle(fontSize: 16),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
             loc.ingredientsForThisStep,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           ...step.ingredients.map((ingredient) => ListTile(
             title: Text(ingredient.name),
@@ -66,12 +70,13 @@ class _RecipeStepperState extends State<RecipeStepper> {
     );
   }
 
-  Widget _buildInventoryAdjustment(AppLocalizations loc) {
-    Map<String, Ingredient> allIngredients = {};
-    for (var step in widget.steps) {
-      for (var ingredient in step.ingredients) {
+  Widget _buildCompletionScreen(AppLocalizations loc) {
+    // Aggregate all ingredients from all steps
+    final allIngredients = <String, Ingredient>{};
+    for (final step in widget.steps) {
+      for (final ingredient in step.ingredients) {
         if (allIngredients.containsKey(ingredient.id)) {
-          var existing = allIngredients[ingredient.id]!;
+          final existing = allIngredients[ingredient.id]!;
           allIngredients[ingredient.id] = Ingredient(
             id: ingredient.id,
             name: ingredient.name,
@@ -80,95 +85,236 @@ class _RecipeStepperState extends State<RecipeStepper> {
           );
         } else {
           allIngredients[ingredient.id] = ingredient;
+          // Initialize quantities and selection state if not already set
+          _ingredientQuantities.putIfAbsent(ingredient.id, () => ingredient.quantity);
+          _selectedIngredients.putIfAbsent(ingredient.id, () => false);
         }
       }
     }
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             loc.recipeComplete,
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
-            loc.adjustYourInventory,
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            loc.manageIngredients,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           ...allIngredients.values.map((ingredient) {
-            inventoryDeductions.putIfAbsent(ingredient.id, () => ingredient.quantity);
-            addToShoppingList.putIfAbsent(ingredient.id, () => false);
-
             return Card(
               child: Padding(
-                padding: EdgeInsets.all(12),
+                padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      ingredient.name,
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    SizedBox(height: 8),
                     Row(
                       children: [
+                        Checkbox(
+                          value: _selectedIngredients[ingredient.id] ?? false,
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedIngredients[ingredient.id] = value ?? false;
+                            });
+                          },
+                        ),
                         Expanded(
-                          child: TextFormField(
-                            initialValue: inventoryDeductions[ingredient.id]!.toStringAsFixed(2),
-                            keyboardType: TextInputType.numberWithOptions(decimal: true),
-                            decoration: InputDecoration(
-                              labelText: loc.quantityToDeduct,
-                              suffixText: ingredient.unit,
-                            ),
-                            onChanged: (value) {
-                              double? newValue = double.tryParse(value);
-                              if (newValue != null && newValue >= 0) {
-                                setState(() {
-                                  inventoryDeductions[ingredient.id] = newValue;
-                                });
-                              }
-                            },
+                          child: Text(
+                            ingredient.name,
+                            style: const TextStyle(fontSize: 18),
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 8),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          Checkbox(
-                            value: addToShoppingList[ingredient.id],
-                            onChanged: (value) {
-                              setState(() {
-                                addToShoppingList[ingredient.id] = value ?? false;
-                              });
-                            },
-                          ),
-                          Text(loc.addToShoppingListIfZero,softWrap: true,),
-                        ],
+                    if (_selectedIngredients[ingredient.id] ?? false) ...[
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        initialValue: _ingredientQuantities[ingredient.id]?.toStringAsFixed(2),
+                        keyboardType: TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(
+                          labelText: loc.quantity,
+                          suffixText: ingredient.unit,
+                        ),
+                        onChanged: (value) {
+                          final newValue = double.tryParse(value);
+                          if (newValue != null && newValue >= 0) {
+                            setState(() {
+                              _ingredientQuantities[ingredient.id] = newValue;
+                            });
+                          }
+                        },
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
             );
           }).toList(),
-          SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _submitInventoryAdjustments,
-            child: Text(loc.confirmAdjustments),
-            style: ElevatedButton.styleFrom(
-              minimumSize: Size(double.infinity, 50),
-            ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _addToShoppingList,
+                  child: Text(loc.addToShoppingList),
+
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _updateInventory,
+                  child: Text(loc.updateInventory),
+
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _addToShoppingList() async {
+    final loc = AppLocalizations.of(context)!;
+    if (_user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(loc.notSignedIn)),
+      );
+      return;
+    }
+
+    // Get selected items
+    final itemsToAdd = _selectedIngredients.entries
+        .where((e) => e.value)
+        .map((e) {
+      final ingredient = _findIngredientById(e.key);
+      return {
+        'name': ingredient?.name ?? 'Unknown',
+        'quantity': _ingredientQuantities[e.key] ?? 0,
+        'unit': ingredient?.unit ?? 'g',
+        'checked': false,
+        'category': 'From Recipe: ${widget.recipeName}',
+        'createdAt': FieldValue.serverTimestamp(),
+      };
+    })
+        .toList();
+
+    if (itemsToAdd.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(loc.noItemsSelected)),
+      );
+      return;
+    }
+
+    try {
+      final batch = FirebaseFirestore.instance.batch();
+      final shoppingListRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(_user!.uid)
+          .collection('shoppingList');
+
+      for (final item in itemsToAdd) {
+        // Check for existing item with same name and unit
+        final existingItem = await shoppingListRef
+            .where('name', isEqualTo: item['name'])
+            .where('unit', isEqualTo: item['unit'])
+            .limit(1)
+            .get();
+
+        if (existingItem.docs.isNotEmpty) {
+          // Update existing item
+          batch.update(
+            existingItem.docs.first.reference,
+            {'quantity': FieldValue.increment(item['quantity'] as double)},
+          );
+        } else {
+          // Add new item
+          final newItemRef = shoppingListRef.doc();
+          batch.set(newItemRef, item);
+        }
+      }
+
+      await batch.commit();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(loc.itemsAddedToShoppingList)),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${loc.failedToAddToShoppingList}: $e')),
+      );
+    }
+  }
+
+  Future<void> _updateInventory() async {
+    final loc = AppLocalizations.of(context)!;
+    if (_user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(loc.notSignedIn)),
+      );
+      return;
+    }
+
+    try {
+      final batch = FirebaseFirestore.instance.batch();
+      final inventoryRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(_user!.uid)
+          .collection('inventory');
+
+      for (final entry in _selectedIngredients.entries) {
+        if (!entry.value) continue;
+
+        final ingredient = _findIngredientById(entry.key);
+        if (ingredient == null) continue;
+
+        final quantity = _ingredientQuantities[entry.key] ?? 0;
+        if (quantity <= 0) continue;
+
+        // Find matching inventory item
+        final inventoryItem = await inventoryRef
+            .where('name', isEqualTo: ingredient.name)
+            .where('unit', isEqualTo: ingredient.unit)
+            .limit(1)
+            .get();
+
+        if (inventoryItem.docs.isNotEmpty) {
+          final currentQuantity = inventoryItem.docs.first.data()['quantity'] ?? 0;
+          final newQuantity = currentQuantity - quantity;
+
+          batch.update(
+            inventoryItem.docs.first.reference,
+            {'quantity': newQuantity >= 0 ? newQuantity : 0},
+          );
+        }
+      }
+
+      await batch.commit();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(loc.inventoryUpdatedSuccessfully)),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${loc.failedToUpdateInventory}: $e')),
+      );
+    }
+  }
+
+  Ingredient? _findIngredientById(String id) {
+    for (final step in widget.steps) {
+      for (final ingredient in step.ingredients) {
+        if (ingredient.id == id) {
+          return ingredient;
+        }
+      }
+    }
+    return null;
   }
 
   List<Widget> _buildNavigationButtons(AppLocalizations loc) {
@@ -186,41 +332,5 @@ class _RecipeStepperState extends State<RecipeStepper> {
       ];
     }
     return [];
-  }
-
-  Future<void> _submitInventoryAdjustments() async {
-    final loc = AppLocalizations.of(context)!;
-
-    for (var entry in inventoryDeductions.entries) {
-      if (entry.value < 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(loc.quantitiesCannotBeNegative)),
-        );
-        return;
-      }
-    }
-
-    bool success = await _updateInventoryInDatabase();
-
-    if (success) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(loc.inventoryUpdatedSuccessfully)),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(loc.failedToUpdateInventory)),
-      );
-    }
-  }
-
-  Future<bool> _updateInventoryInDatabase() async {
-    try {
-      // Your database update logic
-      return true;
-    } catch (e) {
-      print('Error updating inventory: $e');
-      return false;
-    }
   }
 }

@@ -122,9 +122,9 @@
   "difficulty_medium": "متوسط",
   "difficulty_hard": "صعب",
   "time": "الوقت",
-  "time_quick": "سريع (<30 دقيقة)",
-  "time_medium": "متوسط (30-60 دقيقة)",
-  "time_long": "طويل (>60 دقيقة)",
+  "timeQuick": "سريع (<30 دقيقة)",
+  "timeMedium": "متوسط (30-60 دقيقة)",
+  "timeLong": "طويل (>60 دقيقة)",
   "availability": "التوفر",
   "untitledRecipe": "وصفة بدون عنوان",
   "minutes": "دقيقة",
@@ -190,5 +190,8 @@
   "failedToUpdateInventory": "فشل تحديث المخزون",
   "notSignedIn": "لم يتم تسجيل الدخول",
   "manageIngredients": "إدارة المكونات",
-  "noItemsSelected": "لم يتم تحديد أي عناصر"
+  "noItemsSelected": "لم يتم تحديد أي عناصر",
+  "availabilityFull": "مكتمل",
+  "availabilityPartial": "جزئي",
+  "availabilityLow": "منخفض"
 }

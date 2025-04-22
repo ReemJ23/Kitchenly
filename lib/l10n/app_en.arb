@@ -191,5 +191,6 @@
   "failedToUpdateInventory": "Failed to update inventory",
   "notSignedIn": "Not Signed In",
   "noItemsSelected": "No items selected",
-  "manageIngredients": "Manage Ingredients"
+  "manageIngredients": "Manage Ingredients",
+  "addSublist": "Add Sublist"
  }

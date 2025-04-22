@@ -29,7 +29,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
   DateTime? _expirationDate;
   User? user = FirebaseAuth.instance.currentUser;
   String? _userLanguage;
-  //String _currentSort = 'alphabetical';
   Set<String> expandedCategories = {};
   @override
   void initState() {
@@ -256,19 +255,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
         : AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: Text(localizations.inventory),
-
-        //ASK DR. FIRAS
-        actions: [
-          IconButton(
-            icon: Icon(Icons.sort),
-            onPressed: () {
-              // Sorting options will go here in the future
-              // For now, it does nothing
-            },
-          ),
-        ],
-      centerTitle: true,),
+      appBar: AppBar(title: Text(localizations.inventory), centerTitle: true,),
 
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddItemDialog(),

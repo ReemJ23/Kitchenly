@@ -25,10 +25,18 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
   User? user = FirebaseAuth.instance.currentUser;
   List<String> _tabs = [];
   TabController? _tabController;
+  bool _checkedItemsExpanded = false;
+  late AnimationController _fabAnimationController;
+  Set<String> expandedCategories = {};
+
 
   @override
   void initState() {
     super.initState();
+    _fabAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
     _loadSublistNames();
     _ensureShoppingListExists();
   }
@@ -188,20 +196,26 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
 
     String category = (listKey == AppLocalizations.of(context)!.main) ? _categoryController.text.trim() : '';
 
-    String collectionPath =
-    listKey == AppLocalizations.of(context)!.main ? 'shoppingList' : 'sublists/$listKey/items';
-
-    await FirebaseFirestore.instance
+    final shoppingListRef = (listKey == _tabs[0])
+        ? FirebaseFirestore.instance
         .collection('users')
         .doc(user!.uid)
-        .collection(collectionPath)
-        .add({
+        .collection('shoppingList')
+        : FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .collection('sublists')
+        .doc(listKey)
+        .collection('items');
+
+    await shoppingListRef.add({
       'name': itemName,
       'quantity': quantity,
       'unit': _selectedUnit,
       'checked': false,
-      if (listKey == AppLocalizations.of(context)!.main && category.isNotEmpty) 'category': category
+      if (listKey == _tabs[0] && category.isNotEmpty) 'category': category,
     });
+
     _itemNameController.clear();
     _quantityController.clear();
     _categoryController.clear();
@@ -341,7 +355,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
               key: Key(doc.id),
               direction: DismissDirection.endToStart,
               background: Container(
-                color: Colors.red,
+                color: AppColors.deleteBg,
                 alignment: Alignment.centerRight,
                 padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Icon(Icons.delete, color: Colors.white),
@@ -377,6 +391,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
 
         return ExpansionTile(
           title: Text(localizations.checkedItems),
+          onExpansionChanged: (expanded) {
+            setState(() {
+              _checkedItemsExpanded = expanded;
+              expanded
+                  ? _fabAnimationController.forward()
+                  : _fabAnimationController.reverse();
+            });
+          },
           children: [
             ...docs.map((itemDoc) {
               Map<String, dynamic> itemData = itemDoc.data() as Map<String, dynamic>;
@@ -391,6 +413,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                 ),
               );
             }).toList(),
+            SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
                 for (var doc in docs) {
@@ -399,6 +422,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
               },
               child: Text(localizations.deleteCheckedItems),
             ),
+            SizedBox(height: 10)
           ],
         );
       },
@@ -427,51 +451,58 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
           }
           categorizedItems[category]!.add(doc);
         }
-
         return ListView(
           children: categorizedItems.entries.map((entry) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    entry.key,
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            final isExpanded = expandedCategories.contains(entry.key);
+            return ExpansionTile(
+              key: PageStorageKey(entry.key),
+              title: Text(
+                entry.key,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              initiallyExpanded: isExpanded,
+              onExpansionChanged: (expanded) {
+                setState(() {
+                  if (expanded) {
+                    expandedCategories.add(entry.key);
+                  } else {
+                    expandedCategories.remove(entry.key);
+                  }
+                });
+              },
+              children: entry.value.map((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                return Dismissible(
+                  key: Key(doc.id),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    color: AppColors.error,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: const Icon(Icons.delete, color: Colors.white),
                   ),
-                ),
-                ...entry.value.map((doc) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  return Dismissible(
-                    key: Key(doc.id),
-                    direction: DismissDirection.endToStart,
-                    background: Container(
-                      color: Colors.red,
-                      alignment: Alignment.centerRight,
-                      padding: EdgeInsets.symmetric(horizontal: 20),
-                      child: Icon(Icons.delete, color: Colors.white),
+                  onDismissed: (_) async {
+                    await doc.reference.delete();
+                  },
+                  child: ListTile(
+                    title: Text(data['name']),
+                    subtitle: Text("${data['quantity']} ${data['unit']}"),
+                    leading: Checkbox(
+                      value: data['checked'],
+                      onChanged: (_) async {
+                        await doc.reference.update({'checked': true});
+                        await _updateInventory(doc);
+                      },
                     ),
-                    onDismissed: (direction) async {
-                      await doc.reference.delete();
-                    },
-                    child: ListTile(
-                      title: Text(data['name']),
-                      subtitle: Text("${data['quantity']} ${data['unit']}"),
-                      leading: Checkbox(
-                        value: data['checked'],
-                        onChanged: (_) async {
-                          await doc.reference.update({'checked': true});
-                          await _updateInventory(doc);
-                        },
-                      ),
-                      onTap: () => _editItem(doc, 'Main'),
-                    ),
-                  );
-                }).toList(),
-              ],
+                    onTap: () => _editItem(doc, 'Main'),
+                  ),
+                );
+              }).toList(),
             );
           }).toList(),
         );
+
+
       },
     );
   }
@@ -487,39 +518,71 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(localizations.shoppingList),
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true, // Make the TabBar scrollable
-          tabs: List.generate(_tabs.length, (i) {
-            return GestureDetector(
-              onLongPress: _tabs[i] != localizations.main ? () => _renameTab(i) : null,
-              child: Tab(
-                child: Row(
-                  children: [
-                    Text(_tabs[i]),
-                    if (_tabs[i] != localizations.main)
-                      IconButton(
-                        icon: Icon(Icons.close),
-                        onPressed: () => _removeTab(i),
+        title: Text(localizations.shoppingList),centerTitle: true,
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(48),
+          child: Row(
+            children: [
+              Expanded(
+                child: TabBar(
+                  controller: _tabController,
+                  isScrollable: true,
+                  tabs: List.generate(_tabs.length, (i) {
+                    return GestureDetector(
+                      onLongPress: _tabs[i] != localizations.main ? () => _renameTab(i) : null,
+                      child: Tab(
+                        child: Row(
+                          children: [
+                            Text(_tabs[i]),
+                            if (_tabs[i] != localizations.main)
+                              IconButton(
+                                icon: Icon(Icons.close),
+                                onPressed: () => _removeTab(i),
+                              ),
+                          ],
+                        ),
                       ),
-                  ],
+                    );
+                  }),
                 ),
               ),
-            );
-          }),
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: TextButton.icon(
+                  onPressed: _addTab,
+                  icon: Icon(Icons.add, size: 18),
+                  label: Text(
+                    localizations.addSublist,
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4), // tighter padding
+                    minimumSize: Size(0, 32), // limit height
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap, // reduce touch target
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: _addTab,
-          )
-        ],
+
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddItemDialog(_tabs[_tabController!.index]),
-        child: Icon(Icons.add),
+      floatingActionButton: AnimatedBuilder(
+        animation: _fabAnimationController,
+        builder: (context, child) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: 40 + (_fabAnimationController.value * 200),
+              right: 2,
+            ),
+            child: FloatingActionButton(
+              onPressed: () => _showAddItemDialog(_tabs[_tabController!.index]),
+              child: Icon(Icons.add),
+            ),
+          );
+        },
       ),
+
       body: TabBarView(
         controller: _tabController,
         children: _tabs.map((key) {
@@ -582,11 +645,13 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
               controller: _itemNameController,
               decoration: InputDecoration(labelText: localizations.itemName),
             ),
+            SizedBox(height: 10),
             TextField(
               controller: _quantityController,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(labelText: localizations.quantity),
             ),
+            SizedBox(height: 10),
             DropdownButtonFormField<String>(
               value: _selectedUnit,
               decoration: InputDecoration(labelText: localizations.unit),
@@ -603,12 +668,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                 });
               },
             ),
+            SizedBox(height: 10),
             if (listKey == localizations.main)
               TextField(
                 controller: _categoryController,
                 decoration: InputDecoration(
                     labelText: localizations.category ?? 'Category'),
               ),
+            SizedBox(height: 20),
           ],
         ),
         actions: [

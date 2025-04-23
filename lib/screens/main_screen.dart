@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kitchenly/screens/meal_plan_screen.dart';
 import 'package:kitchenly/screens/profile_screen.dart';
 import 'package:kitchenly/screens/inventory_screen.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -28,7 +29,7 @@ class _MainScreenState extends State<MainScreen> {
     _pages.add(ShoppingListScreen());
     _pages.add(MyRecipesScreen());
     _pages.add(Container()); // Placeholder for Browsing
-    _pages.add(Container()); // Placeholder for Meal Plan
+    _pages.add(MealPlanScreen()); // Placeholder for Meal Plan
   }
 
   void _onItemTapped(int index) {

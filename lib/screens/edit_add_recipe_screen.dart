@@ -162,7 +162,7 @@ class _EditRecipePageState extends State<EditRecipePage> {
         ? lookupAppLocalizations(Locale(_userLanguage!))
         : AppLocalizations.of(context)!;
     final isEditing = widget.recipe != null;
-    final recipeData = widget.recipe!.data() as Map<String, dynamic>;
+    final recipeData = isEditing ? widget.recipe!.data() as Map<String, dynamic> : {};
 
     return Scaffold(
       appBar: AppBar(
@@ -407,22 +407,22 @@ class _EditRecipePageState extends State<EditRecipePage> {
               SizedBox(height: 8),
 
               if (_recipeImage != null)
-               Image.file(_recipeImage!, height: 200, fit: BoxFit.cover)
+                Image.file(_recipeImage!, height: 200, fit: BoxFit.cover)
 
               else if (_imageBase64 != null && _imageBase64!.isNotEmpty)
-               Image.memory(
-              base64Decode(_imageBase64!),
-              height: 200,
-              fit: BoxFit.cover,
-              )
+                Image.memory(
+                  base64Decode(_imageBase64!),
+                  height: 200,
+                  fit: BoxFit.cover,
+                )
               else if (widget.recipe != null&&recipeData['imageBase64'] != null)
-               Image.memory(
-              base64Decode(recipeData['imageBase64']),
-              height: 200,
-              fit: BoxFit.cover,
-              )
-              else
-                    Text(localizations.noImageSelected),
+                  Image.memory(
+                    base64Decode(recipeData['imageBase64']),
+                    height: 200,
+                    fit: BoxFit.cover,
+                  )
+                else
+                  Text(localizations.noImageSelected),
               ElevatedButton(
                 onPressed: _pickImage,
                 child: Text(localizations.uploadImage),
@@ -700,19 +700,27 @@ class _EditRecipePageState extends State<EditRecipePage> {
         'labels': _labels,
         'equipment': _equipment,
         'notes': _notesController.text,
-        'imageBase64': _imageBase64 ?? '', // Store base64 string
+        'imageBase64': _imageBase64 ?? '',
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
+      DocumentReference recipeRef;
       if (widget.recipe == null) {
-        await FirebaseFirestore.instance
+        // Create new recipe
+        recipeRef = await FirebaseFirestore.instance
             .collection('users')
             .doc(user!.uid)
             .collection('recipes')
             .add(recipeData);
       } else {
-        await widget.recipe!.reference.update(recipeData);
+        // Update existing recipe
+        recipeRef = widget.recipe!.reference;
+        await recipeRef.update(recipeData);
       }
+
+      // Now handle ingredients and steps
+      await _saveIngredients(recipeRef);
+      await _saveSteps(recipeRef);
 
       Navigator.pop(context); // Close loading
       Navigator.pop(context); // Return to previous screen
@@ -721,6 +729,47 @@ class _EditRecipePageState extends State<EditRecipePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving recipe: $e')),
       );
+    }
+  }
+  Future<void> _saveIngredients(DocumentReference recipeRef) async {
+    final ingredientsCollection = recipeRef.collection('ingredients');
+
+    // First, delete all existing ingredients if we're editing
+    if (widget.recipe != null) {
+      final existingIngredients = await ingredientsCollection.get();
+      for (final doc in existingIngredients.docs) {
+        await doc.reference.delete();
+      }
+    }
+
+    // Then add all current ingredients
+    for (final ingredient in _ingredients) {
+      await ingredientsCollection.add({
+        'name': ingredient['name'],
+        'quantity': ingredient['quantity'],
+        'unit': ingredient['unit'],
+      });
+    }
+  }
+
+  Future<void> _saveSteps(DocumentReference recipeRef) async {
+    final stepsCollection = recipeRef.collection('steps');
+
+    // First, delete all existing steps if we're editing
+    if (widget.recipe != null) {
+      final existingSteps = await stepsCollection.get();
+      for (final doc in existingSteps.docs) {
+        await doc.reference.delete();
+      }
+    }
+
+    // Then add all current steps
+    for (final step in _steps) {
+      await stepsCollection.add({
+        'text': step['text'],
+        'order': step['order'],
+        'ingredients': step['ingredients'],
+      });
     }
   }
 }

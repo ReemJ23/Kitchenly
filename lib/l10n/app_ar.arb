@@ -122,9 +122,9 @@
   "difficulty_medium": "متوسط",
   "difficulty_hard": "صعب",
   "time": "الوقت",
-  "time_quick": "سريع (<30 دقيقة)",
-  "time_medium": "متوسط (30-60 دقيقة)",
-  "time_long": "طويل (>60 دقيقة)",
+  "timeQuick": "سريع (<30 دقيقة)",
+  "timeMedium": "متوسط (30-60 دقيقة)",
+  "timeLong": "طويل (>60 دقيقة)",
   "availability": "التوفر",
   "untitledRecipe": "وصفة بدون عنوان",
   "minutes": "دقيقة",
@@ -191,6 +191,7 @@
   "notSignedIn": "لم يتم تسجيل الدخول",
   "manageIngredients": "إدارة المكونات",
   "noItemsSelected": "لم يتم تحديد أي عناصر",
+<<<<<<< HEAD
   "mealPlan": "خطة الوجبات",
   "createMealPlan": "إنشاء خطة وجبات",
   "selectPeriod": "حدد الفترة",
@@ -234,4 +235,10 @@
   "editMealPlan": "تعديل خطة الوجبات",
   "deleteMealPlan": "حذف خطة الوجبات",
   "mealPlanDeleted": "تم حذف خطة الوجبات."
+=======
+  "availabilityFull": "مكتمل",
+  "availabilityPartial": "جزئي",
+  "availabilityLow": "منخفض",
+  "addSublist": "إضافة قائمة فرعية"
+>>>>>>> a36f9f3507dae14f705976a81b23903ed3db3a40
 }

@@ -120,13 +120,13 @@
   "difficulty_medium": "Medium",
   "difficulty_hard": "Hard",
   "time": "Time",
-  "time_quick": "Quick (<30 min)",
-  "time_medium": "Medium (30-60 min)",
-  "time_long": "Long (>60 min)",
+  "timeQuick": "Quick (<30 min)",
+  "timeMedium": "Medium (30-60 min)",
+  "timeLong": "Long (>60 min)",
   "availability": "Availability",
-  "availability_full": "Full",
-  "availability_partial": "Partial",
-  "availability_low": "Low",
+  "availabilityFull": "Full",
+  "availabilityPartial": "Partial",
+  "availabilityLow": "Low",
   "untitledRecipe": "Untitled Recipe",
   "minutes": "min",
   "ingredients": "Ingredients",
@@ -192,6 +192,7 @@
   "notSignedIn": "Not Signed In",
   "noItemsSelected": "No items selected",
   "manageIngredients": "Manage Ingredients",
+<<<<<<< HEAD
   "mealPlan": "Meal Plan",
   "createMealPlan": "Create Meal Plan",
   "selectPeriod": "Select Period",
@@ -235,4 +236,7 @@
   "editMealPlan": "Edit Meal Plan",
   "deleteMealPlan": "Delete Meal Plan",
   "mealPlanDeleted": "Meal plan deleted."
+=======
+  "addSublist": "Add Sublist"
+>>>>>>> a36f9f3507dae14f705976a81b23903ed3db3a40
  }

@@ -191,7 +191,6 @@
   "notSignedIn": "لم يتم تسجيل الدخول",
   "manageIngredients": "إدارة المكونات",
   "noItemsSelected": "لم يتم تحديد أي عناصر",
-<<<<<<< HEAD
   "mealPlan": "خطة الوجبات",
   "createMealPlan": "إنشاء خطة وجبات",
   "selectPeriod": "حدد الفترة",
@@ -234,11 +233,9 @@
   "noMealPlans": "لم يتم العثور على أي خطط وجبات.",
   "editMealPlan": "تعديل خطة الوجبات",
   "deleteMealPlan": "حذف خطة الوجبات",
-  "mealPlanDeleted": "تم حذف خطة الوجبات."
-=======
+  "mealPlanDeleted": "تم حذف خطة الوجبات.",
   "availabilityFull": "مكتمل",
   "availabilityPartial": "جزئي",
   "availabilityLow": "منخفض",
   "addSublist": "إضافة قائمة فرعية"
->>>>>>> a36f9f3507dae14f705976a81b23903ed3db3a40
 }

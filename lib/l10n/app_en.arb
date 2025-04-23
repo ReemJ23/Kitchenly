@@ -192,7 +192,6 @@
   "notSignedIn": "Not Signed In",
   "noItemsSelected": "No items selected",
   "manageIngredients": "Manage Ingredients",
-<<<<<<< HEAD
   "mealPlan": "Meal Plan",
   "createMealPlan": "Create Meal Plan",
   "selectPeriod": "Select Period",
@@ -235,8 +234,6 @@
   "noMealPlans": "No meal plans found.",
   "editMealPlan": "Edit Meal Plan",
   "deleteMealPlan": "Delete Meal Plan",
-  "mealPlanDeleted": "Meal plan deleted."
-=======
+  "mealPlanDeleted": "Meal plan deleted.",
   "addSublist": "Add Sublist"
->>>>>>> a36f9f3507dae14f705976a81b23903ed3db3a40
  }

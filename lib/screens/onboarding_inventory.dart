@@ -27,11 +27,11 @@ class _OnboardingInventoryScreenState extends State<OnboardingInventoryScreen> {
     "Tomato": "g",
     "Carrot": "g",
     "Potato": "g",
-    "Milk": "liters",
-    "Cheese": "grams",
-    "Yogurt": "grams",
+    "Milk": "liter",
+    "Cheese": "g",
+    "Yogurt": "g",
     "Rice": "g",
-    "Pasta": "grams",
+    "Pasta": "g",
     "Bread": "pieces"
   };
 

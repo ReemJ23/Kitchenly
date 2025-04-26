@@ -349,7 +349,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
           .where('checked', isEqualTo: false)
           .snapshots(),
       builder: (context, snapshot) {
-<<<<<<< HEAD
         if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
 
         final docs = snapshot.data!.docs;
@@ -364,10 +363,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
           categorizedItems[category]!.add(doc);
         }
 
-=======
         if (!snapshot.hasData) return CircularProgressIndicator();
 
-        final docs = snapshot.data!.docs;
         if (docs.isEmpty) {
           return Center(
             child: Column(
@@ -392,7 +389,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
           );
         }
         //final docs = snapshot.data!.docs;
->>>>>>> cca6262f5fa5f34f7037fee6cfd59ed2282a84b3
         return ListView(
           children: categorizedItems.entries.map((entry) {
             final isExpanded = expandedCategories.contains(entry.key);

@@ -336,38 +336,63 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 padding: const EdgeInsets.only(top: 17),
                 child: Align(
                   alignment: Alignment.centerRight,
-                  child: ToggleButtons(
-                    isSelected: [
-                      _calendarFormat == CalendarFormat.week,
-                      _calendarFormat == CalendarFormat.twoWeeks,
-                      _calendarFormat == CalendarFormat.month,
-                    ],
-                    onPressed: (index) {
+                  child:ElevatedButton.icon(
+                    onPressed: () {
                       setState(() {
-                        _calendarFormat = [
-                          CalendarFormat.week,
-                          CalendarFormat.twoWeeks,
-                          CalendarFormat.month,
-                        ][index];
+                        if (_calendarFormat == CalendarFormat.week) {
+                          _calendarFormat = CalendarFormat.twoWeeks;
+                        } else if (_calendarFormat == CalendarFormat.twoWeeks) {
+                          _calendarFormat = CalendarFormat.month;
+                        } else {
+                          _calendarFormat = CalendarFormat.week;
+                        }
                       });
                     },
-                    constraints: BoxConstraints(minWidth: 36),
-                    borderRadius: BorderRadius.circular(6),
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12),
-                        child: Text(localizations.oneWeek),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12),
-                        child: Text(localizations.twoWeeks),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12),
-                        child: Text(localizations.month),
-                      ),
-                    ],
+                    label: Text(
+                      _calendarFormat == CalendarFormat.week
+                          ? localizations.oneWeek
+                          : _calendarFormat == CalendarFormat.twoWeeks
+                          ? localizations.twoWeeks
+                          : localizations.month,
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      minimumSize: Size(0, 36),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
                   ),
+                  // ToggleButtons(
+                  //   isSelected: [
+                  //     _calendarFormat == CalendarFormat.week,
+                  //     _calendarFormat == CalendarFormat.twoWeeks,
+                  //     _calendarFormat == CalendarFormat.month,
+                  //   ],
+                  //   onPressed: (index) {
+                  //     setState(() {
+                  //       _calendarFormat = [
+                  //         CalendarFormat.week,
+                  //         CalendarFormat.twoWeeks,
+                  //         CalendarFormat.month,
+                  //       ][index];
+                  //     });
+                  //   },
+                  //   constraints: BoxConstraints(minWidth: 36),
+                  //   borderRadius: BorderRadius.circular(6),
+                  //   children: [
+                  //     Padding(
+                  //       padding: EdgeInsets.symmetric(horizontal: 12),
+                  //       child: Text(localizations.oneWeek),
+                  //     ),
+                  //     Padding(
+                  //       padding: EdgeInsets.symmetric(horizontal: 12),
+                  //       child: Text(localizations.twoWeeks),
+                  //     ),
+                  //     Padding(
+                  //       padding: EdgeInsets.symmetric(horizontal: 12),
+                  //       child: Text(localizations.month),
+                  //     ),
+                  //   ],
+                  // ),
                 ),
               ),
               ],
@@ -882,7 +907,7 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text(AppLocalizations.of(context)!
-                                .maxRecipesSelected(_numberOfRecipes))),
+                                .maxRecipesSelected)),
                           );
                         }
                       } else {

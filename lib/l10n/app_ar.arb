@@ -237,5 +237,11 @@
   "availabilityFull": "مكتمل",
   "availabilityPartial": "جزئي",
   "availabilityLow": "منخفض",
-  "addSublist": "إضافة قائمة فرعية"
+  "addSublist": "إضافة قائمة فرعية",
+  "oneWeek": "أسبوع",
+  "twoWeeks": "أسبوعين",
+  "month": "شهر",
+  "inventoryIsEmpty": "المخزون فارغ",
+  "shoppingSublistIsEmpty": "قائمة التسوق الفرعية فارغة",
+  "shoppingListIsEmpty": "قائمة التسوق فارغة"
 }

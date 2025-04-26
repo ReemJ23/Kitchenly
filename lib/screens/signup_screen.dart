@@ -28,6 +28,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool isPasswordEmpty = false;
   bool isUsernameEmpty = false;
 
+  bool _obscurePassword = true;
+
   @override
   void initState() {
     super.initState();
@@ -130,12 +132,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     // Password Field
                     TextFormField(
                       controller: _passwordController,
-                      obscureText: true,
+                      obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: localizations.password,
                         errorText: passwordError,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
                       ),
-                    ),
+                      ),
+
                     SizedBox(height: 20),
 
                     ElevatedButton(onPressed: _signUp,

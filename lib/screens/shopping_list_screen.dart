@@ -347,7 +347,32 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
           .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return CircularProgressIndicator();
+
         final docs = snapshot.data!.docs;
+        if (docs.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.shopping_cart_rounded,
+                  size: 95,
+                  color: AppColors.iconColor,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  AppLocalizations.of(context)!.shoppingSublistIsEmpty,
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: AppColors.heading2,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          );
+        }
+        //final docs = snapshot.data!.docs;
         return ListView(
           children: docs.map((doc) {
             final data = doc.data() as Map<String, dynamic>;
@@ -439,8 +464,30 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
           .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return CircularProgressIndicator();
-
         final docs = snapshot.data!.docs;
+        if (docs.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.shopping_cart_rounded, // Same cart icon
+                  size: 95,
+                  color: AppColors.iconColor,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  AppLocalizations.of(context)!.shoppingListIsEmpty, // Add this to your l10n
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: AppColors.heading2,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          );
+        }
         final Map<String, List<DocumentSnapshot>> categorizedItems = {};
 
         for (var doc in docs) {

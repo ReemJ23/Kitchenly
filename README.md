@@ -7,3 +7,5 @@
 - Change ingredients quantity based on serving size
 - Allergies
 - Combine duplicates in shopping list page
+- J: add see password icon in login and signup
+- J: when the inventory is empty, display an appropriate message

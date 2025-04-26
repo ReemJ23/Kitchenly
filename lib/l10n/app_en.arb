@@ -235,5 +235,11 @@
   "editMealPlan": "Edit Meal Plan",
   "deleteMealPlan": "Delete Meal Plan",
   "mealPlanDeleted": "Meal plan deleted.",
-  "addSublist": "Add Sublist"
- }
+  "addSublist": "Add Sublist",
+  "oneWeek": "1 week",
+  "twoWeeks": "2 weeks",
+  "month": "Month",
+  "inventoryIsEmpty": "Inventory is empty.",
+  "shoppingSublistIsEmpty": "Shopping sublist is empty.",
+  "shoppingListIsEmpty": "Shopping list is empty."
+}

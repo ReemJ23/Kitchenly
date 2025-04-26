@@ -26,6 +26,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool isUserEmpty = false;
   bool isPasswordEmpty = false;
 
+  bool _obscurePassword = true;
+
   // Firebase Authentication instance
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -144,11 +146,21 @@ class _LoginScreenState extends State<LoginScreen> {
                     // Password Field
                     TextFormField(
                       controller: _passwordController,
-                      obscureText: true,
+                      obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: localizations.password,
                         border: OutlineInputBorder(),
                         errorText: passwordError,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
                       ),
                     ),
                     SizedBox(height: 20),

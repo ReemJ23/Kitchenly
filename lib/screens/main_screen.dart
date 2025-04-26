@@ -24,7 +24,6 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
-    _pages.add(ProfileScreen());
     _pages.add(InventoryScreen());
     _pages.add(ShoppingListScreen());
     _pages.add(MyRecipesScreen());
@@ -49,7 +48,6 @@ class _MainScreenState extends State<MainScreen> {
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         items: [
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: localizations.profile),
           BottomNavigationBarItem(icon: Icon(Icons.kitchen), label: localizations.inventory),
           BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: localizations.shoppingList),
           BottomNavigationBarItem(icon: Icon(Icons.restaurant_menu), label: localizations.recipes),

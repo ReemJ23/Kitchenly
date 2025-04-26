@@ -3,9 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
+import 'package:kitchenly/screens/profile_screen.dart';
+import '../utils/category_helper.dart';
 import '../utils/colors.dart';
-
-
+import 'package:openfoodfacts/openfoodfacts.dart' as OFF;
 import '../utils/localization_helper.dart';
 
 class InventoryScreen extends StatefulWidget {
@@ -30,6 +31,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
   User? user = FirebaseAuth.instance.currentUser;
   String? _userLanguage;
   Set<String> expandedCategories = {};
+  bool _isAddingItem =false;
   @override
   void initState() {
     super.initState();
@@ -87,40 +89,64 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
     return categories.toList();
   }
+  Future<String> fetchProductCategory(String productName) async {
+    return CategoryHelper.categorizeItem(productName);
+  }
 
   // Add an item to a selected or new category
   void _addItem() async {
+    setState(() {
+      _isAddingItem = true;
+    });
+
+    String itemName = _itemNameController.text.trim().toLowerCase(); // 🔥 normalize lowercase
     String quantityText = _quantityController.text.trim();
     int quantity = int.tryParse(quantityText) ?? 0;
 
-    // Validation checks
-    if (_itemNameController.text.trim().isEmpty ||
-        quantity <= 0 ||
-        quantity > 999) {
-      // Show error if quantity is invalid
+    if (itemName.isEmpty || quantity <= 0 || quantity > 999) {
       _showErrorDialog(AppLocalizations.of(context)!.invalidQuantity);
-      return;
-    }
-
-    if (_selectedCategory != null && _newCategoryController.text.trim().isNotEmpty) {
-      // Show error if both category and new category name are filled
-      _showErrorDialog(AppLocalizations.of(context)!.categoryConflict);
+      setState(() {
+        _isAddingItem = false;
+      });
       return;
     }
 
     String finalCategory = _selectedCategory ?? _newCategoryController.text.trim();
 
-    await FirebaseFirestore.instance
+    if (finalCategory.isEmpty) {
+      finalCategory = await fetchProductCategory(itemName) ?? 'Uncategorized';
+    }
+
+    final inventoryRef = FirebaseFirestore.instance
         .collection('users')
         .doc(user!.uid)
-        .collection('inventory')
-        .add({
-      'name': _itemNameController.text.trim(),
-      'quantity': quantity,
-      'unit': _selectedUnit,
-      'category': finalCategory,
-      'expirationDate': _expirationDate != null ? Timestamp.fromDate(_expirationDate!) : null,
-    });
+        .collection('inventory');
+
+    // 🔥 Check if item already exists with same name and unit
+    final existingQuery = await inventoryRef
+        .where('name', isEqualTo: itemName)
+        .where('unit', isEqualTo: _selectedUnit)
+        .limit(1)
+        .get();
+
+    if (existingQuery.docs.isNotEmpty) {
+      // 🔥 Item exists → update quantity
+      final existingDoc = existingQuery.docs.first;
+      int existingQuantity = existingDoc['quantity'] ?? 0;
+
+      await existingDoc.reference.update({
+        'quantity': existingQuantity + quantity,
+      });
+    } else {
+      // 🔥 No existing item → add new
+      await inventoryRef.add({
+        'name': itemName,
+        'quantity': quantity,
+        'unit': _selectedUnit,
+        'category': finalCategory,
+        'expirationDate': _expirationDate != null ? Timestamp.fromDate(_expirationDate!) : null,
+      });
+    }
 
     _itemNameController.clear();
     _quantityController.clear();
@@ -128,8 +154,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
     setState(() {
       _expirationDate = null;
       _selectedCategory = null;
+      _isAddingItem = false;
     });
   }
+
+
 
   // Show error dialog
   void _showErrorDialog(String message) {
@@ -170,7 +199,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
         ? lookupAppLocalizations(Locale(_userLanguage!))
         : AppLocalizations.of(context)!;
 
-    // Set initial values for the edit dialog
     _editItemNameController.text = itemData['name'];
     _editQuantityController.text = itemData['quantity'].toString();
     _editCategoryController.text = itemData['category'] ?? '';
@@ -180,7 +208,41 @@ class _InventoryScreenState extends State<InventoryScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(localizations.editItem),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(localizations.editItem),
+            IconButton(
+              icon: Icon(Icons.delete, color: Colors.red),
+              tooltip: localizations.delete,
+              onPressed: () async {
+                // Show confirmation first
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(localizations.delete),
+                    content: Text(localizations.confirmDeleteItem),
+                    actions: [
+                      TextButton(
+                        child: Text(localizations.cancel),
+                        onPressed: () => Navigator.pop(context, false),
+                      ),
+                      TextButton(
+                        child: Text(localizations.delete),
+                        onPressed: () => Navigator.pop(context, true),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true) {
+                  await itemDoc.reference.delete();
+                  Navigator.pop(context); // Close the edit dialog too
+                }
+              },
+            ),
+          ],
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -200,7 +262,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 value: _selectedUnit,
                 decoration: InputDecoration(labelText: localizations.unit),
                 items: [
-                  'g', 'lb', 'oz', 'liter','pieces','packs','cups'
+                  'g', 'lb', 'oz', 'liter', 'pieces', 'packs', 'cups'
                 ].map((unit) {
                   return DropdownMenuItem(
                     value: unit,
@@ -228,7 +290,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
               SizedBox(height: 10),
               ElevatedButton(
                 onPressed: () {
-                  // Update the item in Firestore
                   itemDoc.reference.update({
                     'name': _editItemNameController.text.trim(),
                     'quantity': int.tryParse(_editQuantityController.text.trim()) ?? 0,
@@ -248,6 +309,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
 
+
   @override
   Widget build(BuildContext context) {
     final localizations = _userLanguage != null
@@ -255,7 +317,16 @@ class _InventoryScreenState extends State<InventoryScreen> {
         : AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: Text(localizations.inventory), centerTitle: true,),
+      appBar: AppBar(title: Text(localizations.inventory), centerTitle: true, leading: IconButton(
+        icon: const Icon(Icons.person),
+        tooltip: AppLocalizations.of(context)!.profile,
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) =>  ProfileScreen(),),
+          );
+        },
+      ),),
 
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddItemDialog(),
@@ -327,20 +398,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 ),
               ...uncategorizedItems.map((itemDoc) {
                 Map<String, dynamic> itemData = itemDoc.data() as Map<String, dynamic>;
-                return Dismissible(
-                  key: Key(itemDoc.id), // Unique key for each item
-                  direction: DismissDirection.endToStart, // Swipe from right to left
-                  background: Container(
-                    color: AppColors.deleteBg,
-                    alignment: Alignment.centerRight,
-                    padding: EdgeInsets.symmetric(horizontal: 20),
-                    child: Icon(Icons.delete, color: Colors.white),
-                  ),
-                  onDismissed: (direction) {
-                    // Delete the item from Firestore
-                    itemDoc.reference.delete();
-                  },
-                  child: ListTile(
+                return ListTile(
                     title: Text(itemData['name'] ?? "Unnamed Item"),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -358,65 +416,98 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       ],
                     ),
                     onTap: () => _showEditItemDialog(itemDoc), // Open edit dialog on tap
-                  ),
-                );
+                  );
               }).toList(),
 
               // Categorized items
-              ...categorizedItems.entries.map((entry) {
-                final isExpanded = expandedCategories.contains(entry.key);
+              ...categorizedItems.entries.map((entry) {return DragTarget<DocumentSnapshot>(
+                onAccept: (draggedItemDoc) async {
+                  await draggedItemDoc.reference.update({'category': entry.key});
+                },
+                builder: (context, candidateData, rejectedData) {
+                  final isExpanded = expandedCategories.contains(entry.key);
 
-                return ExpansionTile(
-                  key: PageStorageKey(entry.key), // preserve state on scroll
-                  title: Text(
-                    entry.key,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  initiallyExpanded: isExpanded,
-                  onExpansionChanged: (expanded) {
-                    setState(() {
-                      if (expanded) {
-                        expandedCategories.add(entry.key);
-                      } else {
-                        expandedCategories.remove(entry.key);
-                      }
-                    });
-                  },
-                  children: entry.value.map((itemDoc) {
-                    Map<String, dynamic> itemData = itemDoc.data() as Map<String, dynamic>;
-                    return Dismissible(
-                      key: Key(itemDoc.id),
-                      direction: DismissDirection.endToStart,
-                      background: Container(
-                        color: AppColors.deleteBg,
-                        alignment: Alignment.centerRight,
-                        padding: EdgeInsets.symmetric(horizontal: 20),
-                        child: Icon(Icons.delete, color: Colors.white),
-                      ),
-                      onDismissed: (_) => itemDoc.reference.delete(),
-                      child: ListTile(
-                        title: Text(itemData['name'] ?? "Unnamed Item"),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("${itemData['quantity']} ${itemData['unit']}"),
-                            if (itemData['expirationDate'] != null)
-                              Text(
-                                "${localizations.expirationDate}: ${DateFormat.yMd().format((itemData['expirationDate'] as Timestamp).toDate())}",
-                                style: TextStyle(
-                                  color: (itemData['expirationDate'] as Timestamp).toDate().isBefore(DateTime.now())
-                                      ? AppColors.pastExpirationDate
-                                      : AppColors.futureExpirationDate,
-                                ),
-                              ),
-                          ],
+                  return ExpansionTile(
+                    key: PageStorageKey(entry.key),
+                    title: Row(
+                      children: [
+                        Text(
+                          entry.key,
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
-                        onTap: () => _showEditItemDialog(itemDoc),
-                      ),
-                    );
-                  }).toList(),
-                );
-              }).toList(),
+                        if (candidateData.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8.0),
+                            child: Icon(Icons.folder_open, color: Theme.of(context).colorScheme.primary),
+                          ),
+                      ],
+                    ),
+                    initiallyExpanded: isExpanded,
+                    onExpansionChanged: (expanded) {
+                      setState(() {
+                        if (expanded) {
+                          expandedCategories.add(entry.key);
+                        } else {
+                          expandedCategories.remove(entry.key);
+                        }
+                      });
+                    },
+                    children: entry.value.map((itemDoc) {
+                      Map<String, dynamic> itemData = itemDoc.data() as Map<String, dynamic>;
+                      return Dismissible(
+                        key: Key(itemDoc.id),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          color: AppColors.deleteBg,
+                          alignment: Alignment.centerRight,
+                          padding: EdgeInsets.symmetric(horizontal: 20),
+                          child: Icon(Icons.delete, color: Colors.white),
+                        ),
+                        onDismissed: (_) => itemDoc.reference.delete(),
+                        child: Draggable<DocumentSnapshot>(
+                          data: itemDoc,
+                          feedback: Material(
+                            color: Colors.transparent,
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(maxWidth: 250),
+                              child: ListTile(
+                                  title: Text(itemData['name']),
+                                  subtitle: Text("${itemData['quantity']} ${itemData['unit']}")
+                              ),
+                            ),
+                          ),
+                          childWhenDragging: Opacity(
+                            opacity: 0.5,
+                            child: ListTile(
+                                title: Text(itemData['name']),
+                                subtitle: Text("${itemData['quantity']} ${itemData['unit']}")
+                            ),
+                          ),
+                          child: ListTile(
+                            title: Text(itemData['name']),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("${itemData['quantity']} ${itemData['unit']}"),
+                                if (itemData['expirationDate'] != null)
+                                  Text(
+                                    "${localizations.expirationDate}: ${DateFormat.yMd().format((itemData['expirationDate'] as Timestamp).toDate())}",
+                                    style: TextStyle(
+                                      color: (itemData['expirationDate'] as Timestamp).toDate().isBefore(DateTime.now())
+                                          ? AppColors.pastExpirationDate
+                                          : AppColors.futureExpirationDate,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            onTap: () => _showEditItemDialog(itemDoc),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
+              );}).toList(),
 
             ],
           );
@@ -464,16 +555,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 onChanged: (value) {
                   setState(() {
                     _selectedUnit = value;
-                  });
-                },
-              ),
-              SizedBox(height: 10),
-              TextField(
-                controller: _newCategoryController,
-                decoration: InputDecoration(labelText: localizations.categoryName),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedCategory = null;
                   });
                 },
               ),

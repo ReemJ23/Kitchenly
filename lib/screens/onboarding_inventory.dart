@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../utils/category_helper.dart';
 import '../utils/colors.dart';
 import '../utils/localization_helper.dart';
 
+
+
+
+bool _isLoading = false;
 class OnboardingInventoryScreen extends StatefulWidget {
   final String language;
 
@@ -27,23 +32,29 @@ class _OnboardingInventoryScreenState extends State<OnboardingInventoryScreen> {
     "Tomato": "g",
     "Carrot": "g",
     "Potato": "g",
-    "Milk": "liters",
-    "Cheese": "grams",
-    "Yogurt": "grams",
+    "Milk": "liter",
+    "Cheese": "g",
+    "Yogurt": "g",
     "Rice": "g",
-    "Pasta": "grams",
+    "Pasta": "g",
     "Bread": "pieces"
   };
 
+
   void _submitInventory() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       for (var item in selectedItems.entries) {
         String itemName = item.key;
         var itemData = item.value;
 
-
         if (itemData['quantity'].toString().isEmpty) continue;
+
+        final category = CategoryHelper.categorizeItem(itemName);
 
         await FirebaseFirestore.instance
             .collection('users')
@@ -53,20 +64,49 @@ class _OnboardingInventoryScreenState extends State<OnboardingInventoryScreen> {
           'name': itemName,
           'quantity': itemData['quantity'],
           'unit': itemData['unit'],
-          'category': itemData['category'],
+          'category': category,
           'expirationDate': null,
         });
       }
-
-      Navigator.pushNamedAndRemoveUntil(
-          context, '/main', (route) => false, arguments: widget.language);
     }
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/main',
+          (route) => false,
+      arguments: widget.language,
+    );
   }
+
 
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
-
+    if (_isLoading) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              const SizedBox(height: 20),
+              Text(
+                'Setting up your kitchen...',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.heading1, // You can customize the color
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return Scaffold(
       appBar: AppBar(title: Text(" "),
       ),
@@ -110,7 +150,6 @@ class _OnboardingInventoryScreenState extends State<OnboardingInventoryScreen> {
               children: category.value.map((item) {
                 if (!selectedItems.containsKey(item)) {
                   selectedItems[item] = {
-                    "category": category.key,
                     "quantity": "",
                     "unit": units[item] ?? "pieces"
                   };

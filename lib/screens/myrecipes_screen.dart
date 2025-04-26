@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:kitchenly/screens/profile_screen.dart';
 import 'package:kitchenly/screens/recipe_stepper.dart';
 import '../models/recipeStep.dart';
 import '../utils/localization_helper.dart';
@@ -72,6 +73,16 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(localizations.myRecipes),
+        leading: IconButton(
+          icon: const Icon(Icons.person),
+          tooltip: AppLocalizations.of(context)!.profile,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) =>  ProfileScreen(),),
+            );
+          },
+        ),
         actions: [
           IconButton(
             icon: Icon(Icons.add),

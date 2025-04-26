@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
+import 'package:kitchenly/screens/profile_screen.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../utils/colors.dart';
 import '../utils/localization_helper.dart';
@@ -246,6 +247,16 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(localizations.mealPlan),
+        leading: IconButton(
+          icon: const Icon(Icons.person),
+          tooltip: AppLocalizations.of(context)!.profile,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) =>  ProfileScreen(),),
+            );
+          },
+        ),
         centerTitle: true,
         actions: [
           IconButton(

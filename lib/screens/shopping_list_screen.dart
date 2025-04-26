@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:kitchenly/screens/profile_screen.dart';
+import '../utils/category_helper.dart';
 import '../utils/localization_helper.dart';
 import '../utils/colors.dart';
 
@@ -20,7 +22,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
   final TextEditingController _editNameController = TextEditingController();
   final TextEditingController _editQtyController = TextEditingController();
   final TextEditingController _renameTabController = TextEditingController();
-  final TextEditingController _categoryController = TextEditingController();
   String? _selectedUnit = "g";
   User? user = FirebaseAuth.instance.currentUser;
   List<String> _tabs = [];
@@ -193,9 +194,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
       _showErrorDialog(AppLocalizations.of(context)!.invalidQuantity);
       return;
     }
-
-    String category = (listKey == AppLocalizations.of(context)!.main) ? _categoryController.text.trim() : '';
-
+    String category =  CategoryHelper.categorizeItem(itemName);
     final shoppingListRef = (listKey == _tabs[0])
         ? FirebaseFirestore.instance
         .collection('users')
@@ -213,12 +212,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
       'quantity': quantity,
       'unit': _selectedUnit,
       'checked': false,
-      if (listKey == _tabs[0] && category.isNotEmpty) 'category': category,
+      'category': category,
     });
 
     _itemNameController.clear();
     _quantityController.clear();
-    _categoryController.clear();
     setState(() => _selectedUnit = "g");
   }
 
@@ -247,6 +245,13 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
           ],
         ),
         actions: [
+          TextButton(
+            onPressed: () async {
+              await itemDoc.reference.delete();
+              Navigator.pop(context);
+            },
+            child: Icon(Icons.delete, color: Colors.red),
+          ),
           TextButton(
             child: Text(AppLocalizations.of(context)!.save),
             onPressed: () async {
@@ -277,10 +282,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
           .collection('users')
           .doc(user!.uid)
           .collection('shoppingList')
-          .add({
-        ...data,
-        'category': listKey,
-      });
+          .add(data);
     }
 
     // Show confirmation message
@@ -337,37 +339,93 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
   }
 
   Widget _buildListView(String listKey) {
-    final path = 'sublists/$listKey/items';
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('users')
           .doc(user!.uid)
-          .collection(path)
+          .collection('sublists')
+          .doc(listKey)
+          .collection('items')
           .where('checked', isEqualTo: false)
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return CircularProgressIndicator();
+        if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
+
         final docs = snapshot.data!.docs;
+        final Map<String, List<DocumentSnapshot>> categorizedItems = {};
+
+        for (var doc in docs) {
+          final data = doc.data() as Map<String, dynamic>;
+          final category = data['category'] ?? 'Uncategorized';
+          if (!categorizedItems.containsKey(category)) {
+            categorizedItems[category] = [];
+          }
+          categorizedItems[category]!.add(doc);
+        }
+
         return ListView(
-          children: docs.map((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            return Dismissible(
-              key: Key(doc.id),
-              direction: DismissDirection.endToStart,
-              background: Container(
-                color: AppColors.deleteBg,
-                alignment: Alignment.centerRight,
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: Icon(Icons.delete, color: Colors.white),
-              ),
-              onDismissed: (direction) async {
-                await doc.reference.delete();
+          children: categorizedItems.entries.map((entry) {
+            final isExpanded = expandedCategories.contains(entry.key);
+            return DragTarget<DocumentSnapshot>(
+              onAccept: (draggedItemDoc) async {
+                await draggedItemDoc.reference.update({'category': entry.key});
               },
-              child: ListTile(
-                title: Text(data['name']),
-                subtitle: Text("${data['quantity']} ${data['unit']}"),
-                onTap: () => _editItem(doc, listKey),
-              ),
+              builder: (context, candidateData, rejectedData) {
+                return ExpansionTile(
+                  key: PageStorageKey(entry.key),
+                  title: Row(
+                    children: [
+                      Text(
+                        entry.key,
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      if (candidateData.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Icon(Icons.folder_open, color: Theme.of(context).colorScheme.primary),
+                        ),
+                    ],
+                  ),
+                  initiallyExpanded: isExpanded,
+                  onExpansionChanged: (expanded) {
+                    setState(() {
+                      if (expanded) {
+                        expandedCategories.add(entry.key);
+                      } else {
+                        expandedCategories.remove(entry.key);
+                      }
+                    });
+                  },
+                  children: entry.value.map((itemDoc) {
+                    final itemData = itemDoc.data() as Map<String, dynamic>;
+                    return Draggable<DocumentSnapshot>(
+                      data: itemDoc,
+                      feedback: Material(
+                        color: Colors.transparent,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: 250),
+                          child: ListTile(
+                            title: Text(itemData['name']),
+                            subtitle: Text("${itemData['quantity']} ${itemData['unit']}"),
+                          ),
+                        ),
+                      ),
+                      childWhenDragging: Opacity(
+                        opacity: 0.5,
+                        child: ListTile(
+                          title: Text(itemData['name']),
+                          subtitle: Text("${itemData['quantity']} ${itemData['unit']}"),
+                        ),
+                      ),
+                      child: ListTile(
+                        title: Text(itemData['name']),
+                        subtitle: Text("${itemData['quantity']} ${itemData['unit']}"),
+                        onTap: () => _editItem(itemDoc, listKey),
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
             );
           }).toList(),
         );
@@ -454,55 +512,91 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
         return ListView(
           children: categorizedItems.entries.map((entry) {
             final isExpanded = expandedCategories.contains(entry.key);
-            return ExpansionTile(
-              key: PageStorageKey(entry.key),
-              title: Text(
-                entry.key,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              initiallyExpanded: isExpanded,
-              onExpansionChanged: (expanded) {
-                setState(() {
-                  if (expanded) {
-                    expandedCategories.add(entry.key);
-                  } else {
-                    expandedCategories.remove(entry.key);
-                  }
-                });
+            return DragTarget<DocumentSnapshot>(
+              onAccept: (draggedItemDoc) async {
+                await draggedItemDoc.reference.update({'category': entry.key});
               },
-              children: entry.value.map((doc) {
-                final data = doc.data() as Map<String, dynamic>;
-                return Dismissible(
-                  key: Key(doc.id),
-                  direction: DismissDirection.endToStart,
-                  background: Container(
-                    color: AppColors.error,
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: const Icon(Icons.delete, color: Colors.white),
+              builder: (context, candidateData, rejectedData) {
+                final isExpanded = expandedCategories.contains(entry.key);
+
+                return ExpansionTile(
+                  key: PageStorageKey(entry.key),
+                  title: Row(
+                    children: [
+                      Text(
+                        entry.key,
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      if (candidateData.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Icon(Icons.folder_open, color: Theme.of(context).colorScheme.primary),
+                        ),
+                    ],
                   ),
-                  onDismissed: (_) async {
-                    await doc.reference.delete();
+                  initiallyExpanded: isExpanded,
+                  onExpansionChanged: (expanded) {
+                    setState(() {
+                      if (expanded) {
+                        expandedCategories.add(entry.key);
+                      } else {
+                        expandedCategories.remove(entry.key);
+                      }
+                    });
                   },
-                  child: ListTile(
-                    title: Text(data['name']),
-                    subtitle: Text("${data['quantity']} ${data['unit']}"),
-                    leading: Checkbox(
-                      value: data['checked'],
-                      onChanged: (_) async {
-                        await doc.reference.update({'checked': true});
-                        await _updateInventory(doc);
-                      },
-                    ),
-                    onTap: () => _editItem(doc, 'Main'),
-                  ),
+                  children: entry.value.map((itemDoc) {
+                    Map<String, dynamic> itemData = itemDoc.data() as Map<String, dynamic>;
+                    return Draggable<DocumentSnapshot>(
+                      data: itemDoc,
+                      feedback: Material(
+                        color: Colors.transparent,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: 250),
+                          child: ListTile(
+                            title: Text(itemData['name']),
+                            subtitle: Text("${itemData['quantity']} ${itemData['unit']}"),
+                          ),
+                        ),
+                      ),
+                      childWhenDragging: Opacity(
+                        opacity: 0.5,
+                        child: ListTile(
+                          leading: Checkbox(
+                            value: itemData['checked'] ?? false, // ✅ dynamic from Firestore
+                            onChanged: (value) async {
+                              if (value == true) {
+                                await itemDoc.reference.update({'checked': true});
+                                await _updateInventory(itemDoc);
+                              }
+                            },
+                          ),
+                          title: Text(itemData['name']),
+                          subtitle: Text("${itemData['quantity']} ${itemData['unit']}"),
+                          onTap: () => _editItem(itemDoc, 'Main'),
+                        ),
+                      ),
+                      child: ListTile(
+                        leading: Checkbox(
+                          value: itemData['checked'] ?? false, // ✅ dynamic from Firestore
+                          onChanged: (value) async {
+                            if (value == true) {
+                              await itemDoc.reference.update({'checked': true});
+                              await _updateInventory(itemDoc);
+                            }
+                          },
+                        ),
+                        title: Text(itemData['name']),
+                        subtitle: Text("${itemData['quantity']} ${itemData['unit']}"),
+                        onTap: () => _editItem(itemDoc, 'Main'),
+                      ),
+                    );
+
+                  }).toList(),
                 );
-              }).toList(),
+              },
             );
           }).toList(),
         );
-
-
       },
     );
   }
@@ -519,6 +613,16 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
     return Scaffold(
       appBar: AppBar(
         title: Text(localizations.shoppingList),centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.person),
+          tooltip: AppLocalizations.of(context)!.profile,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) =>  ProfileScreen(),),
+            );
+          },
+        ),
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(48),
           child: Row(
@@ -668,13 +772,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                 });
               },
             ),
-            SizedBox(height: 10),
-            if (listKey == localizations.main)
-              TextField(
-                controller: _categoryController,
-                decoration: InputDecoration(
-                    labelText: localizations.category ?? 'Category'),
-              ),
             SizedBox(height: 20),
           ],
         ),

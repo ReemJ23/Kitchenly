@@ -349,6 +349,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
           .where('checked', isEqualTo: false)
           .snapshots(),
       builder: (context, snapshot) {
+<<<<<<< HEAD
         if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
 
         final docs = snapshot.data!.docs;
@@ -363,6 +364,35 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
           categorizedItems[category]!.add(doc);
         }
 
+=======
+        if (!snapshot.hasData) return CircularProgressIndicator();
+
+        final docs = snapshot.data!.docs;
+        if (docs.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.shopping_cart_rounded,
+                  size: 95,
+                  color: AppColors.iconColor,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  AppLocalizations.of(context)!.shoppingSublistIsEmpty,
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: AppColors.heading2,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          );
+        }
+        //final docs = snapshot.data!.docs;
+>>>>>>> cca6262f5fa5f34f7037fee6cfd59ed2282a84b3
         return ListView(
           children: categorizedItems.entries.map((entry) {
             final isExpanded = expandedCategories.contains(entry.key);
@@ -497,8 +527,30 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
           .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return CircularProgressIndicator();
-
         final docs = snapshot.data!.docs;
+        if (docs.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.shopping_cart_rounded, // Same cart icon
+                  size: 95,
+                  color: AppColors.iconColor,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  AppLocalizations.of(context)!.shoppingListIsEmpty, // Add this to your l10n
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: AppColors.heading2,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          );
+        }
         final Map<String, List<DocumentSnapshot>> categorizedItems = {};
 
         for (var doc in docs) {

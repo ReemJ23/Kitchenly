@@ -236,6 +236,7 @@
   "deleteMealPlan": "Delete Meal Plan",
   "mealPlanDeleted": "Meal plan deleted.",
   "addSublist": "Add Sublist",
+<<<<<<< HEAD
   "profile": "Profile",
   "logout": "Logout",
   "username": "Username",
@@ -288,3 +289,12 @@
   "confirmDeleteItem":  "Are you sure you want to delete this item?",
   "noFamilyCodeYet": "No family code yet. Click below to generate."
  }
+=======
+  "oneWeek": "1 week",
+  "twoWeeks": "2 weeks",
+  "month": "Month",
+  "inventoryIsEmpty": "Inventory is empty.",
+  "shoppingSublistIsEmpty": "Shopping sublist is empty.",
+  "shoppingListIsEmpty": "Shopping list is empty."
+}
+>>>>>>> cca6262f5fa5f34f7037fee6cfd59ed2282a84b3

@@ -60,14 +60,16 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     Map<DateTime, List<String>> meals = {};
     Set<DateTime> ranges = {};
 
-    for (var d = startDate; d.isBefore(endDate.add(Duration(days: 1))); d = d.add(Duration(days: 1))) {
+    for (var d = startDate; d.isBefore(endDate.add(Duration(days: 1)));
+    d = d.add(Duration(days: 1))) {
       ranges.add(DateTime(d.year, d.month, d.day));
     }
 
     recipeDates.forEach((id, ts) {
       final date = (ts as Timestamp).toDate();
       final key = DateTime(date.year, date.month, date.day);
-      meals[key] = (meals[key] ?? [])..add(id);
+      meals[key] = (meals[key] ?? [])
+        ..add(id);
     });
 
     setState(() {
@@ -86,7 +88,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         .get();
 
     if (plans.docs.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(localizations.noMealPlans)));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(localizations.noMealPlans)));
       return;
     }
 
@@ -103,8 +106,11 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               final end = (data['endDate'] as Timestamp).toDate();
 
               return ListTile(
-                title: Text('${DateFormat.yMMMd().format(start)} - ${DateFormat.yMMMd().format(end)}'),
-                trailing: _selectedMealPlanId == doc.id ? Icon(Icons.check, color: Colors.green) : null,
+                title: Text(
+                    '${DateFormat.yMMMd().format(start)} - ${DateFormat.yMMMd()
+                        .format(end)}'),
+                trailing: _selectedMealPlanId == doc.id ? Icon(
+                    Icons.check, color: Colors.green) : null,
                 onTap: () {
                   Navigator.of(ctx).pop();
                   _loadMealPlans(selectedPlanId: doc.id);
@@ -136,6 +142,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       });
     }
   }
+
   void _confirmDeleteMealPlan() async {
     final localizations = AppLocalizations.of(context)!;
     final plans = await FirebaseFirestore.instance
@@ -145,7 +152,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         .get();
 
     if (plans.docs.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(localizations.noMealPlans)));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(localizations.noMealPlans)));
       return;
     }
 
@@ -160,7 +168,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               final start = (doc['startDate'] as Timestamp).toDate();
               final end = (doc['endDate'] as Timestamp).toDate();
               return ListTile(
-                title: Text('${DateFormat.yMMMd().format(start)} - ${DateFormat.yMMMd().format(end)}'),
+                title: Text(
+                    '${DateFormat.yMMMd().format(start)} - ${DateFormat.yMMMd()
+                        .format(end)}'),
                 trailing: IconButton(
                   icon: Icon(Icons.delete, color: Colors.red),
                   onPressed: () async {
@@ -176,11 +186,13 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                         _mealsByDay.clear();
                       });
                     } else {
-                      _loadMealPlans(selectedPlanId: _selectedMealPlanId); // refresh if another plan was selected
+                      _loadMealPlans(
+                          selectedPlanId: _selectedMealPlanId); // refresh if another plan was selected
                     }
 
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(AppLocalizations.of(context)!.mealPlanDeleted)),
+                      SnackBar(content: Text(
+                          AppLocalizations.of(context)!.mealPlanDeleted)),
                     );
                   },
                 ),
@@ -191,6 +203,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       },
     );
   }
+
   void _navigateToEditMealPlan() async {
     final localizations = AppLocalizations.of(context)!;
 
@@ -201,7 +214,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         .get();
 
     if (plans.docs.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(localizations.noMealPlans)));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(localizations.noMealPlans)));
       return;
     }
 
@@ -218,15 +232,18 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               final end = (data['endDate'] as Timestamp).toDate();
 
               return ListTile(
-                title: Text('${DateFormat.yMMMd().format(start)} - ${DateFormat.yMMMd().format(end)}'),
+                title: Text(
+                    '${DateFormat.yMMMd().format(start)} - ${DateFormat.yMMMd()
+                        .format(end)}'),
                 onTap: () {
                   Navigator.of(ctx).pop(); // Close dialog
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => CreateMealPlanPage(
-                        existingMealPlanDoc: doc,
-                      ),
+                      builder: (_) =>
+                          CreateMealPlanPage(
+                            existingMealPlanDoc: doc,
+                          ),
                     ),
                   );
                 },
@@ -259,10 +276,6 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         ),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: () => _showCreateMealPlanDialog(context),
-          ),
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'select') {
@@ -274,24 +287,107 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               }
             },
             itemBuilder: (context) => [
-              PopupMenuItem(value: 'select', child: Text(localizations.selectMealPlan)),
-              PopupMenuItem(value: 'edit', child: Text(localizations.editMealPlan)),
-              PopupMenuItem(value: 'delete', child: Text(localizations.deleteMealPlan)),
+              PopupMenuItem(
+                value: 'select',
+                child: Text(localizations.selectMealPlan),
+              ),
+              PopupMenuItem(
+                value: 'edit',
+                child: Text(localizations.editMealPlan),
+              ),
+              PopupMenuItem(
+                value: 'delete',
+                child: Text(localizations.deleteMealPlan),
+              ),
             ],
           )
-
         ],
       ),
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 17),
+                  child: TextButton.icon(
+                    onPressed: () => _showCreateMealPlanDialog(context),
+                    icon: Icon(
+                      Icons.add,
+                      size: 16,
+                    ),
+                    label: Text(
+                      localizations.createMealPlan,
+                      style: TextStyle(fontSize: 14),
+                    ),
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      minimumSize: Size(0, 32),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                ),
+
+              Padding(
+                padding: const EdgeInsets.only(top: 17),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: ToggleButtons(
+                    isSelected: [
+                      _calendarFormat == CalendarFormat.week,
+                      _calendarFormat == CalendarFormat.twoWeeks,
+                      _calendarFormat == CalendarFormat.month,
+                    ],
+                    onPressed: (index) {
+                      setState(() {
+                        _calendarFormat = [
+                          CalendarFormat.week,
+                          CalendarFormat.twoWeeks,
+                          CalendarFormat.month,
+                        ][index];
+                      });
+                    },
+                    constraints: BoxConstraints(minWidth: 36),
+                    borderRadius: BorderRadius.circular(6),
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(localizations.oneWeek),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(localizations.twoWeeks),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(localizations.month),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              ],
+            ),
+          ),
+
+
+
           TableCalendar(
             firstDay: DateTime.utc(2020, 1, 1),
             lastDay: DateTime.utc(2030, 12, 31),
             focusedDay: _focusedDay,
             calendarFormat: _calendarFormat,
             selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-            rangeStartDay: _mealPlanRanges.isNotEmpty ? _mealPlanRanges.reduce((a, b) => a.isBefore(b) ? a : b) : null,
-            rangeEndDay: _mealPlanRanges.isNotEmpty ? _mealPlanRanges.reduce((a, b) => a.isAfter(b) ? a : b) : null,
+            rangeStartDay: _mealPlanRanges.isNotEmpty
+                ? _mealPlanRanges.reduce((a, b) => a.isBefore(b) ? a : b)
+                : null,
+            rangeEndDay: _mealPlanRanges.isNotEmpty
+                ? _mealPlanRanges.reduce((a, b) => a.isAfter(b) ? a : b)
+                : null,
             onDaySelected: (selectedDay, focusedDay) {
               setState(() {
                 _selectedDay = selectedDay;
@@ -303,18 +399,21 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             },
             onPageChanged: (focusedDay) => _focusedDay = focusedDay,
             eventLoader: (day) => _getEventsForDay(day),
+            headerStyle: HeaderStyle(
+              formatButtonVisible: false,
+            ),
             calendarBuilders: CalendarBuilders(
               rangeStartBuilder: (context, day, isSelected) {
                 return Container(
                   margin: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.01), // same soft shade
+                    color: Colors.blue.withOpacity(0.01),
                     shape: BoxShape.circle,
                   ),
                   alignment: Alignment.center,
                   child: Text(
                     '${day.day}',
-                    style: TextStyle(color: Colors.black),
+                    style: TextStyle(color: AppColors.calendarText),
                   ),
                 );
               },
@@ -328,7 +427,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                   alignment: Alignment.center,
                   child: Text(
                     '${day.day}',
-                    style: TextStyle(color: Colors.black),
+                    style: TextStyle(color: AppColors.calendarText),
                   ),
                 );
               },
@@ -338,31 +437,43 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                   return Container(
                     margin: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.3),
+                      color: Colors.blue.withOpacity(0.03),
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
                     child: Text(
                       '${day.day}',
-                      style: TextStyle(color: Colors.black),
+                      style: TextStyle(color: AppColors.calendarText),
                     ),
                   );
                 }
                 return null;
               },
             ),
-
             calendarStyle: CalendarStyle(
-              rangeHighlightColor: Colors.transparent,
+              rangeHighlightColor: AppColors.transparent,
               rangeStartDecoration: BoxDecoration(
-                color: Colors.transparent,
+                color:  AppColors.transparent,
                 shape: BoxShape.circle,
               ),
               rangeEndDecoration: BoxDecoration(
-                color: Colors.transparent,
+                color:  AppColors.transparent,
                 shape: BoxShape.circle,
-              ),// disable default highlight
-              withinRangeTextStyle: TextStyle(),       // fallback to normal text style
+              ),
+              todayDecoration: BoxDecoration(
+                color: AppColors.focusedDayBg,
+                shape: BoxShape.circle,
+              ),
+
+              withinRangeTextStyle: TextStyle(),
+              selectedDecoration: BoxDecoration(
+                color: AppColors.focusedDayBg,
+                shape: BoxShape.circle,
+              ),
+              selectedTextStyle: TextStyle(
+                color: AppColors.focusedDayText,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
 
@@ -372,15 +483,37 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         ],
       ),
     );
+
   }
 
 
   Widget _buildMealsForSelectedDay() {
     if (_selectedMealPlanId == null) {
-      return Center(child: Text(AppLocalizations.of(context)!.noRecipesSelected));
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.local_restaurant_rounded,
+              size: 80,
+              color: AppColors.iconColor,
+            ),
+            SizedBox(height: 16), // Space between icon and text
+            Text(
+              AppLocalizations.of(context)!.noRecipesSelected,
+              style: TextStyle(
+                fontSize: 18,
+                color: AppColors.heading2,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
     }
 
-    final selectedKey = DateTime(_selectedDay!.year, _selectedDay!.month, _selectedDay!.day);
+    final selectedKey = DateTime(
+        _selectedDay!.year, _selectedDay!.month, _selectedDay!.day);
 
     return FutureBuilder<DocumentSnapshot>(
       future: FirebaseFirestore.instance
@@ -390,8 +523,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           .doc(_selectedMealPlanId)
           .get(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
-        if (!snapshot.data!.exists) return Center(child: Text(AppLocalizations.of(context)!.noMealPlans));
+        if (!snapshot.hasData)
+          return Center(child: CircularProgressIndicator());
+        if (!snapshot.data!.exists)
+          return Center(child: Text(AppLocalizations.of(context)!.noMealPlans));
 
         final data = snapshot.data!.data() as Map<String, dynamic>;
         final recipeDates = data['recipeDates'] as Map<String, dynamic>;
@@ -408,7 +543,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         });
 
         if (recipeIdsForDay.isEmpty) {
-          return Center(child: Text(AppLocalizations.of(context)!.noRecipesSelected));
+          return Center(
+              child: Text(AppLocalizations.of(context)!.noRecipesSelected));
         }
 
         return FutureBuilder<QuerySnapshot>(
@@ -419,7 +555,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               .where(FieldPath.documentId, whereIn: recipeIdsForDay)
               .get(),
           builder: (context, recipeSnapshot) {
-            if (!recipeSnapshot.hasData) return Center(child: CircularProgressIndicator());
+            if (!recipeSnapshot.hasData)
+              return Center(child: CircularProgressIndicator());
 
             final recipes = recipeSnapshot.data!.docs;
 
@@ -431,11 +568,17 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 return Card(
                   margin: EdgeInsets.all(8),
                   child: ListTile(
-                    leading: recipe['imageBase64'] != null && recipe['imageBase64'].toString().isNotEmpty
+                    leading: recipe['imageBase64'] != null &&
+                        recipe['imageBase64']
+                            .toString()
+                            .isNotEmpty
                         ? ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: Image.memory(
-                        base64Decode(recipe['imageBase64'].toString().split(',').last),
+                        base64Decode(recipe['imageBase64']
+                            .toString()
+                            .split(',')
+                            .last),
                         width: 48,
                         height: 48,
                         fit: BoxFit.cover,
@@ -461,7 +604,6 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       },
     );
   }
-
 
 
   void _deleteMealPlanItem(String mealId) async {
@@ -494,7 +636,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 class CreateMealPlanPage extends StatefulWidget {
   final DocumentSnapshot? existingMealPlanDoc;
 
-  const CreateMealPlanPage({Key? key, this.existingMealPlanDoc}) : super(key: key);
+  const CreateMealPlanPage({Key? key, this.existingMealPlanDoc})
+      : super(key: key);
 
   @override
   _CreateMealPlanPageState createState() => _CreateMealPlanPageState();
@@ -534,33 +677,38 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
 
 
   Future<_RecipeCardData> _getRecipeCardData(DocumentSnapshot recipe) async {
-  final ingredientsSnapshot = await recipe.reference.collection('ingredients').get();
-  final total = ingredientsSnapshot.docs.length;
+    final ingredientsSnapshot = await recipe.reference.collection('ingredients')
+        .get();
+    final total = ingredientsSnapshot.docs.length;
 
-  final inventorySnapshot = await FirebaseFirestore.instance
-      .collection('users')
-      .doc(user!.uid)
-      .collection('inventory')
-      .get();
+    final inventorySnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .collection('inventory')
+        .get();
 
-  final inventory = inventorySnapshot.docs.map((e) => e.data()).toList();
+    final inventory = inventorySnapshot.docs.map((e) => e.data()).toList();
 
-  int available = 0;
-  for (final doc in ingredientsSnapshot.docs) {
-  final data = doc.data();
-  final match = inventory.firstWhere(
-  (item) => item['name'] == data['name'] && item['unit'] == data['unit'],
-  orElse: () => {},
-  );
-  if (match.isNotEmpty && (match['quantity'] ?? 0) >= (data['quantity'] ?? 0)) {
-  available++;
-  }
-  }
+    int available = 0;
+    for (final doc in ingredientsSnapshot.docs) {
+      final data = doc.data();
+      final match = inventory.firstWhere(
+            (item) =>
+        item['name'] == data['name'] && item['unit'] == data['unit'],
+        orElse: () => {},
+      );
+      if (match.isNotEmpty &&
+          (match['quantity'] ?? 0) >= (data['quantity'] ?? 0)) {
+        available++;
+      }
+    }
 
-  final ratio = total > 0 ? available / total : 0;
-  final color = ratio == 1 ? Colors.green : ratio >= 0.5 ? Colors.orange : Colors.red;
+    final ratio = total > 0 ? available / total : 0;
+    final color = ratio == 1 ? Colors.green : ratio >= 0.5
+        ? Colors.orange
+        : Colors.red;
 
-  return _RecipeCardData(available, total, color);
+    return _RecipeCardData(available, total, color);
   }
 
   Future<void> _fetchUserLanguage() async {
@@ -587,47 +735,47 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
         title: Text(localizations.createMealPlan),
       ),
       body: Stepper(
-          controlsBuilder: (context, details) {
-            return Column(
-              children: [
-                if (details.currentStep > 0)
-                  ElevatedButton(
-                    onPressed: details.onStepCancel,
-                    child: Text(AppLocalizations.of(context)!.back),
-                  ),
+        controlsBuilder: (context, details) {
+          return Column(
+            children: [
+              if (details.currentStep > 0)
                 ElevatedButton(
-                  onPressed: details.onStepContinue,
-                  child: Text(AppLocalizations.of(context)!.continueText),
+                  onPressed: details.onStepCancel,
+                  child: Text(AppLocalizations.of(context)!.back),
                 ),
-              ],
-            );
-          },
-          currentStep: _currentStep,
-          onStepContinue: _continue,
-          onStepCancel: _cancel,
-          onStepTapped: (step) => setState(() => _currentStep = step),
-          steps: [
-            Step(
-              title: Text(localizations.selectPeriod),
-              content: _buildDateSelectionStep(localizations),
-              isActive: _currentStep >= 0,
-            ),
-            Step(
-              title: Text(localizations.selectRecipes),
-              content: _buildRecipeSelectionStep(),
-              isActive: _currentStep >= 1,
-            ),
-            Step(
-              title: Text(localizations.assignDates),
-              content: _buildDateAssignmentStep(localizations),
-              isActive: _currentStep >= 2,
-            ),
-            Step(
-              title: Text(localizations.generateShoppingList),
-              content: _buildShoppingListStep(localizations),
-              isActive: _currentStep >= 3,
-            ),
-          ],
+              ElevatedButton(
+                onPressed: details.onStepContinue,
+                child: Text(AppLocalizations.of(context)!.continueText),
+              ),
+            ],
+          );
+        },
+        currentStep: _currentStep,
+        onStepContinue: _continue,
+        onStepCancel: _cancel,
+        onStepTapped: (step) => setState(() => _currentStep = step),
+        steps: [
+          Step(
+            title: Text(localizations.selectPeriod),
+            content: _buildDateSelectionStep(localizations),
+            isActive: _currentStep >= 0,
+          ),
+          Step(
+            title: Text(localizations.selectRecipes),
+            content: _buildRecipeSelectionStep(),
+            isActive: _currentStep >= 1,
+          ),
+          Step(
+            title: Text(localizations.assignDates),
+            content: _buildDateAssignmentStep(localizations),
+            isActive: _currentStep >= 2,
+          ),
+          Step(
+            title: Text(localizations.generateShoppingList),
+            content: _buildShoppingListStep(localizations),
+            isActive: _currentStep >= 3,
+          ),
+        ],
       ),
     );
   }
@@ -679,7 +827,8 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
           max: 20,
           divisions: 19,
           label: _numberOfRecipes.toString(),
-          onChanged: (value) => setState(() => _numberOfRecipes = value.toInt()),
+          onChanged: (value) =>
+              setState(() => _numberOfRecipes = value.toInt()),
         ),
       ],
     );
@@ -687,7 +836,8 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
 
   Widget _buildRecipeSelectionStep() {
     if (_startDate == null || _endDate == null) {
-      return Center(child: Text(AppLocalizations.of(context)!.selectPeriodFirst));
+      return Center(
+          child: Text(AppLocalizations.of(context)!.selectPeriodFirst));
     }
 
     return StreamBuilder<QuerySnapshot>(
@@ -697,11 +847,13 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
           .collection('recipes')
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
+        if (!snapshot.hasData)
+          return Center(child: CircularProgressIndicator());
 
         final recipes = snapshot.data!.docs;
         if (recipes.isEmpty) {
-          return Center(child: Text(AppLocalizations.of(context)!.noRecipesFound));
+          return Center(
+              child: Text(AppLocalizations.of(context)!.noRecipesFound));
         }
 
         return ListView.builder(
@@ -722,13 +874,15 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
                   value: isSelected,
                   onChanged: (value) {
                     setState(() {
-                      if (value == true && !_selectedRecipeIds.contains(recipe.id)) {
+                      if (value == true &&
+                          !_selectedRecipeIds.contains(recipe.id)) {
                         if (_selectedRecipeIds.length < _numberOfRecipes) {
                           _selectedRecipeIds.add(recipe.id);
                           _selectedRecipes[recipe.id] = recipe;
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(AppLocalizations.of(context)!.maxRecipesSelected(_numberOfRecipes))),
+                            SnackBar(content: Text(AppLocalizations.of(context)!
+                                .maxRecipesSelected(_numberOfRecipes))),
                           );
                         }
                       } else {
@@ -740,14 +894,21 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
                   },
                   title: Text(data['name'] ?? 'Unknown Recipe'),
                   subtitle: Text(
-                    '${cardData.availableIngredients}/${cardData.totalIngredients} ${AppLocalizations.of(context)!.ingredients}',
+                    '${cardData.availableIngredients}/${cardData
+                        .totalIngredients} ${AppLocalizations.of(context)!
+                        .ingredients}',
                     style: TextStyle(color: cardData.availabilityColor),
                   ),
-                  secondary: data['imageBase64'] != null && data['imageBase64'].toString().isNotEmpty
+                  secondary: data['imageBase64'] != null && data['imageBase64']
+                      .toString()
+                      .isNotEmpty
                       ? ClipRRect(
                     borderRadius: BorderRadius.circular(8), // Rounded corners
                     child: Image.memory(
-                      base64Decode(data['imageBase64'].toString().split(',').last),
+                      base64Decode(data['imageBase64']
+                          .toString()
+                          .split(',')
+                          .last),
                       width: 48,
                       height: 48,
                       fit: BoxFit.cover,
@@ -787,27 +948,32 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
 
 
         return ListTile(
-          leading: data['imageBase64'] != null && data['imageBase64'].toString().isNotEmpty
-            ? ClipRRect(
-          borderRadius: BorderRadius.circular(8), // Rounded corners
-          child: Image.memory(
-            base64Decode(data['imageBase64'].toString().split(',').last),
+          leading: data['imageBase64'] != null && data['imageBase64']
+              .toString()
+              .isNotEmpty
+              ? ClipRRect(
+            borderRadius: BorderRadius.circular(8), // Rounded corners
+            child: Image.memory(
+              base64Decode(data['imageBase64']
+                  .toString()
+                  .split(',')
+                  .last),
+              width: 48,
+              height: 48,
+              fit: BoxFit.cover,
+            ),
+          )
+              : Container(
             width: 48,
             height: 48,
-            fit: BoxFit.cover,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(Icons.fastfood, color: Colors.grey[600]),
           ),
-        )
-            : Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: Colors.grey[300],
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(Icons.fastfood, color: Colors.grey[600]),
-        ),
 
-        title: Text(data['name'] ?? 'Unknown Recipe'),
+          title: Text(data['name'] ?? 'Unknown Recipe'),
           subtitle: Text(assignedDate != null
               ? DateFormat.yMd().format(assignedDate)
               : localizations.notAssigned),
@@ -889,7 +1055,9 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
             Text(localizations.generateShoppingList),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _isGeneratingShoppingList ? null : _generateShoppingList,
+              onPressed: _isGeneratingShoppingList
+                  ? null
+                  : _generateShoppingList,
               child: _isGeneratingShoppingList
                   ? CircularProgressIndicator()
                   : Text(localizations.generateShoppingList),
@@ -914,7 +1082,8 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
                     _shoppingListItems[index]['selected'] = value;
                   });
                 },
-                title: Text('${item['quantity']} ${item['unit']} ${item['name']}'),
+                title: Text(
+                    '${item['quantity']} ${item['unit']} ${item['name']}'),
                 subtitle: Text('Needed for: ${item['recipes'].join(', ')}'),
               );
             },
@@ -937,7 +1106,8 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
 
     for (final recipeDoc in _selectedRecipes.values) {
       final recipe = recipeDoc.data() as Map<String, dynamic>;
-      final ingredientsSnapshot = await recipeDoc.reference.collection('ingredients').get();
+      final ingredientsSnapshot = await recipeDoc.reference.collection(
+          'ingredients').get();
 
       for (final ingredientDoc in ingredientsSnapshot.docs) {
         final ingredient = ingredientDoc.data();
@@ -1014,7 +1184,8 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
         'numberOfRecipes': _numberOfRecipes,
         'createdAt': FieldValue.serverTimestamp(),
         'recipeIds': _selectedRecipeIds,
-        'recipeDates': _recipeDates.map((key, value) => MapEntry(key, Timestamp.fromDate(value))),
+        'recipeDates': _recipeDates.map((key, value) =>
+            MapEntry(key, Timestamp.fromDate(value))),
       });
 
       // Optional: Add shopping list items logic...
@@ -1032,10 +1203,12 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
   }
 
 }
+
 class _RecipeCardData {
   final int availableIngredients;
   final int totalIngredients;
   final Color availabilityColor;
 
-  _RecipeCardData(this.availableIngredients, this.totalIngredients, this.availabilityColor);
+  _RecipeCardData(this.availableIngredients, this.totalIngredients,
+      this.availabilityColor);
 }

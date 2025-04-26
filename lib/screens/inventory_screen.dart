@@ -342,6 +342,29 @@ class _InventoryScreenState extends State<InventoryScreen> {
         builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (!snapshot.hasData) return CircularProgressIndicator();
 
+          if (snapshot.data!.docs.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.restaurant_menu_rounded,
+                    size: 95,
+                    color: AppColors.iconColor,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    localizations.inventoryIsEmpty,
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: AppColors.heading2,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            );
+          }
           // Group items by category
           Map<String, List<QueryDocumentSnapshot>> categorizedItems = {};
           List<QueryDocumentSnapshot> uncategorizedItems = [];

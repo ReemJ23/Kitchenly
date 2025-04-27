@@ -537,5 +537,6 @@
 "recipeDeletedSuccessfully": "تم حذف الوصفة بنجاح.",
 "failedToDeleteRecipe": "فشل حذف الوصفة",
 "confirmDelete": "تأكيد الحذف",
-"areYouSureDelete": "هل أنت متأكد أنك تريد حذف هذه الوصفة؟"
+"areYouSureDelete": "هل أنت متأكد أنك تريد حذف هذه الوصفة؟",
+"shoppingListGenerated": "تم إنشاء قائمة التسوق بنجاح!"
 }

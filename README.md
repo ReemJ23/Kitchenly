@@ -11,4 +11,3 @@
 - Notifications
 - fix issue with recipe addition
 - fix generate shopping list and update inventory
-

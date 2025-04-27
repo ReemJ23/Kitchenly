@@ -720,7 +720,6 @@ class _EditRecipePageState extends State<EditRecipePage> {
       final ingredientIds = await _saveIngredients(recipeRef);
       await _saveSteps(recipeRef, ingredientIds);
 
-      await _loadExistingIngredientsAndSteps();
       Navigator.pop(context); // Close loading
       Navigator.pop(context); // Return to previous screen
     } catch (e) {
@@ -770,20 +769,25 @@ class _EditRecipePageState extends State<EditRecipePage> {
 
     // Save steps correctly
     for (final step in _steps) {
-      final ingredientFirestoreIds = (step['ingredients'] as List<dynamic>)
-          .map((indexString) {
-        final index = int.tryParse(indexString);
-        if (index != null && ingredientIds.containsKey(index)) {
-          return ingredientIds[index];
+      List<String> ingredientFirestoreIds = [];
+
+      if (step['ingredients'] != null) {
+        for (var indexString in step['ingredients']) {
+          if (indexString != null) {
+            final index = int.tryParse(indexString.toString());
+            if (index != null && ingredientIds.containsKey(index)) {
+              final firestoreId = ingredientIds[index];
+              if (firestoreId != null) {
+                ingredientFirestoreIds.add(firestoreId);
+              }
+            }
+          }
         }
-        return null;
-      })
-          .where((id) => id != null)
-          .toList();
+      }
 
       await stepsCollection.add({
-        'text': step['text'],
-        'order': step['order'],
+        'text': step['text'] ?? '',
+        'order': step['order'] ?? 0,
         'ingredients': ingredientFirestoreIds,
       });
     }

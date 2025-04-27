@@ -196,52 +196,51 @@ class _RecipeStepperState extends State<RecipeStepper> {
         .doc(_user!.uid)
         .collection('shoppingList');
 
-    // 1. Fetch all existing shopping list items once ✅
     final existingItemsSnapshot = await shoppingListRef.get();
     final existingItems = {
       for (var doc in existingItemsSnapshot.docs)
-        '${doc['name']}_${doc['unit']}': doc
+        if (doc.data().containsKey('name') && doc.data().containsKey('unit'))
+          '${doc['name']}_${doc['unit']}': doc
     };
 
-    // 2. Prepare batch
     final batch = FirebaseFirestore.instance.batch();
 
-    // 3. Build list of selected items
     final itemsToAdd = _selectedIngredients.entries
         .where((e) => e.value)
         .map((e) {
       final ingredient = _findIngredientById(e.key);
-      return {
-        'name': ingredient?.name ?? 'Unknown',
-        'quantity': _ingredientQuantities[e.key] ?? 0,
-        'unit': ingredient?.unit ?? 'g',
-        'checked': false,
-        'category': CategoryHelper.categorizeItem(ingredient?.name ?? ''),
-      };
-    }).toList();
+      if (ingredient == null) return null;
 
-    // 4. Merge logic ✅
+      return {
+        'name': ingredient.name,
+        'quantity': _ingredientQuantities[e.key] ?? 0,
+        'unit': ingredient.unit,
+        'checked': false,
+        'category': CategoryHelper.categorizeItem(ingredient.name),
+      };
+    })
+        .where((item) => item != null)
+        .toList();
+
     for (final item in itemsToAdd) {
-      final key = '${item['name']}_${item['unit']}';
+      final key = '${item!['name']}_${item['unit']}';
       if (existingItems.containsKey(key)) {
-        // Update quantity if exists
         batch.update(
           existingItems[key]!.reference,
           {'quantity': FieldValue.increment(item['quantity'] as double)},
         );
       } else {
-        // Add new document if not found
         batch.set(shoppingListRef.doc(), item);
       }
     }
 
-    // 5. Commit batch
     await batch.commit();
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(loc.itemsAddedToShoppingList)),
     );
   }
+
 
 
   Future<void> _updateInventory() async {

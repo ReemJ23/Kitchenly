@@ -1079,13 +1079,11 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(localizations.generateShoppingList),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _isGeneratingShoppingList
-                  ? null
-                  : _generateShoppingList,
+              onPressed: _isGeneratingShoppingList ? null : _generateShoppingList,
               child: _isGeneratingShoppingList
-                  ? CircularProgressIndicator()
+                  ? const CircularProgressIndicator()
                   : Text(localizations.generateShoppingList),
             ),
           ],
@@ -1094,9 +1092,12 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
     }
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(localizations.ingredientsToBuy),
-        Expanded(
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 300, // ✅ Fix here: add a bounded height
           child: ListView.builder(
             itemCount: _shoppingListItems.length,
             itemBuilder: (context, index) {
@@ -1108,8 +1109,7 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
                     _shoppingListItems[index]['selected'] = value;
                   });
                 },
-                title: Text(
-                    '${item['quantity']} ${item['unit']} ${item['name']}'),
+                title: Text('${item['quantity']} ${item['unit']} ${item['name']}'),
                 subtitle: Text('Needed for: ${item['recipes'].join(', ')}'),
               );
             },
@@ -1196,6 +1196,17 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
         });
       }
     });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.green),
+            const SizedBox(width: 8),
+            Text(localizations.shoppingListGenerated),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _saveMealPlan() async {
@@ -1207,22 +1218,45 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
           .doc(user!.uid)
           .collection('mealPlans');
 
-      await mealPlansRef.add({
+      final newMealPlanDoc = await mealPlansRef.add({
         'startDate': _startDate,
         'endDate': _endDate,
         'numberOfRecipes': _numberOfRecipes,
         'createdAt': FieldValue.serverTimestamp(),
         'recipeIds': _selectedRecipeIds,
-        'recipeDates': _recipeDates.map((key, value) =>
-            MapEntry(key, Timestamp.fromDate(value))),
+        'recipeDates': _recipeDates.map((key, value) => MapEntry(key, Timestamp.fromDate(value))),
       });
 
-      // Optional: Add shopping list items logic...
+      // 🔥 ADD SHOPPING LIST ITEMS TO MAIN SHOPPING LIST
+      final shoppingListRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user!.uid)
+          .collection('shoppingList');
+
+      final batch = FirebaseFirestore.instance.batch();
+
+      for (final item in _shoppingListItems) {
+        if (item['selected'] == true) {
+          final docRef = shoppingListRef.doc();
+          batch.set(docRef, {
+            'name': item['name'],
+            'quantity': item['quantity'],
+            'unit': item['unit'],
+            'category': item['category'],
+            'checked': false,
+            'addedFromMealPlanId': newMealPlanDoc.id, // optional: to track where it came from
+          });
+        }
+      }
+
+      await batch.commit(); // ✅ Upload all at once
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(localizations.mealPlanCreated)),
+        SnackBar(content: Text(localizations.shoppingListGenerated)),
       );
+
       Navigator.of(context).popUntil((route) => route.isFirst);
+
     } catch (e) {
       setState(() => _isGeneratingShoppingList = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1230,6 +1264,7 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
       );
     }
   }
+
 
 }
 

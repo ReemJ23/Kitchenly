@@ -113,7 +113,7 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
                   .collection('recipes')
                   .snapshots(),
               builder: (context, snapshot) {
-                if (!snapshot.hasData) {
+                if (snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData) {
                   return Center(child: CircularProgressIndicator());
                 }
 
@@ -243,8 +243,11 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
     return FutureBuilder(
       future: _getRecipeCardData(recipe),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return Container(); // or a loading placeholder
+        if (snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData) {
+          return Center(child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: CircularProgressIndicator(),
+          ));
         }
 
         final cardData = snapshot.data!;
@@ -411,6 +414,42 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
     );
   }
 }
+void _confirmDeleteRecipe(BuildContext context, DocumentSnapshot recipe) {
+  final localizations = AppLocalizations.of(context)!;
+
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: Text(localizations.confirmDelete),
+        content: Text(localizations.areYouSureDelete),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context), // Cancel
+            child: Text(localizations.cancel),
+          ),
+          TextButton(
+            onPressed: () async {
+              try {
+                Navigator.pop(context); // Close confirmation dialog
+                Navigator.pop(context); // Close recipe details bottom sheet
+                await recipe.reference.delete();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(localizations.recipeDeletedSuccessfully)),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('${localizations.failedToDeleteRecipe}: $e')),
+                );
+              }
+            },
+            child: Text(localizations.delete, style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      );
+    },
+  );
+}
 
 class RecipeDetailsSheet extends StatelessWidget {
   final DocumentSnapshot recipe;
@@ -437,12 +476,21 @@ class RecipeDetailsSheet extends StatelessWidget {
                 data['name'] ?? localizations.untitledRecipe,
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
-              IconButton(
-                icon: Icon(Icons.edit),
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => EditRecipePage(recipe: recipe)));
-                },
+              Row(
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.edit),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => EditRecipePage(recipe: recipe)));
+                    },
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.delete),
+                    color: Colors.red,
+                    onPressed: () => _confirmDeleteRecipe(context, recipe),
+                  ),
+                ],
               ),
             ],
           ),

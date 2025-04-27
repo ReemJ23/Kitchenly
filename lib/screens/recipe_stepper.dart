@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../models/recipeStep.dart';
+import '../utils/category_helper.dart';
 import '../utils/colors.dart';
 
 class RecipeStepper extends StatefulWidget {
@@ -190,7 +191,22 @@ class _RecipeStepperState extends State<RecipeStepper> {
       return;
     }
 
-    // Get selected items
+    final shoppingListRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(_user!.uid)
+        .collection('shoppingList');
+
+    // 1. Fetch all existing shopping list items once ✅
+    final existingItemsSnapshot = await shoppingListRef.get();
+    final existingItems = {
+      for (var doc in existingItemsSnapshot.docs)
+        '${doc['name']}_${doc['unit']}': doc
+    };
+
+    // 2. Prepare batch
+    final batch = FirebaseFirestore.instance.batch();
+
+    // 3. Build list of selected items
     final itemsToAdd = _selectedIngredients.entries
         .where((e) => e.value)
         .map((e) {
@@ -200,57 +216,33 @@ class _RecipeStepperState extends State<RecipeStepper> {
         'quantity': _ingredientQuantities[e.key] ?? 0,
         'unit': ingredient?.unit ?? 'g',
         'checked': false,
-        'category': 'From Recipe: ${widget.recipeName}',
-        'createdAt': FieldValue.serverTimestamp(),
+        'category': CategoryHelper.categorizeItem(ingredient?.name ?? ''),
       };
-    })
-        .toList();
+    }).toList();
 
-    if (itemsToAdd.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(loc.noItemsSelected)),
-      );
-      return;
-    }
-
-    try {
-      final batch = FirebaseFirestore.instance.batch();
-      final shoppingListRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(_user!.uid)
-          .collection('shoppingList');
-
-      for (final item in itemsToAdd) {
-        // Check for existing item with same name and unit
-        final existingItem = await shoppingListRef
-            .where('name', isEqualTo: item['name'])
-            .where('unit', isEqualTo: item['unit'])
-            .limit(1)
-            .get();
-
-        if (existingItem.docs.isNotEmpty) {
-          // Update existing item
-          batch.update(
-            existingItem.docs.first.reference,
-            {'quantity': FieldValue.increment(item['quantity'] as double)},
-          );
-        } else {
-          // Add new item
-          final newItemRef = shoppingListRef.doc();
-          batch.set(newItemRef, item);
-        }
+    // 4. Merge logic ✅
+    for (final item in itemsToAdd) {
+      final key = '${item['name']}_${item['unit']}';
+      if (existingItems.containsKey(key)) {
+        // Update quantity if exists
+        batch.update(
+          existingItems[key]!.reference,
+          {'quantity': FieldValue.increment(item['quantity'] as double)},
+        );
+      } else {
+        // Add new document if not found
+        batch.set(shoppingListRef.doc(), item);
       }
-
-      await batch.commit();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(loc.itemsAddedToShoppingList)),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${loc.failedToAddToShoppingList}: $e')),
-      );
     }
+
+    // 5. Commit batch
+    await batch.commit();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(loc.itemsAddedToShoppingList)),
+    );
   }
+
 
   Future<void> _updateInventory() async {
     final loc = AppLocalizations.of(context)!;

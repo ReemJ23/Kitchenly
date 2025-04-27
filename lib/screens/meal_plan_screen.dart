@@ -7,6 +7,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:kitchenly/screens/profile_screen.dart';
 import 'package:table_calendar/table_calendar.dart';
+import '../utils/category_helper.dart';
 import '../utils/colors.dart';
 import '../utils/localization_helper.dart';
 
@@ -1184,9 +1185,12 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
         );
       } else {
         mergedIngredients.forEach((key, ingredient) {
+          final name = ingredient['name'] ?? '';
+          final category = CategoryHelper.categorizeItem(name);
           _shoppingListItems.add({
             ...ingredient,
             'selected': true,
+            'category': category,
             'recipes': ingredientRecipes[key] ?? [],
           });
         });

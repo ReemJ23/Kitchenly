@@ -292,5 +292,9 @@
 "month": "Month",
 "inventoryIsEmpty": "Inventory is empty.",
 "shoppingSublistIsEmpty": "Shopping sublist is empty.",
-"shoppingListIsEmpty": "Shopping list is empty."
+"shoppingListIsEmpty": "Shopping list is empty.",
+"recipeDeletedSuccessfully": "Recipe deleted successfully.",
+"failedToDeleteRecipe": "Failed to delete recipe",
+"confirmDelete": "Confirm Deletion",
+"areYouSureDelete": "Are you sure you want to delete this recipe?"
 }

@@ -533,5 +533,9 @@
 "month": "شهر",
 "inventoryIsEmpty": "المخزون فارغ",
 "shoppingSublistIsEmpty": "قائمة التسوق الفرعية فارغة",
-"shoppingListIsEmpty": "قائمة التسوق فارغة"
+"shoppingListIsEmpty": "قائمة التسوق فارغة",
+"recipeDeletedSuccessfully": "تم حذف الوصفة بنجاح.",
+"failedToDeleteRecipe": "فشل حذف الوصفة",
+"confirmDelete": "تأكيد الحذف",
+"areYouSureDelete": "هل أنت متأكد أنك تريد حذف هذه الوصفة؟"
 }

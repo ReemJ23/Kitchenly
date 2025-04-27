@@ -717,11 +717,10 @@ class _EditRecipePageState extends State<EditRecipePage> {
         recipeRef = widget.recipe!.reference;
         await recipeRef.update(recipeData);
       }
+      final ingredientIds = await _saveIngredients(recipeRef);
+      await _saveSteps(recipeRef, ingredientIds);
 
-      // Now handle ingredients and steps
-      await _saveIngredients(recipeRef);
-      await _saveSteps(recipeRef);
-
+      await _loadExistingIngredientsAndSteps();
       Navigator.pop(context); // Close loading
       Navigator.pop(context); // Return to previous screen
     } catch (e) {
@@ -731,10 +730,10 @@ class _EditRecipePageState extends State<EditRecipePage> {
       );
     }
   }
-  Future<void> _saveIngredients(DocumentReference recipeRef) async {
+  Future<Map<int, String>> _saveIngredients(DocumentReference recipeRef) async {
     final ingredientsCollection = recipeRef.collection('ingredients');
 
-    // First, delete all existing ingredients if we're editing
+    // Delete old ingredients if editing
     if (widget.recipe != null) {
       final existingIngredients = await ingredientsCollection.get();
       for (final doc in existingIngredients.docs) {
@@ -742,20 +741,26 @@ class _EditRecipePageState extends State<EditRecipePage> {
       }
     }
 
-    // Then add all current ingredients
-    for (final ingredient in _ingredients) {
-      await ingredientsCollection.add({
+    // Save new ingredients and collect their new Firestore IDs
+    Map<int, String> ingredientIds = {};
+
+    for (int i = 0; i < _ingredients.length; i++) {
+      final ingredient = _ingredients[i];
+      final docRef = await ingredientsCollection.add({
         'name': ingredient['name'],
         'quantity': ingredient['quantity'],
         'unit': ingredient['unit'],
       });
+      ingredientIds[i] = docRef.id; // Map local index to Firestore ID
     }
+
+    return ingredientIds;
   }
 
-  Future<void> _saveSteps(DocumentReference recipeRef) async {
+  Future<void> _saveSteps(DocumentReference recipeRef, Map<int, String> ingredientIds) async {
     final stepsCollection = recipeRef.collection('steps');
 
-    // First, delete all existing steps if we're editing
+    // Delete old steps if editing
     if (widget.recipe != null) {
       final existingSteps = await stepsCollection.get();
       for (final doc in existingSteps.docs) {
@@ -763,13 +768,26 @@ class _EditRecipePageState extends State<EditRecipePage> {
       }
     }
 
-    // Then add all current steps
+    // Save steps correctly
     for (final step in _steps) {
+      final ingredientFirestoreIds = (step['ingredients'] as List<dynamic>)
+          .map((indexString) {
+        final index = int.tryParse(indexString);
+        if (index != null && ingredientIds.containsKey(index)) {
+          return ingredientIds[index];
+        }
+        return null;
+      })
+          .where((id) => id != null)
+          .toList();
+
       await stepsCollection.add({
         'text': step['text'],
         'order': step['order'],
-        'ingredients': step['ingredients'],
+        'ingredients': ingredientFirestoreIds,
       });
     }
   }
+
+
 }

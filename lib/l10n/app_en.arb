@@ -297,5 +297,22 @@
 "failedToDeleteRecipe": "Failed to delete recipe",
 "confirmDelete": "Confirm Deletion",
 "areYouSureDelete": "Are you sure you want to delete this recipe?",
-"shoppingListGenerated": "Shopping list generated successfully!"
+"shoppingListGenerated": "Shopping list generated successfully!",
+"notifications": "Notifications",
+"noNotifications": "No notifications yet.",
+"notification": "Notification",
+"friendRequestAccepted": "Friend Request Accepted",
+"friendRequestDeclined": "Friend Request Declined",
+"noFriendRequests": "No friend requests at the moment.",
+"errorOccurred": "An error occurred. Please try again.",
+"manageFriends": "Manage Friends",
+"manageFamily": "Manage Family",
+"connections": "Connections",
+"accept": "Accept",
+"decline": "Decline",
+"friendRequestAccepted": "Friend Request Accepted",
+"friendRequestDeclined": "Friend Request Declined",
+"youAcceptedRequest": "You accepted a friend request from",
+"youDeclinedRequest": "You declined a friend request from",
+"notificationDeleted": "Notification deleted"
 }

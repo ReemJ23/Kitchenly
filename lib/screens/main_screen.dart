@@ -17,7 +17,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _selectedIndex = 1; // Default to Inventory screen
+  int _selectedIndex = 2; // Default screen
 
   final List<Widget> _pages = [];
 

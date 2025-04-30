@@ -538,5 +538,22 @@
 "failedToDeleteRecipe": "فشل حذف الوصفة",
 "confirmDelete": "تأكيد الحذف",
 "areYouSureDelete": "هل أنت متأكد أنك تريد حذف هذه الوصفة؟",
-"shoppingListGenerated": "تم إنشاء قائمة التسوق بنجاح!"
+"shoppingListGenerated": "تم إنشاء قائمة التسوق بنجاح!",
+"notifications": "الإشعارات",
+"noNotifications": "لا توجد إشعارات بعد.",
+"notification": "إشعار",
+"friendRequestAccepted": "تم قبول طلب الصداقة",
+"friendRequestDeclined": "تم رفض طلب الصداقة",
+"noFriendRequests": "لا توجد طلبات صداقة حالياً.",
+"errorOccurred": "حدث خطأ. يرجى المحاولة مرة أخرى.",
+"manageFriends": "إدارة الأصدقاء",
+"manageFamily": "إدارة العائلة",
+"connections": "العلاقات",
+"accept": "قبول",
+"decline": "رفض",
+"friendRequestAccepted": "تم قبول طلب الصداقة",
+"friendRequestDeclined": "تم رفض طلب الصداقة",
+"youAcceptedRequest": "لقد قبلت طلب صداقة من",
+"youDeclinedRequest": "لقد رفضت طلب صداقة من",
+"notificationDeleted": "تم حذف الإشعار"
 }

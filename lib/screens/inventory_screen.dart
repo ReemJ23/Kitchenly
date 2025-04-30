@@ -317,16 +317,45 @@ class _InventoryScreenState extends State<InventoryScreen> {
         : AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: Text(localizations.inventory), centerTitle: true, leading: IconButton(
-        icon: const Icon(Icons.person),
-        tooltip: AppLocalizations.of(context)!.profile,
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) =>  ProfileScreen(),),
-          );
-        },
-      ),),
+      appBar: AppBar(
+        title: Text(localizations.inventory),
+        centerTitle: true,
+        leading: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(FirebaseAuth.instance.currentUser!.uid)
+              .collection('notifications')
+              .where('read', isEqualTo: false)
+              .snapshots(),
+          builder: (context, snapshot) {
+            final hasUnread = snapshot.hasData && snapshot.data!.docs.isNotEmpty;
+
+            return Stack(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.person),
+                  tooltip: AppLocalizations.of(context)!.profile,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                    );
+                  },
+                ),
+                if (hasUnread)
+                  const Positioned(
+                    right: 8,
+                    top: 8,
+                    child: CircleAvatar(
+                      radius: 5,
+                      backgroundColor: Colors.red,
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ),
 
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddItemDialog(),

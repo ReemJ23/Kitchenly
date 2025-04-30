@@ -660,19 +660,45 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(localizations.shoppingList),centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.person),
-          tooltip: AppLocalizations.of(context)!.profile,
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) =>  ProfileScreen(),),
+        title: Text(localizations.shoppingList),
+        centerTitle: true,
+        leading: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(FirebaseAuth.instance.currentUser!.uid)
+              .collection('notifications')
+              .where('read', isEqualTo: false)
+              .snapshots(),
+          builder: (context, snapshot) {
+            final hasUnread = snapshot.hasData && snapshot.data!.docs.isNotEmpty;
+
+            return Stack(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.person),
+                  tooltip: AppLocalizations.of(context)!.profile,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                    );
+                  },
+                ),
+                if (hasUnread)
+                  const Positioned(
+                    right: 8,
+                    top: 8,
+                    child: CircleAvatar(
+                      radius: 5,
+                      backgroundColor: Colors.red,
+                    ),
+                  ),
+              ],
             );
           },
         ),
         bottom: PreferredSize(
-          preferredSize: Size.fromHeight(48),
+          preferredSize: const Size.fromHeight(48),
           child: Row(
             children: [
               Expanded(
@@ -688,7 +714,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                             Text(_tabs[i]),
                             if (_tabs[i] != localizations.main)
                               IconButton(
-                                icon: Icon(Icons.close),
+                                icon: const Icon(Icons.close),
                                 onPressed: () => _removeTab(i),
                               ),
                           ],
@@ -702,22 +728,21 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                 padding: const EdgeInsets.only(right: 8.0),
                 child: TextButton.icon(
                   onPressed: _addTab,
-                  icon: Icon(Icons.add, size: 18),
+                  icon: const Icon(Icons.add, size: 18),
                   label: Text(
                     localizations.addSublist,
-                    style: TextStyle(fontSize: 12),
+                    style: const TextStyle(fontSize: 12),
                   ),
                   style: TextButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4), // tighter padding
-                    minimumSize: Size(0, 32), // limit height
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap, // reduce touch target
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: const Size(0, 32),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),
               ),
             ],
           ),
         ),
-
       ),
       floatingActionButton: AnimatedBuilder(
         animation: _fabAnimationController,

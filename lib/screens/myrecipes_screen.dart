@@ -64,6 +64,16 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
     }
     return 'en'; // Default to 'en' if the user document doesn't exist
   }
+  Stream<bool> hasUnreadNotifications(String uid) {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('notifications')
+        .where('read', isEqualTo: false)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.isNotEmpty);
+  }
+
   @override
   Widget build(BuildContext context) {
     final localizations = _userLanguage != null
@@ -73,20 +83,48 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(localizations.myRecipes),
-        leading: IconButton(
-          icon: const Icon(Icons.person),
-          tooltip: AppLocalizations.of(context)!.profile,
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) =>  ProfileScreen(),),
+        leading: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(FirebaseAuth.instance.currentUser!.uid)
+              .collection('notifications')
+              .where('read', isEqualTo: false)
+              .snapshots(),
+          builder: (context, snapshot) {
+            final hasUnread = snapshot.hasData && snapshot.data!.docs.isNotEmpty;
+
+            return Stack(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.person),
+                  tooltip: AppLocalizations.of(context)!.profile,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                    );
+                  },
+                ),
+                if (hasUnread)
+                  const Positioned(
+                    right: 8,
+                    top: 8,
+                    child: CircleAvatar(
+                      radius: 5,
+                      backgroundColor: Colors.red,
+                    ),
+                  ),
+              ],
             );
           },
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.add),
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => EditRecipePage()))
+            icon: const Icon(Icons.add),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const EditRecipePage()),
+            ),
           ),
         ],
       ),

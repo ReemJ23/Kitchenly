@@ -1,13 +1,14 @@
-import 'dart:math';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:kitchenly/screens/notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'dart:io';
-import '../utils/colors.dart';
+
+import 'friends_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -23,19 +24,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final User? user = FirebaseAuth.instance.currentUser;
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _familyCodeController = TextEditingController();
-  final TextEditingController _addFamilyUsernameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isEditingUsername = false;
   bool _isChangingPassword = false;
   bool _isLoading = false;
+  bool _hasNotifications = false;
 
   @override
   void initState() {
     super.initState();
     _fetchUserData();
+    _checkExpiredIngredients();
+    _checkForNotifications();
   }
-
+  Future<void> _checkForNotifications() async {
+    final hasNotifications = await _hasUnreadNotifications();
+    setState(() {
+      _hasNotifications = hasNotifications;
+    });
+  }
   Future<void> _fetchUserData() async {
     if (user == null) return;
 
@@ -148,57 +155,74 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     }
   }
+  Future<bool> _hasUnreadNotifications() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return false;
 
-  Future<void> _generateFamilyCode() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('notifications')
+        .where('read', isEqualTo: false)
+        .limit(1)
+        .get();
+
+    return snapshot.docs.isNotEmpty;
+  }
+
+  Future<void> _checkExpiredIngredients() async {
+    final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    setState(() => _isLoading = true);
+    final now = DateTime.now();
 
-    try {
-      // Generate a random 6-digit code
-      final code = (100000 + Random().nextInt(900000)).toString();
+    // Only run once per day — optional (can be removed if not needed)
+    final prefs = await SharedPreferences.getInstance();
+    final lastCheckStr = prefs.getString('last_expiration_check');
+    final lastCheck = lastCheckStr != null ? DateTime.tryParse(lastCheckStr) : null;
 
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user!.uid)
-          .update({'familyCode': code});
-
-      // 🎯 Instantly update the UI
-      setState(() {
-        _familyCodeController.text = code;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${localizations.familyCodeGenerated}: $code')),
-      );
-    } catch (e) {
-      print("Error generating family code: $e");
-    } finally {
-      setState(() => _isLoading = false);
+    if (lastCheck != null &&
+        lastCheck.year == now.year &&
+        lastCheck.month == now.month &&
+        lastCheck.day == now.day) {
+      return; // Already checked today
     }
+
+    final ingredientsSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('inventory')
+        .get();
+
+    for (final doc in ingredientsSnapshot.docs) {
+      final data = doc.data();
+      if (data['expirationDate'] != null && (data['notified'] != true)) {
+        final expirationDate = (data['expirationDate'] as Timestamp).toDate();
+
+        if (!expirationDate.isAfter(now)) {
+          // 1. Send Notification
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .collection('notifications')
+              .add({
+            'title': 'Ingredient Expired',
+            'body': 'The ingredient "${data['name']}" has expired!',
+            'type': 'expiration',
+            'timestamp': FieldValue.serverTimestamp(),
+            'read': false,
+          });
+
+          // 2. Mark ingredient as notified
+          await doc.reference.update({'notified': true});
+        }
+      }
+    }
+
+    // Save last check date
+    await prefs.setString('last_expiration_check', now.toIso8601String());
   }
 
-
-  Future<void> _joinFamily() async {
-    if (user == null || _familyCodeController.text.isEmpty) return;
-
-    setState(() => _isLoading = true);
-
-    try {
-      // Implementation would depend on your family sharing logic
-      // This is a placeholder for the actual implementation
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(localizations.familyJoinSuccess)),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(localizations.familyJoinError)),
-      );
-      print("Error joining family: $e");
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
 
   Future<void> _logout() async {
     await FirebaseAuth.instance.signOut();
@@ -215,12 +239,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(localizations.profile),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _logout,
-          )
-        ],
+          actions: [
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(user!.uid)
+                  .collection('notifications')
+                  .where('read', isEqualTo: false)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                bool hasUnread = snapshot.hasData && snapshot.data!.docs.isNotEmpty;
+
+                return Stack(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.notifications),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => NotificationsPage()),
+                        );
+                      },
+                    ),
+                    if (hasUnread)
+                      Positioned(
+                        right: 12,
+                        top: 12,
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: _logout,
+            ),
+          ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -239,9 +301,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const Divider(),
                     _buildPasswordSection(),
                     const Divider(),
-                    _buildFriendsSection(),
-                    const Divider(),
-                    _buildFamilySection(),
+                    _buildConnectionsSection(),
                   ],
                 ),
               ),
@@ -302,21 +362,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 25),
         Align(
           alignment: Alignment.centerRight,
           child: _isEditingUsername
               ? Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextButton(
-                      onPressed: () =>
-                          setState(() => _isEditingUsername = false),
-                      child: Text(localizations.cancel),
+                    Container(
+                      width: MediaQuery.of(context).size.width*0.4,
+                      child: ElevatedButton(
+                        onPressed: () =>
+                            setState(() => _isEditingUsername = false),
+                        child: Text(localizations.cancel),
+                      ),
                     ),
-                    ElevatedButton(
-                      onPressed: _updateUsername,
-                      child: Text(localizations.save),
+                    SizedBox(width: MediaQuery.of(context).size.width*0.1,),
+                    Container(
+                      width: MediaQuery.of(context).size.width*0.4,
+                      child: ElevatedButton(
+                        onPressed: _updateUsername,
+                        child: Text(localizations.save),
+                      ),
                     ),
                   ],
                 )
@@ -395,13 +462,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              TextButton(
-                onPressed: () => setState(() => _isChangingPassword = false),
-                child: Text(localizations.cancel),
+              Container(
+                width: MediaQuery.of(context).size.width*0.4,
+                child: ElevatedButton(
+                  onPressed: () => setState(() => _isChangingPassword = false),
+                  child: Text(localizations.cancel),
+                ),
               ),
-              ElevatedButton(
-                onPressed: _updatePassword,
-                child: Text(localizations.save),
+              SizedBox(width: MediaQuery.of(context).size.width*0.1),
+              Container(
+                width: MediaQuery.of(context).size.width*0.4,
+                child: ElevatedButton(
+                  onPressed: _updatePassword,
+                  child: Text(localizations.save),
+                ),
               ),
             ],
           ),
@@ -414,326 +488,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildFriendsSection() {
-    final friendController = TextEditingController();
-
+  Widget _buildConnectionsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(localizations.friends,
+        Text(localizations.connections,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        TextFormField(
-          controller: friendController,
-          decoration: InputDecoration(
-            labelText: localizations.enterFriendUsername,
-          ),
-        ),
-        const SizedBox(height: 8),
-        ElevatedButton(
-          onPressed: () async {
-            final username = friendController.text.trim();
-            if (username.isEmpty || user == null) return;
-
-            final query = await FirebaseFirestore.instance
-                .collection('users')
-                .where('username', isEqualTo: username)
-                .limit(1)
-                .get();
-
-            if (query.docs.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(localizations.friendNotFound)),
-              );
-              return;
-            }
-
-            final targetDoc = query.docs.first;
-            final targetUid = targetDoc.id;
-
-            if (targetUid == user!.uid) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(localizations.cannotAddYourself)),
-              );
-              return;
-            }
-
-            final friendReqRef = FirebaseFirestore.instance
-                .collection('users')
-                .doc(targetUid)
-                .collection('friendRequests')
-                .doc(user!.uid);
-
-            final existing = await friendReqRef.get();
-            if (existing.exists) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(localizations.friendRequestAlreadySent)),
-              );
-              return;
-            }
-
-            await friendReqRef.set({
-              'username': user!.displayName ?? user!.email,
-              'status': 'pending',
-              'sentAt': FieldValue.serverTimestamp(),
-            });
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(localizations.friendRequestSent)),
-            );
-
-            friendController.clear();
-          },
-          child: Text(localizations.addFriend),
-        ),
-      ],
-    );
-  }
-  Widget _buildFriendRequestsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(localizations.friendRequests,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('users')
-              .doc(user!.uid)
-              .collection('friendRequests')
-              .where('status', isEqualTo: 'pending')
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) {
-              return const CircularProgressIndicator();
-            }
-
-            final requests = snapshot.data!.docs;
-
-            if (requests.isEmpty) {
-              return Text(localizations.noFriendRequests);
-            }
-
-            return ListView.builder(
-              shrinkWrap: true,
-              itemCount: requests.length,
-              itemBuilder: (context, index) {
-                final req = requests[index];
-                final requesterUid = req.id;
-                final requesterName = req['username'];
-
-                return ListTile(
-                  title: Text(requesterName),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.check),
-                        onPressed: () async {
-                          // Add each other as friends
-                          await FirebaseFirestore.instance
-                              .collection('users')
-                              .doc(user!.uid)
-                              .collection('friends')
-                              .doc(requesterUid)
-                              .set({
-                            'username': requesterName,
-                            'addedAt': FieldValue.serverTimestamp(),
-                          });
-
-                          await FirebaseFirestore.instance
-                              .collection('users')
-                              .doc(requesterUid)
-                              .collection('friends')
-                              .doc(user!.uid)
-                              .set({
-                            'username': user!.displayName ?? user!.email,
-                            'addedAt': FieldValue.serverTimestamp(),
-                          });
-
-                          // Update request status
-                          await FirebaseFirestore.instance
-                              .collection('users')
-                              .doc(user!.uid)
-                              .collection('friendRequests')
-                              .doc(requesterUid)
-                              .update({'status': 'accepted'});
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () async {
-                          await FirebaseFirestore.instance
-                              .collection('users')
-                              .doc(user!.uid)
-                              .collection('friendRequests')
-                              .doc(requesterUid)
-                              .update({'status': 'rejected'});
-                        },
-                      ),
-                    ],
-                  ),
-                );
-              },
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFamilySection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(localizations.familySharing,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        Text(localizations.familySectionDescription,
-            style: const TextStyle(color: Colors.grey)),
-        const SizedBox(height: 16),
-
-        // Show current family code
-        FutureBuilder<DocumentSnapshot>(
-          future: FirebaseFirestore.instance
-              .collection('users')
-              .doc(user!.uid)
-              .get(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            String familyCode = '';
-            if (snapshot.hasData && snapshot.data!.exists && snapshot.data!.data() != null) {
-              final data = snapshot.data!.data() as Map<String, dynamic>;
-              if (data.containsKey('familyCode')) {
-                familyCode = data['familyCode'] ?? '';
-              }
-            }
-
-            if (familyCode.isEmpty) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(context)!.noFamilyCodeYet,
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: _generateFamilyCode,
-                    child: Text(AppLocalizations.of(context)!.generateFamilyCode),
-                  ),
-                ],
-              );
-            }
-
-            _familyCodeController.text = familyCode;
-
-            return TextFormField(
-              controller: _familyCodeController,
-              readOnly: true,
-              decoration: InputDecoration(
-                labelText: AppLocalizations.of(context)!.familyCode,
-                border: const OutlineInputBorder(),
+        Row(
+          children: [
+            Expanded(
+              child: Card(
+                child: ListTile(
+                  leading: const Icon(Icons.person_add_alt_1),
+                  title: Text(localizations.manageFriends),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const FriendsPage()),
+                    );
+                  },
+                ),
               ),
-            );
-          },
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Card(
+                child: ListTile(
+                  leading: const Icon(Icons.group),
+                  title: Text(localizations.manageFamily),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) =>  Container()),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
         ),
-
-        const SizedBox(height: 12),
-
-        ElevatedButton(
-          onPressed: _generateFamilyCode,
-          child: Text(localizations.generateFamilyCode),
-        ),
-
-        const Divider(height: 32),
-        _buildAddFamilyMemberSection(),
       ],
     );
   }
 
-  Widget _buildAddFamilyMemberSection() {
-    final permissions = {
-      'shoppingList': false,
-      'inventory': false,
-      'recipes': false,
-      'mealPlan': false,
-    };
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(localizations.addFamilyMember,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: _addFamilyUsernameController,
-          decoration: InputDecoration(
-            labelText: localizations.enterMemberUsername,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(localizations.setPermissions),
-        ...permissions.keys.map((key) => CheckboxListTile(
-              title: Text(getPermissionLabel(localizations, key)),
-              value: permissions[key],
-              onChanged: (val) {
-                permissions[key] = val!;
-                setState(() {}); // Make sure UI updates
-              },
-            )),
-        const SizedBox(height: 12),
-        ElevatedButton(
-          onPressed: () async {
-            final username = _addFamilyUsernameController.text.trim();
-
-            if (username.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(localizations.usernameRequired)),
-              );
-              return;
-            }
-
-            final query = await FirebaseFirestore.instance
-                .collection('users')
-                .where('username', isEqualTo: username)
-                .limit(1)
-                .get();
-
-            if (query.docs.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(localizations.userNotFound)),
-              );
-              return;
-            }
-
-            final memberUid = query.docs.first.id;
-
-            await FirebaseFirestore.instance
-                .collection('users')
-                .doc(user!.uid)
-                .collection('familyMembers')
-                .doc(memberUid)
-                .set({
-              'username': username,
-              'permissions': permissions,
-              'addedAt': FieldValue.serverTimestamp(),
-            });
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(localizations.familyMemberAdded)),
-            );
-
-            _addFamilyUsernameController.clear();
-          },
-          child: Text(localizations.addMember),
-        )
-      ],
-    );
-  }
 
   String getPermissionLabel(AppLocalizations localizations, String key) {
     switch (key) {
@@ -752,9 +550,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   void dispose() {
-    _addFamilyUsernameController.dispose();
     _passwordController.dispose();
-    _familyCodeController.dispose();
+    _usernameController.dispose();
     super.dispose();
   }
 }

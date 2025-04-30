@@ -265,17 +265,42 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(localizations.mealPlan),
-        leading: IconButton(
-          icon: const Icon(Icons.person),
-          tooltip: AppLocalizations.of(context)!.profile,
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) =>  ProfileScreen(),),
+        centerTitle: true,
+        leading: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(FirebaseAuth.instance.currentUser!.uid)
+              .collection('notifications')
+              .where('read', isEqualTo: false)
+              .snapshots(),
+          builder: (context, snapshot) {
+            final hasUnread = snapshot.hasData && snapshot.data!.docs.isNotEmpty;
+
+            return Stack(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.person),
+                  tooltip: AppLocalizations.of(context)!.profile,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                    );
+                  },
+                ),
+                if (hasUnread)
+                  const Positioned(
+                    right: 8,
+                    top: 8,
+                    child: CircleAvatar(
+                      radius: 5,
+                      backgroundColor: Colors.red,
+                    ),
+                  ),
+              ],
             );
           },
         ),
-        centerTitle: true,
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) {
@@ -301,9 +326,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 child: Text(localizations.deleteMealPlan),
               ),
             ],
-          )
+          ),
         ],
       ),
+
       body: Column(
         children: [
           Padding(

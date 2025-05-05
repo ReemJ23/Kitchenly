@@ -795,17 +795,17 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
       body: Stepper(
         controlsBuilder: (context, details) {
           return Column(
-            children: [
-              if (details.currentStep > 0)
-                ElevatedButton(
-                  onPressed: details.onStepCancel,
-                  child: Text(AppLocalizations.of(context)!.back),
-                ),
-              ElevatedButton(
-                onPressed: details.onStepContinue,
-                child: Text(AppLocalizations.of(context)!.continueText),
-              ),
-            ],
+            // children: [
+            //   if (details.currentStep > 0)
+            //     // ElevatedButton(
+            //     //   onPressed: details.onStepCancel,
+            //     //   child: Text(AppLocalizations.of(context)!.back),
+            //     // ),
+            //   // ElevatedButton(
+            //   //   onPressed: details.onStepContinue,
+            //   //   child: Text(AppLocalizations.of(context)!.continueText),
+            //   // ),
+            // ],
           );
         },
         currentStep: _currentStep,
@@ -1028,7 +1028,7 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
               color: Colors.grey[300],
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(Icons.fastfood, color: Colors.grey[600]),
+            child: Icon(Icons.fastfood, color: AppColors.iconColor),
           ),
 
           title: Text(data['name'] ?? 'Unknown Recipe'),
@@ -1110,8 +1110,14 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(localizations.generateShoppingList),
-            const SizedBox(height: 20),
+            // Text(localizations.generateShoppingList),
+            // const SizedBox(height: 20),
+            // ElevatedButton(
+            //   onPressed: _isGeneratingShoppingList ? null : _generateShoppingList,
+            //   child: _isGeneratingShoppingList
+            //       ? const CircularProgressIndicator()
+            //       : Text(localizations.generateShoppingList),
+            // ),
             ElevatedButton(
               onPressed: _isGeneratingShoppingList ? null : _generateShoppingList,
               child: _isGeneratingShoppingList
@@ -1232,7 +1238,7 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
       SnackBar(
         content: Row(
           children: [
-            Icon(Icons.check_circle, color: Colors.green),
+            Icon(Icons.check_circle, color: AppColors.success),
             const SizedBox(width: 8),
             Text(localizations.shoppingListGenerated),
           ],

@@ -220,47 +220,136 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
     setState(() => _selectedUnit = "g");
   }
 
+  // void _editItem(DocumentSnapshot itemDoc, String currentListKey) {
+  //   var itemData = itemDoc.data() as Map<String, dynamic>;
+  //   _editNameController.text = itemData['name'];
+  //   _editQtyController.text = itemData['quantity'].toString();
+  //   showDialog(
+  //     context: context,
+  //     builder: (_) => AlertDialog(
+  //       title: Text(AppLocalizations.of(context)!.editItem),
+  //     IconButton(
+  //       icon: Icon(Icons.delete, color: AppColors.deleteBg),
+  //       tooltip: localizations.delete,),
+  //       content: Column(
+  //         mainAxisSize: MainAxisSize.min,
+  //         children: [
+  //           TextField(
+  //             controller: _editNameController,
+  //             decoration:
+  //             InputDecoration(labelText: AppLocalizations.of(context)!.itemName),
+  //           ),
+  //           TextField(
+  //             controller: _editQtyController,
+  //             keyboardType: TextInputType.number,
+  //             decoration:
+  //             InputDecoration(labelText: AppLocalizations.of(context)!.quantity),
+  //           ),
+  //         ],
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () async {
+  //             await itemDoc.reference.delete();
+  //             Navigator.pop(context);
+  //           },
+  //           child: Icon(Icons.delete, color: AppColors.deleteBg),
+  //         ),
+  //         TextButton(
+  //           child: Text(AppLocalizations.of(context)!.save),
+  //           onPressed: () async {
+  //             await itemDoc.reference.update({
+  //               'name': _editNameController.text.trim(),
+  //               'quantity': int.tryParse(_editQtyController.text.trim()) ?? 1
+  //             });
+  //             Navigator.pop(context);
+  //           },
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+
   void _editItem(DocumentSnapshot itemDoc, String currentListKey) {
+    final localizations = AppLocalizations.of(context)!;
     var itemData = itemDoc.data() as Map<String, dynamic>;
     _editNameController.text = itemData['name'];
     _editQtyController.text = itemData['quantity'].toString();
+
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.editItem),
+      builder: (context) => AlertDialog(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(localizations.editItem),
+            IconButton(
+              icon: Icon(Icons.delete, color: AppColors.deleteBg),
+              tooltip: localizations.delete,
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(localizations.delete),
+                    content: Text(localizations.confirmDeleteItem),
+                    actions: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ElevatedButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: Text(localizations.delete),
+                              ),
+                              SizedBox(height: 10),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: Text(localizations.cancel),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true) {
+                  await itemDoc.reference.delete();
+                  Navigator.pop(context); // Close the edit dialog
+                }
+              },
+            ),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: _editNameController,
-              decoration:
-              InputDecoration(labelText: AppLocalizations.of(context)!.itemName),
+              decoration: InputDecoration(labelText: localizations.itemName),
             ),
+            SizedBox(height: 10),
             TextField(
               controller: _editQtyController,
               keyboardType: TextInputType.number,
-              decoration:
-              InputDecoration(labelText: AppLocalizations.of(context)!.quantity),
+              decoration: InputDecoration(labelText: localizations.quantity),
             ),
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () async {
-              await itemDoc.reference.delete();
-              Navigator.pop(context);
-            },
-            child: Icon(Icons.delete, color: AppColors.deleteBg),
-          ),
-          TextButton(
-            child: Text(AppLocalizations.of(context)!.save),
+          ElevatedButton(
             onPressed: () async {
               await itemDoc.reference.update({
                 'name': _editNameController.text.trim(),
-                'quantity': int.tryParse(_editQtyController.text.trim()) ?? 1
+                'quantity': int.tryParse(_editQtyController.text.trim()) ?? 1,
               });
               Navigator.pop(context);
             },
+            child: Text(localizations.save),
           ),
         ],
       ),

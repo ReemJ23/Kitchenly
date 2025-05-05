@@ -213,7 +213,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
           children: [
             Text(localizations.editItem),
             IconButton(
-              icon: Icon(Icons.delete, color: Colors.red),
+              icon: Icon(Icons.delete, color: AppColors.deleteBg),
               tooltip: localizations.delete,
               onPressed: () async {
                 // Show confirmation first
@@ -223,15 +223,27 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     title: Text(localizations.delete),
                     content: Text(localizations.confirmDeleteItem),
                     actions: [
-                      TextButton(
-                        child: Text(localizations.cancel),
-                        onPressed: () => Navigator.pop(context, false),
-                      ),
-                      TextButton(
-                        child: Text(localizations.delete),
-                        onPressed: () => Navigator.pop(context, true),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ElevatedButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: Text(localizations.delete),
+                              ),
+                              SizedBox(height: 10),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: Text(localizations.cancel),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ],
+
                   ),
                 );
 
@@ -517,7 +529,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                           color: AppColors.deleteBg,
                           alignment: Alignment.centerRight,
                           padding: EdgeInsets.symmetric(horizontal: 20),
-                          child: Icon(Icons.delete, color: Colors.white),
+                          child: Icon(Icons.delete, color: AppColors.iconColor),
                         ),
                         onDismissed: (_) => itemDoc.reference.delete(),
                         child: Draggable<DocumentSnapshot>(

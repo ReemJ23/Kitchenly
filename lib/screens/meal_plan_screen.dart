@@ -173,7 +173,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                     '${DateFormat.yMMMd().format(start)} - ${DateFormat.yMMMd()
                         .format(end)}'),
                 trailing: IconButton(
-                  icon: Icon(Icons.delete, color: Colors.red),
+                  icon: Icon(Icons.delete, color: AppColors.deleteBg),
                   onPressed: () async {
                     final deletedPlanId = doc.id;
 
@@ -279,7 +279,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             return Stack(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.person),
+                  icon: const CircleAvatar(
+                      backgroundImage: AssetImage('assets/images/icons/profile_chef_icon.png'),
+                      backgroundColor: AppColors.profileIconBg,),
                   tooltip: AppLocalizations.of(context)!.profile,
                   onPressed: () {
                     Navigator.push(
@@ -451,6 +453,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             },
             onPageChanged: (focusedDay) => _focusedDay = focusedDay,
             eventLoader: (day) => _getEventsForDay(day),
+            daysOfWeekStyle: DaysOfWeekStyle(
+              weekdayStyle: TextStyle(fontSize: 15),
+              weekendStyle: TextStyle(fontSize: 15),
+            ),
             headerStyle: HeaderStyle(
               formatButtonVisible: false,
             ),

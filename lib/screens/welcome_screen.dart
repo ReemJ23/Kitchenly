@@ -3,7 +3,6 @@ import 'package:kitchenly/routes.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:kitchenly/utils/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:kitchenly/utils/font_helper.dart';
 import 'dart:async';
 import '../main.dart';
 
@@ -14,7 +13,7 @@ class WelcomeScreen extends StatefulWidget {
 }
 
 class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateMixin{
-String selectedLanguage = 'en';  // Default language
+String selectedLanguage = 'en';
 late AnimationController _rotationController;
 int _currentIndex = 0;
 double _opacity = 1.0;

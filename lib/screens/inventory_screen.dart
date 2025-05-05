@@ -333,8 +333,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
             return Stack(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.person),
-                  tooltip: AppLocalizations.of(context)!.profile,
+                  icon: const CircleAvatar(
+                backgroundImage: AssetImage('assets/images/icons/profile_chef_icon.png'),
+                    backgroundColor: AppColors.profileIconBg,
+            ),
+
+            tooltip: AppLocalizations.of(context)!.profile,
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -490,7 +494,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         if (candidateData.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(left: 8.0),
-                            child: Icon(Icons.folder_open, color: Theme.of(context).colorScheme.primary),
+                            child: Icon(Icons.add, color: Theme.of(context).colorScheme.primary),
                           ),
                       ],
                     ),

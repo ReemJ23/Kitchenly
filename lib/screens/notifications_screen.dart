@@ -2,19 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../utils/colors.dart';
+
 
 class NotificationsPage extends StatelessWidget {
   const NotificationsPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final localizations = AppLocalizations.of(context)!;
     final User? user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      appBar: AppBar(title: Text(loc.notifications)),
+      appBar: AppBar(title: Text(localizations.notifications)),
       body: user == null
-          ? Center(child: Text(loc.notSignedIn))
+          ? Center(child: Text(localizations.notSignedIn))
           : StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('users')
@@ -27,7 +29,17 @@ class NotificationsPage extends StatelessWidget {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return Center(child: Text(loc.noNotifications));
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.notifications_none, size: 72, color: AppColors.iconColor),
+                        SizedBox(height: 12),
+                        Text(localizations.noNotifications,
+                            style: TextStyle(color: AppColors.heading2, fontSize: 16)),
+                      ],
+                    ),
+                  );
                 }
 
                 final notifications = snapshot.data!.docs;
@@ -45,15 +57,15 @@ class NotificationsPage extends StatelessWidget {
                       key: Key(doc.id),
                       direction: DismissDirection.endToStart,
                       background: Container(
-                        color: Colors.red,
+                        color: AppColors.dismissNotification,
                         alignment: Alignment.centerRight,
                         padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: const Icon(Icons.delete, color: Colors.white),
+                        child: const Icon(Icons.delete, color: AppColors.iconColor),
                       ),
                       onDismissed: (_) async {
                         await doc.reference.delete();
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(loc.notificationDeleted)),
+                          SnackBar(content: Text(localizations.notificationDeleted)),
                         );
                       },
                       child: Container(
@@ -63,7 +75,7 @@ class NotificationsPage extends StatelessWidget {
                           title: Text(
                             _formatTimestamp(data['timestamp']),
                             style:
-                                const TextStyle(fontSize: 12, color: Colors.grey),
+                                const TextStyle(fontSize: 12, color: AppColors.heading2),
                           ),
                           onTap: () async {
                             if (data['read'] != true) {
@@ -73,7 +85,7 @@ class NotificationsPage extends StatelessWidget {
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(data['title'] ?? loc.notification),
+                              Text(data['title'] ?? localizations.notification),
                               Text(data['body'] ?? ''),
                               if (type == 'friend_request' &&
                                   status == 'pending') ...[
@@ -85,8 +97,8 @@ class NotificationsPage extends StatelessWidget {
                                           0.37,
                                       child: TextButton.icon(
                                         icon: const Icon(Icons.check,
-                                            color: Colors.green),
-                                        label: Text(loc.accept),
+                                            color: AppColors.acceptFriend),
+                                        label: Text(localizations.accept),
                                         onPressed: () async {
                                           final fromUid = data['fromUid'];
 
@@ -109,9 +121,9 @@ class NotificationsPage extends StatelessWidget {
                                           await doc.reference.update({
                                             'status': 'accepted',
                                             'read': true,
-                                            'title': loc.friendRequestAccepted,
+                                            'title': localizations.friendRequestAccepted,
                                             'body':
-                                                '${loc.youAcceptedRequest} ${data['fromUsername']}',
+                                                '${localizations.youAcceptedRequest} ${data['fromUsername']}',
                                           });
                                           // Notify the sender that their request was accepted
                                           final currentUserDoc = await FirebaseFirestore.instance
@@ -127,7 +139,7 @@ class NotificationsPage extends StatelessWidget {
                                               .doc(fromUid)
                                               .collection('notifications')
                                               .add({
-                                            'title': loc.friendRequestAccepted,
+                                            'title': localizations.friendRequestAccepted,
                                             'body': '$currentUsername accepted your friend request.',
                                             'type': 'system',
                                             'timestamp': FieldValue.serverTimestamp(),
@@ -141,15 +153,15 @@ class NotificationsPage extends StatelessWidget {
                                           0.37,
                                       child: TextButton.icon(
                                         icon: const Icon(Icons.clear,
-                                            color: Colors.red),
-                                        label: Text(loc.decline),
+                                            color: AppColors.declineFriend),
+                                        label: Text(localizations.decline),
                                         onPressed: () async {
                                           await doc.reference.update({
                                             'status': 'rejected',
                                             'read': true,
-                                            'title': loc.friendRequestDeclined,
+                                            'title': localizations.friendRequestDeclined,
                                             'body':
-                                                '${loc.youDeclinedRequest} ${data['fromUsername']}',
+                                                '${localizations.youDeclinedRequest} ${data['fromUsername']}',
                                           });
 
                                           // Notify the sender that their request was declined
@@ -166,7 +178,7 @@ class NotificationsPage extends StatelessWidget {
                                               .doc(data['fromUid'])
                                               .collection('notifications')
                                               .add({
-                                            'title': loc.friendRequestDeclined,
+                                            'title': localizations.friendRequestDeclined,
                                             'body': '$currentUsername declined your friend request.',
                                             'type': 'system',
                                             'timestamp': FieldValue.serverTimestamp(),

@@ -8,7 +8,9 @@ import 'package:kitchenly/screens/recipe_stepper.dart';
 import '../models/recipeStep.dart';
 import '../utils/localization_helper.dart';
 import 'edit_add_recipe_screen.dart';
-import 'dart:convert'; // for base64Decode
+import 'dart:convert';
+import '../utils/colors.dart';
+
 String? lang;
 class _RecipeCardData {
   final int availableIngredients;
@@ -83,6 +85,7 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(localizations.myRecipes),
+        centerTitle: true,
         leading: StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
               .collection('users')
@@ -96,7 +99,10 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
             return Stack(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.person),
+                    icon: const CircleAvatar(
+                      backgroundImage: AssetImage('assets/images/icons/profile_chef_icon.png'),
+                      backgroundColor: AppColors.profileIconBg,
+                      ),
                   tooltip: AppLocalizations.of(context)!.profile,
                   onPressed: () {
                     Navigator.push(

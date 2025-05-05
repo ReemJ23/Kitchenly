@@ -250,7 +250,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
               await itemDoc.reference.delete();
               Navigator.pop(context);
             },
-            child: Icon(Icons.delete, color: Colors.red),
+            child: Icon(Icons.delete, color: AppColors.deleteBg),
           ),
           TextButton(
             child: Text(AppLocalizations.of(context)!.save),
@@ -408,7 +408,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                       if (candidateData.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(left: 8.0),
-                          child: Icon(Icons.folder_open, color: Theme.of(context).colorScheme.primary),
+                          child: Icon(Icons.add, color: Theme.of(context).colorScheme.primary),
                         ),
                     ],
                   ),
@@ -578,7 +578,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                       if (candidateData.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(left: 8.0),
-                          child: Icon(Icons.folder_open, color: Theme.of(context).colorScheme.primary),
+                          child: Icon(Icons.add, color: Theme.of(context).colorScheme.primary),
                         ),
                     ],
                   ),
@@ -675,7 +675,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
             return Stack(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.person),
+                    icon: const CircleAvatar(
+                      backgroundImage: AssetImage('assets/images/icons/profile_chef_icon.png'),
+                      backgroundColor: AppColors.profileIconBg,
+                      ),
                   tooltip: AppLocalizations.of(context)!.profile,
                   onPressed: () {
                     Navigator.push(

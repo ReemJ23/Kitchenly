@@ -555,5 +555,10 @@
 "friendRequestDeclined": "تم رفض طلب الصداقة",
 "youAcceptedRequest": "لقد قبلت طلب صداقة من",
 "youDeclinedRequest": "لقد رفضت طلب صداقة من",
-"notificationDeleted": "تم حذف الإشعار"
+"notificationDeleted": "تم حذف الإشعار",
+"cuisine": "المطبخ",
+"level": "المستوى",
+"preparationTime": "وقت التحضير",
+"ingredientAvailability": "توفر المكونات",
+ "addUsername": "أضف اسم مستخدم"
 }

@@ -5,9 +5,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:kitchenly/screens/notifications_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:kitchenly/utils/colors.dart';
 import 'dart:convert';
 import 'dart:io';
-
 import 'friends_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -29,6 +29,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isChangingPassword = false;
   bool _isLoading = false;
   bool _hasNotifications = false;
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -57,8 +58,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (userDoc.exists) {
         setState(() {
           _userLanguage = userDoc['language'] ?? 'en';
-          _usernameController.text =
-              userDoc['username'] ?? user?.displayName ?? '';
+          // _usernameController.text =
+          //     userDoc['username'] ?? user?.displayName ?? '';
+          _usernameController.text = userDoc['username'] ?? '';
+
           _imageBase64 = userDoc['profilePicture'];
         });
       }
@@ -107,6 +110,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } finally {
       setState(() => _isLoading = false);
     }
+    if (mounted) setState(() {
+      _isEditingUsername = false;
+    });
+
   }
 
   Future<void> _updatePassword() async {
@@ -239,6 +246,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(localizations.profile),
+        centerTitle: true,
           actions: [
             StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
@@ -325,8 +333,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ? NetworkImage(user!.photoURL!)
                         : null),
                 child: _imageBase64 == null && user?.photoURL == null
-                    ? const Icon(Icons.person, size: 40)
+                    ? Image.asset(
+                  'assets/images/icons/profile_chef_icon.png',
+                  width: 60,
+                  height: 60,
+                )
                     : null,
+
               ),
             ),
             const SizedBox(width: 16),
@@ -335,11 +348,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (!_isEditingUsername)
-                    Text(
-                      user?.displayName ?? _usernameController.text,
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
+                    // Text(
+                    //   _usernameController.text.isEmpty
+                    //       ? localizations.addUsername
+                    //       : _usernameController.text,
+                    //   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    // )
+                    // ,
+                    GestureDetector(
+                      onTap: () => setState(() => _isEditingUsername = true),
+                      child: Text(
+                        _usernameController.text.isEmpty
+                            ? localizations.addUsername
+                            : _usernameController.text,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.heading1,
+                          //fontStyle: _usernameController.text.isEmpty ? FontStyle.italic : FontStyle.normal,
+                        ),
+                      ),
                     ),
+
                   if (_isEditingUsername)
                     TextFormField(
                       controller: _usernameController,
@@ -355,7 +385,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   Text(
                     user?.email ?? 'No email',
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    style: const TextStyle(fontSize: 14, color: AppColors.heading2),
                   ),
                 ],
               ),
@@ -364,7 +394,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 25),
         Align(
-          alignment: Alignment.centerRight,
+          alignment: Alignment.center,
           child: _isEditingUsername
               ? Row(
                   mainAxisSize: MainAxisSize.min,
@@ -387,10 +417,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ],
                 )
-              : TextButton(
-                  onPressed: () => setState(() => _isEditingUsername = true),
-                  child: Text(localizations.editProfile),
-                ),
+              : const SizedBox.shrink(),
         ),
       ],
     );
@@ -444,9 +471,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 8),
           TextFormField(
             controller: _passwordController,
-            obscureText: true,
+            obscureText: _obscurePassword,
+
             decoration: InputDecoration(
               labelText: localizations.newPassword,
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
+                },
+              ),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -457,6 +495,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               }
               return null;
             },
+
           ),
           const SizedBox(height: 8),
           Row(
@@ -480,9 +519,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
         ] else
-          TextButton(
-            onPressed: () => setState(() => _isChangingPassword = true),
-            child: Text(localizations.changePassword),
+          Center(
+            child: TextButton(
+              onPressed: () => setState(() => _isChangingPassword = true),
+              child: Text(localizations.changePassword),
+            ),
           ),
       ],
     );

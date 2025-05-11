@@ -560,5 +560,11 @@
 "level": "المستوى",
 "preparationTime": "وقت التحضير",
 "ingredientAvailability": "توفر المكونات",
- "addUsername": "أضف اسم مستخدم"
+ "addUsername": "أضف اسم مستخدم",
+  "fillPreviousIngredient": "قم بتعبئة المكون السابق أولًا",
+  "fillPreviousStep": "قم بتعبئة الخطوة السابقة أولًا",
+  "imageTooLarge": "الصورة كبيرة جداً (الحد الأقصى 1 ميجابايت)",
+  "imagePickFailed": "فشل في اختيار الصورة: {error}",
+  "errorSavingRecipe": "حدث خطأ أثناء حفظ الوصفة: {error}",
+  "errorSavingMealPlan": "حدث خطأ أثناء حفظ خطة الوجبات: {error}"
 }

@@ -1298,7 +1298,7 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
     } catch (e) {
       setState(() => _isGeneratingShoppingList = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving meal plan: $e')),
+        SnackBar(content: Text(localizations.errorSavingMealPlan(e.toString()))),
       );
     }
   }

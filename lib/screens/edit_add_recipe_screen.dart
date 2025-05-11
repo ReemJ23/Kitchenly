@@ -6,6 +6,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import '../utils/localization_helper.dart';
+import '../utils/colors.dart';
 
 class EditRecipePage extends StatefulWidget {
   final DocumentSnapshot? recipe;
@@ -88,7 +89,7 @@ class _EditRecipePageState extends State<EditRecipePage> {
       // Check image size (limit to 1MB)
       if (imageBytes.length > 1024 * 1024) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Image too large (max 1MB)')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.imageTooLarge)),
         );
         return;
       }
@@ -99,7 +100,10 @@ class _EditRecipePageState extends State<EditRecipePage> {
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to pick image: $e')),
+        SnackBar(content: Text
+          (AppLocalizations.of(context)!.imagePickFailed(e.toString()),
+        )
+        ),
       );
     }
   }
@@ -174,6 +178,7 @@ class _EditRecipePageState extends State<EditRecipePage> {
             onPressed: _saveRecipe,
           ),
         ],
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
@@ -370,9 +375,12 @@ class _EditRecipePageState extends State<EditRecipePage> {
               SizedBox(height: 8),
               ..._ingredients.map((ingredient) =>
                   _buildIngredientItem(ingredient)).toList(),
-              ElevatedButton(
+              Center(
+              child: TextButton.icon(
                 onPressed: _addIngredient,
-                child: Text(localizations.addIngredient),
+                icon: Icon(Icons.add),
+                label: Text(localizations.addIngredient),
+              ),
               ),
               SizedBox(height: 24),
 
@@ -381,9 +389,12 @@ class _EditRecipePageState extends State<EditRecipePage> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               SizedBox(height: 8),
               ..._steps.map((step) => _buildStepItem(step)).toList(),
-              ElevatedButton(
+              Center(
+              child: TextButton.icon(
                 onPressed: _addStep,
-                child: Text(localizations.addStep),
+                icon: Icon(Icons.add),
+                label: Text(localizations.addStep),
+              ),
               ),
               SizedBox(height: 24),
 
@@ -423,10 +434,12 @@ class _EditRecipePageState extends State<EditRecipePage> {
                   )
                 else
                   Text(localizations.noImageSelected),
-              ElevatedButton(
+              Center(child: TextButton.icon(
                 onPressed: _pickImage,
-                child: Text(localizations.uploadImage),
-              ),
+                icon: Icon(Icons.upload),
+                label: Text(localizations.uploadImage),
+              ),),
+
 
 
             ],
@@ -516,7 +529,7 @@ class _EditRecipePageState extends State<EditRecipePage> {
             Align(
               alignment: Alignment.centerRight,
               child: IconButton(
-                icon: Icon(Icons.delete, color: Colors.red),
+                icon: Icon(Icons.delete, color: AppColors.deleteBg),
                 onPressed: () =>
                     setState(() => _ingredients.remove(ingredient)),
               ),
@@ -631,14 +644,14 @@ class _EditRecipePageState extends State<EditRecipePage> {
               ),
               onChanged: (value) => step['text'] = value,
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 10),
             // Display selected ingredients
             if (selectedIngredientNames.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: Text(
                   '${localizations.ingredients}: $selectedIngredientNames',
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 14, color: AppColors.heading2),
                 ),
               ),
             // Button to select ingredients
@@ -649,7 +662,7 @@ class _EditRecipePageState extends State<EditRecipePage> {
             Align(
               alignment: Alignment.centerRight,
               child: IconButton(
-                icon: Icon(Icons.delete, color: Colors.red),
+                icon: Icon(Icons.delete, color: AppColors.deleteBg),
                 onPressed: () => setState(() => _steps.remove(step)),
               ),
             ),
@@ -660,6 +673,19 @@ class _EditRecipePageState extends State<EditRecipePage> {
   }
 
   void _addIngredient() {
+    if (_ingredients.isNotEmpty) {
+      final last = _ingredients.last;
+      if ((last['name'] as String).trim().isEmpty ||
+          last['quantity'] == null ||
+          last['quantity'].toString().isEmpty ||
+          last['unit'] == null ||
+          (last['unit'] as String).trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.fillPreviousIngredient)),
+        );
+        return;
+      }
+    }
     setState(() {
       _ingredients.add({
         'name': '',
@@ -670,6 +696,16 @@ class _EditRecipePageState extends State<EditRecipePage> {
   }
 
   void _addStep() {
+    if (_steps.isNotEmpty) {
+      final last = _steps.last;
+      if ((last['text'] as String).trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.fillPreviousStep)),
+        );
+        return;
+      }
+    }
+
     setState(() {
       _steps.add({
         'text': '',
@@ -725,7 +761,7 @@ class _EditRecipePageState extends State<EditRecipePage> {
     } catch (e) {
       Navigator.pop(context); // Close loading
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving recipe: $e')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.errorSavingRecipe(e.toString())),)
       );
     }
   }

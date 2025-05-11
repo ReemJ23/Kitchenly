@@ -319,5 +319,11 @@
 "level": "Level",
 "preparationTime": "Preparation Time",
 "ingredientAvailability": "Ingredient Availability",
-  "addUsername": "Add Username"
+  "addUsername": "Add Username",
+  "fillPreviousIngredient": "Please fill out the previous ingredient first",
+  "fillPreviousStep": "Please fill out the previous step first",
+  "imageTooLarge": "Image too large (max 1MB)",
+  "imagePickFailed": "Failed to pick image: {error}",
+  "errorSavingRecipe": "Error saving recipe: {error}",
+  "errorSavingMealPlan": "Error saving meal plan: {error}"
 }

@@ -45,15 +45,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
     String input = _userController.text.trim();
     String password = _passwordController.text.trim();
-
     try {
       UserCredential userCredential;
 
       if (input.contains('@')) {
-
-        userCredential = await _auth.signInWithEmailAndPassword(email: input, password: password);
+        userCredential = await _auth.signInWithEmailAndPassword(
+          email: input,
+          password: password,
+        );
       } else {
-
         QuerySnapshot userQuery = await FirebaseFirestore.instance
             .collection('users')
             .where('username', isEqualTo: input)
@@ -67,11 +67,12 @@ class _LoginScreenState extends State<LoginScreen> {
           return;
         }
 
-
         String email = userQuery.docs.first['email'];
 
-
-        userCredential = await _auth.signInWithEmailAndPassword(email: email, password: password);
+        userCredential = await _auth.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
       }
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -80,14 +81,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
       Navigator.pushNamedAndRemoveUntil(context, '/main', (route) => false, arguments: widget.language);
 
-    } on FirebaseAuthException catch (e) {
+    }  on FirebaseAuthException catch (e) {
       setState(() {
         if (e.code == 'user-not-found') {
           usernameOrEmailError = AppLocalizations.of(context)!.userNotFound;
-        } else if (e.code == 'wrong-password') {
-          passwordError = AppLocalizations.of(context)!.incorrectPassword;
+        } else if (e.code == 'invalid-credential') {
+          passwordError = AppLocalizations.of(context)!.wrongPassword;
         } else {
-          usernameOrEmailError = 'An error occurred: ${e.message}';
+          passwordError = AppLocalizations.of(context)!.loginErrorGeneric;
         }
       });
     }
@@ -148,12 +149,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
-                        labelText: localizations.password,
-                        border: OutlineInputBorder(),
+                        labelText: AppLocalizations.of(context)!.password,
                         errorText: passwordError,
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                            _obscurePassword ? Icons.visibility : Icons.visibility_off,
                           ),
                           onPressed: () {
                             setState(() {

@@ -555,5 +555,8 @@
 "friendRequestDeclined": "تم رفض طلب الصداقة",
 "youAcceptedRequest": "لقد قبلت طلب صداقة من",
 "youDeclinedRequest": "لقد رفضت طلب صداقة من",
-"notificationDeleted": "تم حذف الإشعار"
+"notificationDeleted": "تم حذف الإشعار",
+"userNotFound": "المستخدم غير موجود",
+  "wrongPassword": "كلمة المرور غير صحيحة",
+  "loginErrorGeneric": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى"
 }

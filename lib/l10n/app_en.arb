@@ -314,5 +314,8 @@
 "friendRequestDeclined": "Friend Request Declined",
 "youAcceptedRequest": "You accepted a friend request from",
 "youDeclinedRequest": "You declined a friend request from",
-"notificationDeleted": "Notification deleted"
+"notificationDeleted": "Notification deleted",
+"userNotFound": "User not found",
+"wrongPassword": "Incorrect password",
+"loginErrorGeneric": "An unexpected error occurred. Please try again."
 }

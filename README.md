@@ -6,4 +6,3 @@
 - Change ingredients quantity based on serving size
 - Allergies
 - Test expiration notifications
-- fix wrong password validation

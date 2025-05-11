@@ -556,7 +556,21 @@
 "youAcceptedRequest": "لقد قبلت طلب صداقة من",
 "youDeclinedRequest": "لقد رفضت طلب صداقة من",
 "notificationDeleted": "تم حذف الإشعار",
+<<<<<<< HEAD
 "userNotFound": "المستخدم غير موجود",
   "wrongPassword": "كلمة المرور غير صحيحة",
   "loginErrorGeneric": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى"
+=======
+"cuisine": "المطبخ",
+"level": "المستوى",
+"preparationTime": "وقت التحضير",
+"ingredientAvailability": "توفر المكونات",
+ "addUsername": "أضف اسم مستخدم",
+  "fillPreviousIngredient": "قم بتعبئة المكون السابق أولًا",
+  "fillPreviousStep": "قم بتعبئة الخطوة السابقة أولًا",
+  "imageTooLarge": "الصورة كبيرة جداً (الحد الأقصى 1 ميجابايت)",
+  "imagePickFailed": "فشل في اختيار الصورة: {error}",
+  "errorSavingRecipe": "حدث خطأ أثناء حفظ الوصفة: {error}",
+  "errorSavingMealPlan": "حدث خطأ أثناء حفظ خطة الوجبات: {error}"
+>>>>>>> d211e58640aa1cbeea8a7f1e696fd489b215de7f
 }

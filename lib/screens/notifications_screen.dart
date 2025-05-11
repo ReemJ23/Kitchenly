@@ -14,7 +14,10 @@ class NotificationsPage extends StatelessWidget {
     final User? user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      appBar: AppBar(title: Text(localizations.notifications)),
+      appBar: AppBar(title: Text(localizations.notifications
+      ), centerTitle: true,
+
+      ),
       body: user == null
           ? Center(child: Text(localizations.notSignedIn))
           : StreamBuilder<QuerySnapshot>(

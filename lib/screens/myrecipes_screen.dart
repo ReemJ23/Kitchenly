@@ -38,7 +38,7 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
   // Filter options (these should be populated from your recipes data)
   final List<String> _cuisineTypes = ['all', 'italian', 'mexican', 'indian', 'chinese', 'mediterranean'];
   final List<String> _difficultyLevels = ['all', 'easy', 'medium', 'hard'];
-  final List<String> _timeCategories = ['all', 'quick', 'tmedium', 'long'];
+  final List<String> _timeCategories = ['all', 'quick', 'medium', 'long'];
   final List<String> _availabilityOptions = ['all', 'full', 'partial', 'low'];
   String? _userLanguage;
 
@@ -163,7 +163,27 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
 
                 final recipes = snapshot.data!.docs;
                 if (recipes.isEmpty) {
-                  return Center(child: Text(localizations.noRecipesFound));
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.restaurant_menu_rounded,
+                          size: 95,
+                          color: AppColors.iconColor,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          localizations.noRecipesFound,
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: AppColors.heading2,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  );
                 }
 
                 // Apply filters
@@ -229,53 +249,69 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
               onSelected: (selected) => setState(() => _selectedFilter = 'all'),
             ),
             SizedBox(width: 4),
-            DropdownButton<String>(
-              value: _selectedCuisine,
-              hint: Text(LocalizationHelper.getLocalizedString(localizations, 'cuisine')),
-              items: _cuisineTypes.map((type) {
-                return DropdownMenuItem(
-                  value: type,
-                  child: Text(LocalizationHelper.getLocalizedString(localizations, type)),
-                );
-              }).toList(),
-              onChanged: (value) => setState(() => _selectedCuisine = value!),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  localizations.cuisine,
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                ),
+                DropdownButton<String>(
+                  value: _selectedCuisine,
+                  isDense: true,
+                  items: _cuisineTypes.map((type) {
+                    return DropdownMenuItem(
+                      value: type,
+                      child: Text(LocalizationHelper.getLocalizedString(localizations, type)),
+                    );
+                  }).toList(),
+                  onChanged: (value) => setState(() => _selectedCuisine = value!),
+                ),
+              ],
             ),
             SizedBox(width: 4),
-            DropdownButton<String>(
-              value: _selectedDifficulty,
-              hint: Text(LocalizationHelper.getLocalizedString(localizations, 'difficulty')),
-              items: _difficultyLevels.map((level) {
-                return DropdownMenuItem(
-                  value: level,
-                  child: Text(LocalizationHelper.getLocalizedString(localizations, level)),
-                );
-              }).toList(),
-              onChanged: (value) => setState(() => _selectedDifficulty = value!),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  localizations.preparationTime,
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                ),
+                DropdownButton<String>(
+                  value: _selectedTime,
+                  isDense: true,
+                  items: _timeCategories.map((time) {
+                    return DropdownMenuItem(
+                      value: time,
+                      child: Text(LocalizationHelper.getLocalizedString(localizations, time)),
+                    );
+                  }).toList(),
+                  onChanged: (value) => setState(() => _selectedTime = value!),
+                ),
+              ],
             ),
             SizedBox(width: 4),
-            DropdownButton<String>(
-              value: _selectedTime,
-              hint: Text(LocalizationHelper.getLocalizedString(localizations, 'time')),
-              items: _timeCategories.map((time) {
-                return DropdownMenuItem(
-                  value: time,
-                  child: Text(LocalizationHelper.getLocalizedString(localizations, time)),
-                );
-              }).toList(),
-              onChanged: (value) => setState(() => _selectedTime = value!),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  localizations.ingredientAvailability,
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                ),
+                DropdownButton<String>(
+                  value: _selectedAvailability,
+                  isDense: true,
+                  items: _availabilityOptions.map((avail) {
+                    return DropdownMenuItem(
+                      value: avail,
+                      child: Text(LocalizationHelper.getLocalizedString(localizations, avail)),
+                    );
+                  }).toList(),
+                  onChanged: (value) => setState(() => _selectedAvailability = value!),
+                ),
+              ],
             ),
-            SizedBox(width: 4),
-            DropdownButton<String>(
-              value: _selectedAvailability,
-              hint: Text(LocalizationHelper.getLocalizedString(localizations, 'availability')),
-              items: _availabilityOptions.map((avail) {
-                return DropdownMenuItem(
-                  value: avail,
-                  child: Text(LocalizationHelper.getLocalizedString(localizations, avail)),
-                );
-              }).toList(),
-              onChanged: (value) => setState(() => _selectedAvailability = value!),
-            ),
+
           ],
         ),
       ),

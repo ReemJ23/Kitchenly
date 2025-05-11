@@ -315,21 +315,18 @@
 "youAcceptedRequest": "You accepted a friend request from",
 "youDeclinedRequest": "You declined a friend request from",
 "notificationDeleted": "Notification deleted",
-<<<<<<< HEAD
 "userNotFound": "User not found",
 "wrongPassword": "Incorrect password",
-"loginErrorGeneric": "An unexpected error occurred. Please try again."
-=======
+"loginErrorGeneric": "An unexpected error occurred. Please try again.",
 "cuisine": "Cuisine",
 "level": "Level",
 "preparationTime": "Preparation Time",
 "ingredientAvailability": "Ingredient Availability",
-  "addUsername": "Add Username",
-  "fillPreviousIngredient": "Please fill out the previous ingredient first",
-  "fillPreviousStep": "Please fill out the previous step first",
-  "imageTooLarge": "Image too large (max 1MB)",
-  "imagePickFailed": "Failed to pick image: {error}",
-  "errorSavingRecipe": "Error saving recipe: {error}",
-  "errorSavingMealPlan": "Error saving meal plan: {error}"
->>>>>>> d211e58640aa1cbeea8a7f1e696fd489b215de7f
+"addUsername": "Add Username",
+"fillPreviousIngredient": "Please fill out the previous ingredient first",
+"fillPreviousStep": "Please fill out the previous step first",
+"imageTooLarge": "Image too large (max 1MB)",
+"imagePickFailed": "Failed to pick image: {error}",
+"errorSavingRecipe": "Error saving recipe: {error}",
+"errorSavingMealPlan": "Error saving meal plan: {error}"
 }

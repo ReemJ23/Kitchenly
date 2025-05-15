@@ -742,7 +742,7 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
     final inventorySnapshot = await FirebaseFirestore.instance
         .collection('users')
         .doc(user!.uid)
-        .collection('inventory')
+        .collection('inventory.dart')
         .get();
 
     final inventory = inventorySnapshot.docs.map((e) => e.data()).toList();
@@ -1191,11 +1191,11 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
       }
     }
 
-    // 2. Check inventory for available quantities
+    // 2. Check inventory.dart for available quantities
     final inventorySnapshot = await FirebaseFirestore.instance
         .collection('users')
         .doc(user!.uid)
-        .collection('inventory')
+        .collection('inventory.dart')
         .get();
 
     for (final inventoryItem in inventorySnapshot.docs) {

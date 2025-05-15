@@ -3,136 +3,51 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:kitchenly/screens/profile_screen.dart';
+import 'package:kitchenly/models/recipeStep.dart';
+import 'package:kitchenly/utils/localization_helper.dart';
+import 'package:kitchenly/utils/colors.dart';
 import 'package:kitchenly/screens/recipe_stepper.dart';
-import '../models/recipeStep.dart';
-import '../utils/localization_helper.dart';
-import 'edit_add_recipe_screen.dart';
 import 'dart:convert';
-import '../utils/colors.dart';
 
-String? lang;
-class _RecipeCardData {
-  final int availableIngredients;
-  final int totalIngredients;
-  final Color availabilityColor;
+class EditableRecipesScreen extends StatefulWidget {
+  final String familyOwnerId;
+  final String language;
 
-  _RecipeCardData(this.availableIngredients, this.totalIngredients, this.availabilityColor);
-}
-class MyRecipesScreen extends StatefulWidget {
-  const MyRecipesScreen({Key? key}) : super(key: key);
+  const EditableRecipesScreen({
+    required this.familyOwnerId,
+    required this.language,
+    Key? key,
+  }) : super(key: key);
 
   @override
-  _MyRecipesScreenState createState() => _MyRecipesScreenState();
+  _EditableRecipesScreenState createState() => _EditableRecipesScreenState();
 }
 
-class _MyRecipesScreenState extends State<MyRecipesScreen> {
-  final User? user = FirebaseAuth.instance.currentUser;
+class _EditableRecipesScreenState extends State<EditableRecipesScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedFilter = 'all';
   String _selectedCuisine = 'all';
   String _selectedDifficulty = 'all';
   String _selectedTime = 'all';
   String _selectedAvailability = 'all';
-
-  // Filter options (these should be populated from your recipes data)
   final List<String> _cuisineTypes = ['all', 'italian', 'mexican', 'indian', 'chinese', 'mediterranean'];
   final List<String> _difficultyLevels = ['all', 'easy', 'medium', 'hard'];
   final List<String> _timeCategories = ['all', 'quick', 'medium', 'long'];
   final List<String> _availabilityOptions = ['all', 'full', 'partial', 'low'];
-  String? _userLanguage;
-
+  AppLocalizations? _localizations;
 
   @override
   void initState() {
     super.initState();
-    _fetchUserLanguage().then((language) {
-      setState(() {
-        _userLanguage = language;
-        lang=language;
-      });
-    });
-  }
-
-  // Fetch the user's preferred language from Firestore
-  Future<String> _fetchUserLanguage() async {
-    final userDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user!.uid)
-        .get();
-
-    if (userDoc.exists) {
-      return userDoc['language'] ?? 'en'; // Default to 'en' if language is not set
-    }
-    return 'en'; // Default to 'en' if the user document doesn't exist
-  }
-  Stream<bool> hasUnreadNotifications(String uid) {
-    return FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('notifications')
-        .where('read', isEqualTo: false)
-        .snapshots()
-        .map((snapshot) => snapshot.docs.isNotEmpty);
+    _localizations = lookupAppLocalizations(Locale(widget.language));
   }
 
   @override
   Widget build(BuildContext context) {
-    final localizations = _userLanguage != null
-        ? lookupAppLocalizations(Locale(_userLanguage!))
-        : AppLocalizations.of(context)!;
-
     return Scaffold(
       appBar: AppBar(
-        title: Text(localizations.myRecipes),
+        title: Text(_localizations!.myRecipes),
         centerTitle: true,
-        leading: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('users')
-              .doc(FirebaseAuth.instance.currentUser!.uid)
-              .collection('notifications')
-              .where('read', isEqualTo: false)
-              .snapshots(),
-          builder: (context, snapshot) {
-            final hasUnread = snapshot.hasData && snapshot.data!.docs.isNotEmpty;
-
-            return Stack(
-              children: [
-                IconButton(
-                    icon: const CircleAvatar(
-                      backgroundImage: AssetImage('assets/images/icons/profile_chef_icon.png'),
-                      backgroundColor: AppColors.profileIconBg,
-                      ),
-                  tooltip: AppLocalizations.of(context)!.profile,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                    );
-                  },
-                ),
-                if (hasUnread)
-                  const Positioned(
-                    right: 8,
-                    top: 8,
-                    child: CircleAvatar(
-                      radius: 5,
-                      backgroundColor: Colors.red,
-                    ),
-                  ),
-              ],
-            );
-          },
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const EditRecipePage()),
-            ),
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -141,19 +56,19 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: localizations.searchRecipes,
+                hintText: _localizations!.searchRecipes,
                 prefixIcon: Icon(Icons.search),
                 border: OutlineInputBorder(),
               ),
               onChanged: (value) => setState(() {}),
             ),
           ),
-          _buildFilterChips(localizations),
+          _buildFilterChips(),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('users')
-                  .doc(user!.uid)
+                  .doc(widget.familyOwnerId)
                   .collection('recipes')
                   .snapshots(),
               builder: (context, snapshot) {
@@ -174,7 +89,7 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
                         ),
                         SizedBox(height: 16),
                         Text(
-                          localizations.noRecipesFound,
+                          _localizations!.noRecipesFound,
                           style: TextStyle(
                             fontSize: 18,
                             color: AppColors.heading2,
@@ -186,34 +101,29 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
                   );
                 }
 
-                // Apply filters
                 var filteredRecipes = recipes.where((recipe) {
                   final data = recipe.data() as Map<String, dynamic>;
                   final name = data['name']?.toString().toLowerCase() ?? '';
                   final searchTerm = _searchController.text.toLowerCase();
 
-                  // Search filter
                   if (searchTerm.isNotEmpty && !name.contains(searchTerm)) {
                     return false;
                   }
 
-                  // Cuisine filter
                   if (_selectedCuisine != 'all' &&
                       (data['cuisineType']?.toString().toLowerCase() ?? '') != _selectedCuisine) {
                     return false;
                   }
 
-                  // Difficulty filter
                   if (_selectedDifficulty != 'all' &&
                       (data['difficulty']?.toString().toLowerCase() ?? '') != _selectedDifficulty) {
                     return false;
                   }
 
-                  // Time filter
                   if (_selectedTime != 'all') {
                     final prepTime = data['preparationTime'] as int? ?? 0;
                     if (_selectedTime == 'quick' && prepTime > 30) return false;
-                    if (_selectedTime == 'tmedium' && (prepTime <= 30 || prepTime > 60)) return false;
+                    if (_selectedTime == 'medium' && (prepTime <= 30 || prepTime > 60)) return false;
                     if (_selectedTime == 'long' && prepTime <= 60) return false;
                   }
 
@@ -225,7 +135,7 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
                   itemBuilder: (context, index) {
                     final recipe = filteredRecipes[index];
                     final data = recipe.data() as Map<String, dynamic>;
-                    return _buildRecipeCard(context, recipe, data, localizations);
+                    return _buildRecipeCard(context, recipe, data);
                   },
                 );
               },
@@ -236,7 +146,7 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
     );
   }
 
-  Widget _buildFilterChips(AppLocalizations localizations) {
+  Widget _buildFilterChips() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Padding(
@@ -244,7 +154,7 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
         child: Row(
           children: [
             FilterChip(
-              label: Text(LocalizationHelper.getLocalizedString(localizations, 'all')),
+              label: Text(LocalizationHelper.getLocalizedString(_localizations!, 'all')),
               selected: _selectedFilter == 'all',
               onSelected: (selected) => setState(() => _selectedFilter = 'all'),
             ),
@@ -253,7 +163,7 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  localizations.cuisine,
+                  _localizations!.cuisine,
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                 ),
                 DropdownButton<String>(
@@ -262,7 +172,7 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
                   items: _cuisineTypes.map((type) {
                     return DropdownMenuItem(
                       value: type,
-                      child: Text(LocalizationHelper.getLocalizedString(localizations, type)),
+                      child: Text(LocalizationHelper.getLocalizedString(_localizations!, type)),
                     );
                   }).toList(),
                   onChanged: (value) => setState(() => _selectedCuisine = value!),
@@ -274,7 +184,7 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  localizations.preparationTime,
+                  _localizations!.preparationTime,
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                 ),
                 DropdownButton<String>(
@@ -283,7 +193,7 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
                   items: _timeCategories.map((time) {
                     return DropdownMenuItem(
                       value: time,
-                      child: Text(LocalizationHelper.getLocalizedString(localizations, time)),
+                      child: Text(LocalizationHelper.getLocalizedString(_localizations!, time)),
                     );
                   }).toList(),
                   onChanged: (value) => setState(() => _selectedTime = value!),
@@ -295,7 +205,7 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  localizations.ingredientAvailability,
+                  _localizations!.ingredientAvailability,
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                 ),
                 DropdownButton<String>(
@@ -304,23 +214,21 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
                   items: _availabilityOptions.map((avail) {
                     return DropdownMenuItem(
                       value: avail,
-                      child: Text(LocalizationHelper.getLocalizedString(localizations, avail)),
+                      child: Text(LocalizationHelper.getLocalizedString(_localizations!, avail)),
                     );
                   }).toList(),
                   onChanged: (value) => setState(() => _selectedAvailability = value!),
                 ),
               ],
             ),
-
           ],
         ),
       ),
     );
   }
 
-  Widget _buildRecipeCard(BuildContext context, DocumentSnapshot recipe,
-      Map<String, dynamic> data, AppLocalizations localizations) {
-    return FutureBuilder(
+  Widget _buildRecipeCard(BuildContext context, DocumentSnapshot recipe, Map<String, dynamic> data) {
+    return FutureBuilder<_RecipeCardData>(
       future: _getRecipeCardData(recipe),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData) {
@@ -340,7 +248,6 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
               padding: const EdgeInsets.all(12.0),
               child: Row(
                 children: [
-                  // Recipe image or placeholder
                   if (data['imageBase64'] != null && data['imageBase64'].toString().isNotEmpty)
                     Center(
                       child: ClipRRect(
@@ -360,22 +267,22 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
                         ),
                       ),
                     )
-                    else Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(Icons.fastfood, size: 30, color: Colors.grey[600]),
+                  else Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(8),
                     ),
+                    child: Icon(Icons.fastfood, size: 30, color: Colors.grey[600]),
+                  ),
                   SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          data['name'] ?? localizations.untitledRecipe,
+                          data['name'] ?? _localizations!.untitledRecipe,
                           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                         SizedBox(height: 4),
@@ -384,7 +291,7 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
                             Icon(Icons.timer, size: 14, color: Colors.grey),
                             SizedBox(width: 4),
                             Text(
-                              '${data['preparationTime'] ?? '?'} ${localizations.minutes}',
+                              '${data['preparationTime'] ?? '?'} ${_localizations!.minutes}',
                               style: TextStyle(fontSize: 12, color: Colors.grey),
                             ),
                             SizedBox(width: 12),
@@ -434,21 +341,18 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
   }
 
   Future<_RecipeCardData> _getRecipeCardData(DocumentSnapshot recipe) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return _RecipeCardData(0, 0, Colors.grey);
-
-    // 1. Get all ingredients from the recipe
+    // Get all ingredients from the recipe
     final ingredientsQuery = await recipe.reference.collection('ingredients').get();
     final totalIngredients = ingredientsQuery.docs.length;
 
-    // 2. Check inventory.dart for available ingredients
+    // Check inventory for available ingredients
     int availableIngredients = 0;
 
     for (final ingredientDoc in ingredientsQuery.docs) {
       final ingredient = ingredientDoc.data() as Map<String, dynamic>;
       final inventoryItem = await FirebaseFirestore.instance
           .collection('users')
-          .doc(user.uid)
+          .doc(widget.familyOwnerId)
           .collection('inventory.dart')
           .where('name', isEqualTo: ingredient['name'])
           .where('unit', isEqualTo: ingredient['unit'])
@@ -465,12 +369,10 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
       }
     }
 
-    // Calculate availability ratio
     final availabilityRatio = totalIngredients > 0
         ? availableIngredients / totalIngredients
         : 0;
 
-    // Determine availability color
     Color availabilityColor;
     if (availabilityRatio == 1) {
       availabilityColor = Colors.green;
@@ -483,64 +385,43 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
     return _RecipeCardData(availableIngredients, totalIngredients, availabilityColor);
   }
 
-
   void _viewRecipeDetails(DocumentSnapshot recipe) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (context) {
-        return RecipeDetailsSheet(recipe: recipe);
+        return RecipeDetailsSheet(
+          recipe: recipe,
+          familyOwnerId: widget.familyOwnerId,
+          localizations: _localizations!,
+        );
       },
     );
   }
 }
-void _confirmDeleteRecipe(BuildContext context, DocumentSnapshot recipe) {
-  final localizations = AppLocalizations.of(context)!;
 
-  showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: Text(localizations.confirmDelete),
-        content: Text(localizations.areYouSureDelete),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context), // Cancel
-            child: Text(localizations.cancel),
-          ),
-          TextButton(
-            onPressed: () async {
-              try {
-                Navigator.pop(context); // Close confirmation dialog
-                Navigator.pop(context); // Close recipe details bottom sheet
-                await recipe.reference.delete();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(localizations.recipeDeletedSuccessfully)),
-                );
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('${localizations.failedToDeleteRecipe}: $e')),
-                );
-              }
-            },
-            child: Text(localizations.delete, style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      );
-    },
-  );
+class _RecipeCardData {
+  final int availableIngredients;
+  final int totalIngredients;
+  final Color availabilityColor;
+
+  _RecipeCardData(this.availableIngredients, this.totalIngredients, this.availabilityColor);
 }
 
 class RecipeDetailsSheet extends StatelessWidget {
   final DocumentSnapshot recipe;
+  final String familyOwnerId;
+  final AppLocalizations localizations;
 
-  const RecipeDetailsSheet({Key? key, required this.recipe}) : super(key: key);
+  const RecipeDetailsSheet({
+    Key? key,
+    required this.recipe,
+    required this.familyOwnerId,
+    required this.localizations,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final localizations = lang != null
-        ? lookupAppLocalizations(Locale(lang!))
-        : AppLocalizations.of(context)!;
     final data = recipe.data() as Map<String, dynamic>;
 
     return Container(
@@ -555,22 +436,6 @@ class RecipeDetailsSheet extends StatelessWidget {
               Text(
                 data['name'] ?? localizations.untitledRecipe,
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              Row(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.edit),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => EditRecipePage(recipe: recipe)));
-                    },
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.delete),
-                    color: Colors.red,
-                    onPressed: () => _confirmDeleteRecipe(context, recipe),
-                  ),
-                ],
               ),
             ],
           ),
@@ -594,7 +459,6 @@ class RecipeDetailsSheet extends StatelessWidget {
               ),
             ),
           SizedBox(height: 16),
-          // Recipe metadata
           Wrap(
             spacing: 12,
             runSpacing: 8,
@@ -610,7 +474,6 @@ class RecipeDetailsSheet extends StatelessWidget {
             ],
           ),
           SizedBox(height: 16),
-          // Ingredients section
           Text(
             localizations.ingredients,
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -640,7 +503,6 @@ class RecipeDetailsSheet extends StatelessWidget {
             ),
           ),
           SizedBox(height: 16),
-          // Steps section
           Text(
             localizations.steps,
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -664,8 +526,8 @@ class RecipeDetailsSheet extends StatelessWidget {
                         child: Text('${index + 1}', style: TextStyle(color: Colors.white)),
                       ),
                       title: Text(
-                          stepData['text'] ?? '',
-                          softWrap: true, // Enable text wrapping
+                        stepData['text'] ?? '',
+                        softWrap: true,
                       ),
                     );
                   },
@@ -675,9 +537,6 @@ class RecipeDetailsSheet extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () async {
-              final user = FirebaseAuth.instance.currentUser;
-              if (user == null) return;
-
               showDialog(
                 context: context,
                 barrierDismissible: false,
@@ -685,14 +544,12 @@ class RecipeDetailsSheet extends StatelessWidget {
               );
 
               try {
-                // 1. Get reference to the user's specific recipe document
                 final recipeRef = FirebaseFirestore.instance
                     .collection('users')
-                    .doc(user.uid)
+                    .doc(familyOwnerId)
                     .collection('recipes')
                     .doc(recipe.id);
 
-                // 2. Fetch all ingredients from the recipe's ingredients subcollection
                 final ingredientsSnapshot = await recipeRef
                     .collection('ingredients')
                     .get();
@@ -702,13 +559,11 @@ class RecipeDetailsSheet extends StatelessWidget {
                     doc.id: doc.data()
                 };
 
-                // 3. Fetch steps from the recipe's steps subcollection
                 final stepsSnapshot = await recipeRef
                     .collection('steps')
                     .orderBy('order')
                     .get();
 
-                // 4. Build steps with their ingredients
                 List<RecipeStep> steps = [];
                 for (var stepDoc in stepsSnapshot.docs) {
                   final stepData = stepDoc.data();
@@ -735,7 +590,7 @@ class RecipeDetailsSheet extends StatelessWidget {
                   ));
                 }
 
-                Navigator.pop(context); // Close loading dialog
+                Navigator.pop(context);
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -759,26 +614,6 @@ class RecipeDetailsSheet extends StatelessWidget {
     );
   }
 
-  List<RecipeStep> _parseSteps(Map<String, dynamic> recipeData) {
-    // Implement parsing logic based on your database structure
-    // Example:
-    List<RecipeStep> steps = [];
-    for (var step in recipeData['steps']) {
-      steps.add(RecipeStep(
-        stepNumber: step['stepNumber'],
-        instructions: step['instructions'],
-        ingredients: step['ingredients'].map<Ingredient>((ing) => Ingredient(
-          id: ing['id'],
-          name: ing['name'],
-          quantity: ing['quantity'],
-          unit: ing['unit'],
-        )).toList(),
-      ));
-    }
-    return steps;
-  }
-}
-
   Widget _buildMetadataItem(IconData icon, String text) {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -789,3 +624,4 @@ class RecipeDetailsSheet extends StatelessWidget {
       ],
     );
   }
+}

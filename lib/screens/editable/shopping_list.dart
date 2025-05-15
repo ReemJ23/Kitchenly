@@ -2,20 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:kitchenly/screens/profile_screen.dart';
-import '../utils/category_helper.dart';
-import '../utils/localization_helper.dart';
-import '../utils/colors.dart';
+import 'package:kitchenly/utils/category_helper.dart';
+import 'package:kitchenly/utils/localization_helper.dart';
+import 'package:kitchenly/utils/colors.dart';
 
+class EditableShoppingListScreen extends StatefulWidget {
+  final String familyOwnerId;
+  final String language;
 
-class ShoppingListScreen extends StatefulWidget {
-  const ShoppingListScreen({Key? key}) : super(key: key);
+  const EditableShoppingListScreen({
+    required this.familyOwnerId,
+    required this.language,
+    Key? key,
+  }) : super(key: key);
 
   @override
-  State<ShoppingListScreen> createState() => _ShoppingListScreenState();
+  State<EditableShoppingListScreen> createState() => _EditableShoppingListScreenState();
 }
 
-class _ShoppingListScreenState extends State<ShoppingListScreen>
+class _EditableShoppingListScreenState extends State<EditableShoppingListScreen>
     with TickerProviderStateMixin {
   final TextEditingController _itemNameController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
@@ -23,17 +28,17 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
   final TextEditingController _editQtyController = TextEditingController();
   final TextEditingController _renameTabController = TextEditingController();
   String? _selectedUnit = "g";
-  User? user = FirebaseAuth.instance.currentUser;
   List<String> _tabs = [];
   TabController? _tabController;
   bool _checkedItemsExpanded = false;
   late AnimationController _fabAnimationController;
   Set<String> expandedCategories = {};
-
+  AppLocalizations? _localizations;
 
   @override
   void initState() {
     super.initState();
+    _localizations = lookupAppLocalizations(Locale(widget.language));
     _fabAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -45,7 +50,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
   Future<void> _ensureShoppingListExists() async {
     final collectionRef = FirebaseFirestore.instance
         .collection('users')
-        .doc(user!.uid)
+        .doc(widget.familyOwnerId)
         .collection('shoppingList');
 
     final snapshot = await collectionRef.limit(1).get();
@@ -57,26 +62,25 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
   Future<void> _loadSublistNames() async {
     final snapshot = await FirebaseFirestore.instance
         .collection('users')
-        .doc(user!.uid)
+        .doc(widget.familyOwnerId)
         .collection('sublists')
         .get();
 
     setState(() {
-      _tabs = [AppLocalizations.of(context)!.main];
+      _tabs = [_localizations!.main];
       _tabs.addAll(snapshot.docs.map((doc) => doc.id));
       _tabController = TabController(length: _tabs.length, vsync: this);
     });
   }
 
   Future<void> _addTab() async {
-    final localizations = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(localizations.addListName ?? 'Add List Name'),
+        title: Text(_localizations!.addListName ?? 'Add List Name'),
         content: TextField(
           controller: _renameTabController,
-          decoration: InputDecoration(labelText: localizations.listName ?? 'List Name'),
+          decoration: InputDecoration(labelText: _localizations!.listName ?? 'List Name'),
         ),
         actions: [
           TextButton(
@@ -85,7 +89,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
               if (name.isNotEmpty && !_tabs.contains(name)) {
                 await FirebaseFirestore.instance
                     .collection('users')
-                    .doc(user!.uid)
+                    .doc(widget.familyOwnerId)
                     .collection('sublists')
                     .doc(name)
                     .set({'createdAt': DateTime.now()});
@@ -97,7 +101,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
               _renameTabController.clear();
               Navigator.pop(context);
             },
-            child: Text(localizations.add ?? 'Add'),
+            child: Text(_localizations!.add ?? 'Add'),
           )
         ],
       ),
@@ -106,16 +110,15 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
 
   Future<void> _renameTab(int index) async {
     final oldName = _tabs[index];
-    final localizations = AppLocalizations.of(context)!;
     _renameTabController.text = oldName;
 
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(localizations.renameList ?? 'Rename List'),
+        title: Text(_localizations!.renameList ?? 'Rename List'),
         content: TextField(
           controller: _renameTabController,
-          decoration: InputDecoration(labelText: localizations.listName ?? 'List Name'),
+          decoration: InputDecoration(labelText: _localizations!.listName ?? 'List Name'),
         ),
         actions: [
           TextButton(
@@ -125,13 +128,13 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                 // Copy documents to new collection
                 final oldCollection = FirebaseFirestore.instance
                     .collection('users')
-                    .doc(user!.uid)
+                    .doc(widget.familyOwnerId)
                     .collection('sublists')
                     .doc(oldName)
                     .collection('items');
                 final newCollection = FirebaseFirestore.instance
                     .collection('users')
-                    .doc(user!.uid)
+                    .doc(widget.familyOwnerId)
                     .collection('sublists')
                     .doc(newName)
                     .collection('items');
@@ -143,14 +146,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
 
                 await FirebaseFirestore.instance
                     .collection('users')
-                    .doc(user!.uid)
+                    .doc(widget.familyOwnerId)
                     .collection('sublists')
                     .doc(oldName)
                     .delete();
 
                 await FirebaseFirestore.instance
                     .collection('users')
-                    .doc(user!.uid)
+                    .doc(widget.familyOwnerId)
                     .collection('sublists')
                     .doc(newName)
                     .set({'createdAt': DateTime.now()});
@@ -163,7 +166,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
               _renameTabController.clear();
               Navigator.pop(context);
             },
-            child: Text(localizations.save ?? 'Save'),
+            child: Text(_localizations!.save ?? 'Save'),
           )
         ],
       ),
@@ -172,10 +175,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
 
   void _removeTab(int index) async {
     String listKey = _tabs[index];
-    if (listKey != AppLocalizations.of(context)!.main) {
+    if (listKey != _localizations!.main) {
       await FirebaseFirestore.instance
           .collection('users')
-          .doc(user!.uid)
+          .doc(widget.familyOwnerId)
           .collection('sublists')
           .doc(listKey)
           .delete();
@@ -191,18 +194,18 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
     String quantityText = _quantityController.text.trim();
     int quantity = int.tryParse(quantityText) ?? 0;
     if (itemName.isEmpty || quantity <= 0 || quantity > 999) {
-      _showErrorDialog(AppLocalizations.of(context)!.invalidQuantity);
+      _showErrorDialog(_localizations!.invalidQuantity);
       return;
     }
-    String category =  CategoryHelper.categorizeItem(itemName);
+    String category = CategoryHelper.categorizeItem(itemName);
     final shoppingListRef = (listKey == _tabs[0])
         ? FirebaseFirestore.instance
         .collection('users')
-        .doc(user!.uid)
+        .doc(widget.familyOwnerId)
         .collection('shoppingList')
         : FirebaseFirestore.instance
         .collection('users')
-        .doc(user!.uid)
+        .doc(widget.familyOwnerId)
         .collection('sublists')
         .doc(listKey)
         .collection('items');
@@ -213,6 +216,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
       'unit': _selectedUnit,
       'checked': false,
       'category': category,
+      'lastEditedBy': FirebaseAuth.instance.currentUser?.uid,
     });
 
     _itemNameController.clear();
@@ -220,59 +224,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
     setState(() => _selectedUnit = "g");
   }
 
-  // void _editItem(DocumentSnapshot itemDoc, String currentListKey) {
-  //   var itemData = itemDoc.data() as Map<String, dynamic>;
-  //   _editNameController.text = itemData['name'];
-  //   _editQtyController.text = itemData['quantity'].toString();
-  //   showDialog(
-  //     context: context,
-  //     builder: (_) => AlertDialog(
-  //       title: Text(AppLocalizations.of(context)!.editItem),
-  //     IconButton(
-  //       icon: Icon(Icons.delete, color: AppColors.deleteBg),
-  //       tooltip: localizations.delete,),
-  //       content: Column(
-  //         mainAxisSize: MainAxisSize.min,
-  //         children: [
-  //           TextField(
-  //             controller: _editNameController,
-  //             decoration:
-  //             InputDecoration(labelText: AppLocalizations.of(context)!.itemName),
-  //           ),
-  //           TextField(
-  //             controller: _editQtyController,
-  //             keyboardType: TextInputType.number,
-  //             decoration:
-  //             InputDecoration(labelText: AppLocalizations.of(context)!.quantity),
-  //           ),
-  //         ],
-  //       ),
-  //       actions: [
-  //         TextButton(
-  //           onPressed: () async {
-  //             await itemDoc.reference.delete();
-  //             Navigator.pop(context);
-  //           },
-  //           child: Icon(Icons.delete, color: AppColors.deleteBg),
-  //         ),
-  //         TextButton(
-  //           child: Text(AppLocalizations.of(context)!.save),
-  //           onPressed: () async {
-  //             await itemDoc.reference.update({
-  //               'name': _editNameController.text.trim(),
-  //               'quantity': int.tryParse(_editQtyController.text.trim()) ?? 1
-  //             });
-  //             Navigator.pop(context);
-  //           },
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-
-
   void _editItem(DocumentSnapshot itemDoc, String currentListKey) {
-    final localizations = AppLocalizations.of(context)!;
     var itemData = itemDoc.data() as Map<String, dynamic>;
     _editNameController.text = itemData['name'];
     _editQtyController.text = itemData['quantity'].toString();
@@ -283,16 +235,16 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(localizations.editItem),
+            Text(_localizations!.editItem),
             IconButton(
               icon: Icon(Icons.delete, color: AppColors.deleteBg),
-              tooltip: localizations.delete,
+              tooltip: _localizations!.delete,
               onPressed: () async {
                 final confirm = await showDialog<bool>(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: Text(localizations.delete),
-                    content: Text(localizations.confirmDeleteItem),
+                    title: Text(_localizations!.delete),
+                    content: Text(_localizations!.confirmDeleteItem),
                     actions: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -302,12 +254,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                             children: [
                               ElevatedButton(
                                 onPressed: () => Navigator.pop(context, true),
-                                child: Text(localizations.delete),
+                                child: Text(_localizations!.delete),
                               ),
                               SizedBox(height: 10),
                               TextButton(
                                 onPressed: () => Navigator.pop(context, false),
-                                child: Text(localizations.cancel),
+                                child: Text(_localizations!.cancel),
                               ),
                             ],
                           ),
@@ -319,7 +271,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
 
                 if (confirm == true) {
                   await itemDoc.reference.delete();
-                  Navigator.pop(context); // Close the edit dialog
+                  Navigator.pop(context);
                 }
               },
             ),
@@ -330,13 +282,13 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
           children: [
             TextField(
               controller: _editNameController,
-              decoration: InputDecoration(labelText: localizations.itemName),
+              decoration: InputDecoration(labelText: _localizations!.itemName),
             ),
             SizedBox(height: 10),
             TextField(
               controller: _editQtyController,
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: localizations.quantity),
+              decoration: InputDecoration(labelText: _localizations!.quantity),
             ),
           ],
         ),
@@ -346,10 +298,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
               await itemDoc.reference.update({
                 'name': _editNameController.text.trim(),
                 'quantity': int.tryParse(_editQtyController.text.trim()) ?? 1,
+                'lastEditedBy': FirebaseAuth.instance.currentUser?.uid,
               });
               Navigator.pop(context);
             },
-            child: Text(localizations.save),
+            child: Text(_localizations!.save),
           ),
         ],
       ),
@@ -359,7 +312,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
   void _addSublistToMain(String listKey) async {
     final sublistDocs = await FirebaseFirestore.instance
         .collection('users')
-        .doc(user!.uid)
+        .doc(widget.familyOwnerId)
         .collection('sublists')
         .doc(listKey)
         .collection('items')
@@ -369,12 +322,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
       var data = doc.data();
       await FirebaseFirestore.instance
           .collection('users')
-          .doc(user!.uid)
+          .doc(widget.familyOwnerId)
           .collection('shoppingList')
-          .add(data);
+          .add({
+        ...data,
+        'lastEditedBy': FirebaseAuth.instance.currentUser?.uid,
+      });
     }
 
-    // Show confirmation message
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Items from "$listKey" have been added to the main list.'),
@@ -387,7 +342,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
     final data = itemDoc.data() as Map<String, dynamic>;
     final inventoryRef = FirebaseFirestore.instance
         .collection('users')
-        .doc(user!.uid)
+        .doc(widget.familyOwnerId)
         .collection('inventory.dart');
 
     final inventoryQuery = await inventoryRef
@@ -399,6 +354,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
       final existing = inventoryQuery.docs.first;
       await existing.reference.update({
         'quantity': (existing['quantity'] ?? 0) + (data['quantity'] ?? 0),
+        'lastEditedBy': FirebaseAuth.instance.currentUser?.uid,
       });
     } else {
       await inventoryRef.add({
@@ -407,6 +363,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
         'unit': data['unit'],
         'category': data['category'] ?? 'Uncategorized',
         'expirationDate': null,
+        'lastEditedBy': FirebaseAuth.instance.currentUser?.uid,
       });
     }
   }
@@ -415,12 +372,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.error),
+        title: Text(_localizations!.error),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(AppLocalizations.of(context)!.ok),
+            child: Text(_localizations!.ok),
           ),
         ],
       ),
@@ -431,7 +388,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('users')
-          .doc(user!.uid)
+          .doc(widget.familyOwnerId)
           .collection('sublists')
           .doc(listKey)
           .collection('items')
@@ -452,8 +409,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
           categorizedItems[category]!.add(doc);
         }
 
-        if (!snapshot.hasData) return CircularProgressIndicator();
-
         if (docs.isEmpty) {
           return Center(
             child: Column(
@@ -466,7 +421,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                 ),
                 SizedBox(height: 16),
                 Text(
-                  AppLocalizations.of(context)!.shoppingSublistIsEmpty,
+                  _localizations!.shoppingSublistIsEmpty,
                   style: TextStyle(
                     fontSize: 18,
                     color: AppColors.heading2,
@@ -477,13 +432,16 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
             ),
           );
         }
-        //final docs = snapshot.data!.docs;
+
         return ListView(
           children: categorizedItems.entries.map((entry) {
             final isExpanded = expandedCategories.contains(entry.key);
             return DragTarget<DocumentSnapshot>(
               onAccept: (draggedItemDoc) async {
-                await draggedItemDoc.reference.update({'category': entry.key});
+                await draggedItemDoc.reference.update({
+                  'category': entry.key,
+                  'lastEditedBy': FirebaseAuth.instance.currentUser?.uid,
+                });
               },
               builder: (context, candidateData, rejectedData) {
                 return ExpansionTile(
@@ -549,11 +507,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
   }
 
   Widget _buildCheckedItemsDropdown() {
-    final localizations = AppLocalizations.of(context)!;
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('users')
-          .doc(user!.uid)
+          .doc(widget.familyOwnerId)
           .collection('shoppingList')
           .where('checked', isEqualTo: true)
           .snapshots(),
@@ -563,7 +520,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
         if (docs.isEmpty) return SizedBox.shrink();
 
         return ExpansionTile(
-          title: Text(localizations.checkedItems),
+          title: Text(_localizations!.checkedItems),
           onExpansionChanged: (expanded) {
             setState(() {
               _checkedItemsExpanded = expanded;
@@ -581,7 +538,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                 leading: Checkbox(
                   value: true,
                   onChanged: (_) async {
-                    await itemDoc.reference.update({'checked': false});
+                    await itemDoc.reference.update({
+                      'checked': false,
+                      'lastEditedBy': FirebaseAuth.instance.currentUser?.uid,
+                    });
                   },
                 ),
               );
@@ -593,7 +553,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                   await doc.reference.delete();
                 }
               },
-              child: Text(localizations.deleteCheckedItems),
+              child: Text(_localizations!.deleteCheckedItems),
             ),
             SizedBox(height: 10)
           ],
@@ -606,7 +566,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('users')
-          .doc(user!.uid)
+          .doc(widget.familyOwnerId)
           .collection('shoppingList')
           .where('checked', isEqualTo: false)
           .snapshots(),
@@ -619,13 +579,13 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  Icons.shopping_cart_rounded, // Same cart icon
+                  Icons.shopping_cart_rounded,
                   size: 95,
                   color: AppColors.iconColor,
                 ),
                 SizedBox(height: 16),
                 Text(
-                  AppLocalizations.of(context)!.shoppingListIsEmpty, // Add this to your l10n
+                  _localizations!.shoppingListIsEmpty,
                   style: TextStyle(
                     fontSize: 18,
                     color: AppColors.heading2,
@@ -651,11 +611,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
             final isExpanded = expandedCategories.contains(entry.key);
             return DragTarget<DocumentSnapshot>(
               onAccept: (draggedItemDoc) async {
-                await draggedItemDoc.reference.update({'category': entry.key});
+                await draggedItemDoc.reference.update({
+                  'category': entry.key,
+                  'lastEditedBy': FirebaseAuth.instance.currentUser?.uid,
+                });
               },
               builder: (context, candidateData, rejectedData) {
-                final isExpanded = expandedCategories.contains(entry.key);
-
                 return ExpansionTile(
                   key: PageStorageKey(entry.key),
                   title: Row(
@@ -699,10 +660,13 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                         opacity: 0.5,
                         child: ListTile(
                           leading: Checkbox(
-                            value: itemData['checked'] ?? false, // ✅ dynamic from Firestore
+                            value: itemData['checked'] ?? false,
                             onChanged: (value) async {
                               if (value == true) {
-                                await itemDoc.reference.update({'checked': true});
+                                await itemDoc.reference.update({
+                                  'checked': true,
+                                  'lastEditedBy': FirebaseAuth.instance.currentUser?.uid,
+                                });
                                 await _updateInventory(itemDoc);
                               }
                             },
@@ -714,10 +678,13 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                       ),
                       child: ListTile(
                         leading: Checkbox(
-                          value: itemData['checked'] ?? false, // ✅ dynamic from Firestore
+                          value: itemData['checked'] ?? false,
                           onChanged: (value) async {
                             if (value == true) {
-                              await itemDoc.reference.update({'checked': true});
+                              await itemDoc.reference.update({
+                                'checked': true,
+                                'lastEditedBy': FirebaseAuth.instance.currentUser?.uid,
+                              });
                               await _updateInventory(itemDoc);
                             }
                           },
@@ -727,7 +694,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                         onTap: () => _editItem(itemDoc, 'Main'),
                       ),
                     );
-
                   }).toList(),
                 );
               },
@@ -740,55 +706,16 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context)!;
     if (_tabController == null) {
       return Center(child: CircularProgressIndicator());
     }
 
-    bool isMainTab = _tabs[_tabController!.index] == localizations.main;
+    bool isMainTab = _tabs[_tabController!.index] == _localizations!.main;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(localizations.shoppingList),
+        title: Text(_localizations!.shoppingList),
         centerTitle: true,
-        leading: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('users')
-              .doc(FirebaseAuth.instance.currentUser!.uid)
-              .collection('notifications')
-              .where('read', isEqualTo: false)
-              .snapshots(),
-          builder: (context, snapshot) {
-            final hasUnread = snapshot.hasData && snapshot.data!.docs.isNotEmpty;
-
-            return Stack(
-              children: [
-                IconButton(
-                    icon: const CircleAvatar(
-                      backgroundImage: AssetImage('assets/images/icons/profile_chef_icon.png'),
-                      backgroundColor: AppColors.profileIconBg,
-                      ),
-                  tooltip: AppLocalizations.of(context)!.profile,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                    );
-                  },
-                ),
-                if (hasUnread)
-                  const Positioned(
-                    right: 8,
-                    top: 8,
-                    child: CircleAvatar(
-                      radius: 5,
-                      backgroundColor: Colors.red,
-                    ),
-                  ),
-              ],
-            );
-          },
-        ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Row(
@@ -799,12 +726,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                   isScrollable: true,
                   tabs: List.generate(_tabs.length, (i) {
                     return GestureDetector(
-                      onLongPress: _tabs[i] != localizations.main ? () => _renameTab(i) : null,
+                      onLongPress: _tabs[i] != _localizations!.main ? () => _renameTab(i) : null,
                       child: Tab(
                         child: Row(
                           children: [
                             Text(_tabs[i]),
-                            if (_tabs[i] != localizations.main)
+                            if (_tabs[i] != _localizations!.main)
                               IconButton(
                                 icon: const Icon(Icons.close),
                                 onPressed: () => _removeTab(i),
@@ -822,7 +749,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                   onPressed: _addTab,
                   icon: const Icon(Icons.add, size: 18),
                   label: Text(
-                    localizations.addSublist,
+                    _localizations!.addSublist,
                     style: const TextStyle(fontSize: 12),
                   ),
                   style: TextButton.styleFrom(
@@ -851,11 +778,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
           );
         },
       ),
-
       body: TabBarView(
         controller: _tabController,
         children: _tabs.map((key) {
-          if (key == localizations.main) {
+          if (key == _localizations!.main) {
             return Column(
               children: [
                 Expanded(child: _buildCategorizedMainList()),
@@ -869,7 +795,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                 StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance
                       .collection('users')
-                      .doc(user!.uid)
+                      .doc(widget.familyOwnerId)
                       .collection('sublists')
                       .doc(key)
                       .collection('items')
@@ -880,14 +806,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                       padding: const EdgeInsets.all(8.0),
                       child: Tooltip(
                         message: hasItems
-                            ? localizations.addItemsTooltip
-                            : localizations.emptySublistTooltip,
+                            ? _localizations!.addItemsTooltip
+                            : _localizations!.emptySublistTooltip,
                         child: ElevatedButton.icon(
                           icon: Icon(Icons.upload),
-                          label: Text(localizations.addToMainList),
+                          label: Text(_localizations!.addToMainList),
                           onPressed: hasItems
                               ? () => _addSublistToMain(key)
-                              : null, // Disable the button if the sublist is empty
+                              : null,
                         ),
                       ),
                     );
@@ -902,33 +828,32 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
   }
 
   void _showAddItemDialog(String listKey) {
-    final localizations = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(localizations.addItem),
+        title: Text(_localizations!.addItem),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: _itemNameController,
-              decoration: InputDecoration(labelText: localizations.itemName),
+              decoration: InputDecoration(labelText: _localizations!.itemName),
             ),
             SizedBox(height: 10),
             TextField(
               controller: _quantityController,
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: localizations.quantity),
+              decoration: InputDecoration(labelText: _localizations!.quantity),
             ),
             SizedBox(height: 10),
             DropdownButtonFormField<String>(
               value: _selectedUnit,
-              decoration: InputDecoration(labelText: localizations.unit),
+              decoration: InputDecoration(labelText: _localizations!.unit),
               items: ['g', 'lb', 'oz', 'liter', 'pieces','packs','cups'].map((unit) {
                 return DropdownMenuItem(
                   value: unit,
                   child: Text(LocalizationHelper.getLocalizedString(
-                      localizations, unit)),
+                      _localizations!, unit)),
                 );
               }).toList(),
               onChanged: (value) {
@@ -946,10 +871,22 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
               _addItem(listKey);
               Navigator.pop(context);
             },
-            child: Text(localizations.add),
+            child: Text(_localizations!.add),
           )
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _fabAnimationController.dispose();
+    _tabController?.dispose();
+    _itemNameController.dispose();
+    _quantityController.dispose();
+    _editNameController.dispose();
+    _editQtyController.dispose();
+    _renameTabController.dispose();
+    super.dispose();
   }
 }

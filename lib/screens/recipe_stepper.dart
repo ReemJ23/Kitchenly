@@ -257,7 +257,7 @@ class _RecipeStepperState extends State<RecipeStepper> {
       final inventoryRef = FirebaseFirestore.instance
           .collection('users')
           .doc(_user!.uid)
-          .collection('inventory');
+          .collection('inventory.dart');
 
       for (final entry in _selectedIngredients.entries) {
         if (!entry.value) continue;
@@ -268,7 +268,7 @@ class _RecipeStepperState extends State<RecipeStepper> {
         final quantity = _ingredientQuantities[entry.key] ?? 0;
         if (quantity <= 0) continue;
 
-        // Find matching inventory item
+        // Find matching inventory.dart item
         final inventoryItem = await inventoryRef
             .where('name', isEqualTo: ingredient.name)
             .where('unit', isEqualTo: ingredient.unit)

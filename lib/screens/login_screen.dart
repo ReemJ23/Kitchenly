@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../utils/colors.dart';
+import 'family_login_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final String language;  // Accept language as a parameter
@@ -77,7 +78,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('language', widget.language);
-
+      await prefs.remove('family_owner_uid');
+      await prefs.remove('family_member_name');
+      await prefs.remove('family_member_permission');
 
       Navigator.pushNamedAndRemoveUntil(context, '/main', (route) => false, arguments: widget.language);
 
@@ -170,7 +173,17 @@ class _LoginScreenState extends State<LoginScreen> {
                           minimumSize: Size(350, 55),
                         ),
                         child: Text(localizations.login) ),
-                    SizedBox(height: 10),
+                    SizedBox(height: 15),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => FamilyLoginScreen()),
+                        );
+                      },
+                      child: Text(AppLocalizations.of(context)!.loginAsFamily),
+                    ),
+
                     TextButton(
                       onPressed: () {
                         Navigator.pushReplacementNamed(context, '/signup', arguments: widget.language);

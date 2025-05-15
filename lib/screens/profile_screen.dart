@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kitchenly/utils/colors.dart';
 import 'dart:convert';
 import 'dart:io';
+import 'family_sync_screen.dart';
 import 'friends_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -198,7 +199,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final ingredientsSnapshot = await FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
-        .collection('inventory')
+        .collection('inventory.dart')
         .get();
 
     for (final doc in ingredientsSnapshot.docs) {
@@ -561,7 +562,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) =>  Container()),
+                      MaterialPageRoute(builder: (context) =>  SyncCodePage()),
                     );
                   },
                 ),
@@ -578,7 +579,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     switch (key) {
       case 'shoppingList':
         return localizations.permissionShoppingList;
-      case 'inventory':
+      case 'inventory.dart':
         return localizations.permissionInventory;
       case 'recipes':
         return localizations.permissionRecipes;

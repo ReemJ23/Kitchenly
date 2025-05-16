@@ -355,5 +355,6 @@
 "readOnlyMode": "View mode",
 "scaleIngredients": "Scale ingredients",
 "browseRecipes": "Browse Recipes",
-"saveRecipe": "Save Recipe"
+"saveRecipe": "Save Recipe",
+"cannotDeleteMainList": "You cannot delete the main list."
 }

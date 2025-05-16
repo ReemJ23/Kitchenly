@@ -596,5 +596,6 @@
 "readOnlyMode": "وضع القراءة فقط",
 "scaleIngredients": "قياس المكونات",
 "browseRecipes": "تصفح الوصفات",
-"saveRecipe": "حفظ الوصفة"
+"saveRecipe": "حفظ الوصفة",
+"cannotDeleteMainList": "لا يمكنك حذف القائمة الرئيسية."
 }

@@ -29,6 +29,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
   bool _checkedItemsExpanded = false;
   late AnimationController _fabAnimationController;
   Set<String> expandedCategories = {};
+  String? _userLanguage;
+
+  static const String _mainTabKey = '__main__';
+
 
 
   @override
@@ -40,6 +44,22 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
     );
     _loadSublistNames();
     _ensureShoppingListExists();
+    _fetchUserLanguage().then((language) {
+      setState(() {
+        _userLanguage = language;
+      });
+    });
+  }
+  Future<String> _fetchUserLanguage() async {
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .get();
+
+    if (userDoc.exists) {
+      return userDoc['language'] ?? 'en'; // Default to 'en' if language is not set
+    }
+    return 'en'; // Default to 'en' if the user document doesn't exist
   }
 
   Future<void> _ensureShoppingListExists() async {
@@ -61,15 +81,19 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
         .collection('sublists')
         .get();
 
+
     setState(() {
-      _tabs = [AppLocalizations.of(context)!.main];
+      _tabs = [_mainTabKey];
       _tabs.addAll(snapshot.docs.map((doc) => doc.id));
       _tabController = TabController(length: _tabs.length, vsync: this);
     });
+
   }
 
   Future<void> _addTab() async {
-    final localizations = AppLocalizations.of(context)!;
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -106,7 +130,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
 
   Future<void> _renameTab(int index) async {
     final oldName = _tabs[index];
-    final localizations = AppLocalizations.of(context)!;
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     _renameTabController.text = oldName;
 
     showDialog(
@@ -171,15 +197,29 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
   }
 
   void _removeTab(int index) async {
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     String listKey = _tabs[index];
-    if (listKey != AppLocalizations.of(context)!.main) {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user!.uid)
-          .collection('sublists')
-          .doc(listKey)
-          .delete();
+
+    // Prevent deletion of the main tab
+    if (listKey == _mainTabKey) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(localizations.cannotDeleteMainList),
+        ),
+      );
+      return;
     }
+
+    // Delete the sublist document from Firestore
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .collection('sublists')
+        .doc(listKey)
+        .delete();
+
     setState(() {
       _tabs.removeAt(index);
       _tabController = TabController(length: _tabs.length, vsync: this);
@@ -187,11 +227,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
   }
 
   Future<void> _addItem(String listKey) async {
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     String itemName = _itemNameController.text.trim();
     String quantityText = _quantityController.text.trim();
     int quantity = int.tryParse(quantityText) ?? 0;
     if (itemName.isEmpty || quantity <= 0 || quantity > 999) {
-      _showErrorDialog(AppLocalizations.of(context)!.invalidQuantity);
+      _showErrorDialog(localizations.invalidQuantity);
       return;
     }
     String category =  CategoryHelper.categorizeItem(itemName);
@@ -272,7 +315,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
 
 
   void _editItem(DocumentSnapshot itemDoc, String currentListKey) {
-    final localizations = AppLocalizations.of(context)!;
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     var itemData = itemDoc.data() as Map<String, dynamic>;
     _editNameController.text = itemData['name'];
     _editQtyController.text = itemData['quantity'].toString();
@@ -412,15 +457,18 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
   }
 
   void _showErrorDialog(String message) {
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.error),
+        title: Text(localizations.error),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(AppLocalizations.of(context)!.ok),
+            child: Text(localizations.ok),
           ),
         ],
       ),
@@ -442,7 +490,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
 
         final docs = snapshot.data!.docs;
         final Map<String, List<DocumentSnapshot>> categorizedItems = {};
-
+        final localizations = _userLanguage != null
+            ? lookupAppLocalizations(Locale(_userLanguage!))
+            : AppLocalizations.of(context)!;
         for (var doc in docs) {
           final data = doc.data() as Map<String, dynamic>;
           final category = data['category'] ?? 'Uncategorized';
@@ -466,7 +516,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                 ),
                 SizedBox(height: 16),
                 Text(
-                  AppLocalizations.of(context)!.shoppingSublistIsEmpty,
+                  localizations.shoppingSublistIsEmpty,
                   style: TextStyle(
                     fontSize: 18,
                     color: AppColors.heading2,
@@ -549,7 +599,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
   }
 
   Widget _buildCheckedItemsDropdown() {
-    final localizations = AppLocalizations.of(context)!;
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('users')
@@ -613,6 +665,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
       builder: (context, snapshot) {
         if (!snapshot.hasData) return CircularProgressIndicator();
         final docs = snapshot.data!.docs;
+        final localizations = _userLanguage != null
+            ? lookupAppLocalizations(Locale(_userLanguage!))
+            : AppLocalizations.of(context)!;
         if (docs.isEmpty) {
           return Center(
             child: Column(
@@ -625,7 +680,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                 ),
                 SizedBox(height: 16),
                 Text(
-                  AppLocalizations.of(context)!.shoppingListIsEmpty, // Add this to your l10n
+                  localizations.shoppingListIsEmpty, // Add this to your l10n
                   style: TextStyle(
                     fontSize: 18,
                     color: AppColors.heading2,
@@ -740,12 +795,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context)!;
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     if (_tabController == null) {
       return Center(child: CircularProgressIndicator());
     }
 
-    bool isMainTab = _tabs[_tabController!.index] == localizations.main;
+    bool isMainTab = _tabs[_tabController!.index] == _mainTabKey;
 
     return Scaffold(
       appBar: AppBar(
@@ -768,7 +825,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                       backgroundImage: AssetImage('assets/images/icons/profile_chef_icon.png'),
                       backgroundColor: AppColors.profileIconBg,
                       ),
-                  tooltip: AppLocalizations.of(context)!.profile,
+                  tooltip: localizations.profile,
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -799,12 +856,15 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
                   isScrollable: true,
                   tabs: List.generate(_tabs.length, (i) {
                     return GestureDetector(
-                      onLongPress: _tabs[i] != localizations.main ? () => _renameTab(i) : null,
+                      onLongPress: _tabs[i] != _mainTabKey ? () => _renameTab(i) : null,
                       child: Tab(
                         child: Row(
                           children: [
-                            Text(_tabs[i]),
-                            if (_tabs[i] != localizations.main)
+                            Text(_tabs[i] == _mainTabKey
+                                ? localizations.main
+                                : _tabs[i]),
+
+                            if (_tabs[i] != _mainTabKey)
                               IconButton(
                                 icon: const Icon(Icons.close),
                                 onPressed: () => _removeTab(i),
@@ -855,7 +915,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
       body: TabBarView(
         controller: _tabController,
         children: _tabs.map((key) {
-          if (key == localizations.main) {
+          if (key == _mainTabKey) {
             return Column(
               children: [
                 Expanded(child: _buildCategorizedMainList()),
@@ -902,7 +962,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
   }
 
   void _showAddItemDialog(String listKey) {
-    final localizations = AppLocalizations.of(context)!;
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(

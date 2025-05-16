@@ -19,11 +19,29 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
   bool _isLoading = false;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+  String? _userLanguage;
 
   @override
   void initState() {
     super.initState();
     _fetchRandomRecipes();
+    _fetchUserLanguage().then((language) {
+      setState(() {
+        _userLanguage = language;
+      });
+    });
+  }
+
+  Future<String> _fetchUserLanguage() async {
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .get();
+
+    if (userDoc.exists) {
+      return userDoc['language'] ?? 'en'; // Default to 'en' if language is not set
+    }
+    return 'en'; // Default to 'en' if the user document doesn't exist
   }
 
   Future<void> _fetchRandomRecipes() async {
@@ -222,11 +240,14 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context)!;
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(localizations.browseRecipes),
+        centerTitle: true,
         actions: [
           IconButton(
             icon: Icon(Icons.refresh),

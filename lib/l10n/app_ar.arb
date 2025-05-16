@@ -594,5 +594,7 @@
 "fillAllFields": "يرجى ملء جميع الحقول",
 "loginError": "فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.",
 "readOnlyMode": "وضع القراءة فقط",
-"scaleIngredients": "قياس المكونات"
+"scaleIngredients": "قياس المكونات",
+"browseRecipes": "تصفح الوصفات",
+"saveRecipe": "حفظ الوصفة"
 }

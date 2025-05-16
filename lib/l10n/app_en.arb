@@ -353,5 +353,7 @@
 "fillAllFields": "Please fill all fields",
 "loginError": "Login failed. Please try again.",
 "readOnlyMode": "View mode",
-"scaleIngredients": "Scale ingredients"
+"scaleIngredients": "Scale ingredients",
+"browseRecipes": "Browse Recipes",
+"saveRecipe": "Save Recipe"
 }

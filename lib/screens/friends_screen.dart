@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../utils/colors.dart';
 
 class FriendsPage extends StatefulWidget {
   const FriendsPage({Key? key}) : super(key: key);
@@ -22,7 +24,7 @@ class _FriendsPageState extends State<FriendsPage> {
 
     if (query.docs.isEmpty || query.docs.first.id == user.uid) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("User not found or invalid")),
+         SnackBar(content: Text(AppLocalizations.of(context)!.userNotFoundOrInvalid)),
       );
       return;
     }
@@ -41,7 +43,7 @@ class _FriendsPageState extends State<FriendsPage> {
 
     if (currentFriends.contains(targetId)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("This user is already your friend.")),
+         SnackBar(content: Text(AppLocalizations.of(context)!.alreadyYourFriend)),
       );
       return;
     }
@@ -59,13 +61,12 @@ class _FriendsPageState extends State<FriendsPage> {
 
     if (existing.docs.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Friend request already sent")),
+         SnackBar(content: Text(AppLocalizations.of(context)!.friendRequestAlreadySent)),
+
       );
       return;
     }
 
-    // Send the friend request as a notification
-    // Fetch sender's username from Firestore
     final senderDoc = await FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
@@ -80,8 +81,8 @@ class _FriendsPageState extends State<FriendsPage> {
         .doc(targetId)
         .collection('notifications')
         .add({
-      'title': 'Friend Request',
-      'body': '$senderUsername sent you a friend request.',
+      'title': AppLocalizations.of(context)!.friendRequestTitle,
+      'body': AppLocalizations.of(context)!.friendRequestBody(senderUsername),
       'type': 'friend_request',
       'fromUid': user.uid,
       'fromUsername': senderUsername,
@@ -92,7 +93,7 @@ class _FriendsPageState extends State<FriendsPage> {
 
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Friend request sent")),
+      SnackBar(content: Text(AppLocalizations.of(context)!.friendRequestSent)),
     );
 
     _searchController.clear();
@@ -100,8 +101,11 @@ class _FriendsPageState extends State<FriendsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final localization = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text("Friends")),
+      appBar: AppBar(title: Text(localization.friends),
+      centerTitle: true,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -109,7 +113,7 @@ class _FriendsPageState extends State<FriendsPage> {
             TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                labelText: "Search username",
+                labelText: localization.searchUsername,
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.send),
                   onPressed: () =>
@@ -134,8 +138,26 @@ class _FriendsPageState extends State<FriendsPage> {
                   final List friends = data['friends'] ?? [];
 
                   if (friends.isEmpty) {
-                    return const Text("You have no friends yet.");
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.group_outlined,
+                            size: 95,
+                            color: AppColors.iconColor,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            localization.youHaveNoFriendsYet,
+                            style: TextStyle(fontSize: 16, color: AppColors.heading2),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    );
                   }
+
 
                   return ListView.builder(
                     itemCount: friends.length,
@@ -147,36 +169,42 @@ class _FriendsPageState extends State<FriendsPage> {
                             .get(),
                         builder: (context, friendSnapshot) {
                           if (!friendSnapshot.hasData) {
-                            return const ListTile(title: Text("Unknown"));
+                            return ListTile(title: Text(localization.unknown));
                           }
                           final friendData = friendSnapshot.data!.data()
                               as Map<String, dynamic>;
                           return ListTile(
-                            title: Text(friendData['username'] ?? 'Unknown'),
+                            title: Text(friendData['username'] ?? localization.unknown),
                             trailing: IconButton(
                               icon: const Icon(Icons.remove_circle_outline,
                                   color: Colors.red),
-                              tooltip: "Remove Friend",
+
                               onPressed: () async {
                                 final confirm = await showDialog<bool>(
                                   context: context,
                                   builder: (ctx) => AlertDialog(
-                                    title: const Text("Remove Friend"),
-                                    content: Text(
-                                        "Are you sure you want to remove ${friendData['username']}?"),
+                                    title: Text(localization.removeFriend),
+                                    content: Text(localization.confirmRemoveFriend(friendData['username'])),
                                     actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.pop(ctx, false),
-                                        child: const Text("Cancel"),
-                                      ),
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.pop(ctx, true),
-                                        child: const Text("Remove"),
+                                      Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        children: [
+                                          ElevatedButton(
+                                            onPressed: () => Navigator.pop(ctx, false),
+                                            child: Text(localization.yes),
+                                          ),
+                                          const SizedBox(height: 10),
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(ctx, true),
+                                            child: Text(localization.cancel),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
+
+
                                 );
 
                                 if (confirm != true) return;
@@ -214,17 +242,16 @@ class _FriendsPageState extends State<FriendsPage> {
                                     .doc(friendUid)
                                     .collection('notifications')
                                     .add({
-                                  'title': 'Friend Removed',
-                                  'body':
-                                      '$currentUsername removed you from their friends list.',
+                                  'title': localization.friendRemoved,
+                                  'body': localization.friendRemovedBody(currentUsername),
                                   'type': 'system',
                                   'timestamp': FieldValue.serverTimestamp(),
                                   'read': false,
                                 });
 
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text("Friend removed")),
+                                   SnackBar(
+                                      content: Text(localization.friendRemoved)),
                                 );
 
                                 setState(() {}); // Refresh UI

@@ -572,7 +572,7 @@
 "errorSavingMealPlan": "حدث خطأ أثناء حفظ خطة الوجبات: {error}",
 "syncSettings": "إعدادات المزامنة",
 "currentSyncCode": "رمز المزامنة الحالي",
-"regenerateCode": "إعادة توليد الرمز",
+"regenerateCode": "إعادة إنشاء الرمز",
 "addFamilyMember": "إضافة فرد من العائلة",
 "familyMemberName": "اسم فرد العائلة",
 "viewPermission": "عرض فقط",
@@ -594,5 +594,28 @@
 "fillAllFields": "يرجى ملء جميع الحقول",
 "loginError": "فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.",
 "readOnlyMode": "وضع القراءة فقط",
-"scaleIngredients": "قياس المكونات"
+"scaleIngredients": "قياس المكونات",
+  "codeGeneration": "إنشاء الرمز",
+  "copiedToClipboard": "تم النسخ",
+  "addFamilyMembers": "إضافة أفراد العائلة",
+  "userNotFoundOrInvalid":"مستخدم غير موجود أو غير صحيح",
+  "alreadyYourFriend": "هذا المستخدم موجود لديك",
+  "friendRequestAlreadySent": "طلب الصداقة مرسل سابقًا",
+  "friendRequestSent": "تم إرسال طلب الصداقة",
+  "friends": "الأصدقاء",
+  "searchUsername": "البحث عن اسم مستخدم",
+  "youHaveNoFriendsYet": "لا يوجد لديك أصدقاء بعد",
+  "unknown": "مجهول",
+  "removeFriend": "إلغاء الصديق",
+  "remove": "إلغاء",
+  "friendRemoved": "تم إلغاء الصداقة",
+  "friendRequestTitle": "طلب صداقة",
+  "friendRequestBody": "{username} أرسل لك طلب صداقة.",
+  "friendRemovedBody": "{username} أزالك من قائمة أصدقائه.",
+  "confirmRemoveFriend": "هل أنت متأكد أنك تريد إزالة {username}؟",
+  "yes": "نعم",
+  "enterFamilyMemberName": "قم بإدخال اسم للفرد"
+
+
+
 }

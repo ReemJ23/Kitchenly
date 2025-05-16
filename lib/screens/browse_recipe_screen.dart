@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../utils/localization_helper.dart';
+import 'package:kitchenly/utils/colors.dart';
 
 class RecipeBrowserPage extends StatefulWidget {
   const RecipeBrowserPage({Key? key}) : super(key: key);
@@ -63,7 +64,7 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
       setState(() => _recipes = recipes);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to fetch recipes: $e')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.fetchRecipesFailed(e.toString()))),
       );
     } finally {
       setState(() => _isLoading = false);
@@ -89,12 +90,12 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
       } else {
         setState(() => _recipes = []);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No recipes found for "$_searchQuery"')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.noRecipesFoundFor(_searchQuery))),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Search failed: $e')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.searchFailed(e.toString()))),
       );
     } finally {
       setState(() => _isLoading = false);
@@ -133,7 +134,7 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
     return {
       'idFromApi': apiRecipe['idMeal'],
       'name': apiRecipe['strMeal'],
-      'preparationTime': 30, // Default estimate
+      'preparationTime': _estimatePrepTime(ingredients, steps),
       'difficulty': _determineDifficulty(apiRecipe),
       'cuisineType': apiRecipe['strArea']?.toLowerCase(),
       'imageBase64': apiRecipe['strMealThumb'],
@@ -176,6 +177,10 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
     return ingredientsCount > 10 ? 'hard' : ingredientsCount > 5 ? 'medium' : 'easy';
   }
 
+  int _estimatePrepTime(List ingredients, List steps) {
+    return (ingredients.length * 2 + steps.length * 3).clamp(5, 90);
+  }
+
   Future<void> _saveRecipeToMyRecipes(Map<String, dynamic> recipe) async {
     if (user == null) return;
 
@@ -198,7 +203,7 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
       if (existingRecipe.docs.isNotEmpty) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Recipe already saved')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.recipeAlreadySaved)),
         );
         return;
       }
@@ -227,13 +232,34 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
       }
 
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Recipe saved successfully!')),
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.check_circle, color: Colors.green, size: 48), // larger icon
+              const SizedBox(height: 12),
+              Text(
+                AppLocalizations.of(context)!.recipeSaved,
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16),
+              ),
+            ],
+          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
       );
+
+
+      Future.delayed(const Duration(seconds: 2), () {
+        if (Navigator.canPop(context)) Navigator.pop(context);
+      });
     } catch (e) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save recipe: $e')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.saveRecipeFailed(e.toString()))),
       );
     }
   }
@@ -284,7 +310,24 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
             child: _isLoading
                 ? Center(child: CircularProgressIndicator())
                 : _recipes.isEmpty
-                ? Center(child: Text(localizations.noRecipesFound))
+                ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.restaurant_menu,
+                    size: 85,
+                    color: AppColors.iconColor,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    localizations.noRecipesFound,
+                    style: const TextStyle(fontSize: 16, color: AppColors.heading2),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            )
                 : ListView.builder(
               itemCount: _recipes.length,
               itemBuilder: (context, index) {
@@ -331,7 +374,7 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
                       SizedBox(width: 16),
                       Icon(Icons.star, size: 16),
                       SizedBox(width: 4),
-                      Text(LocalizationHelper.getLocalizedString(loc, 'difficulty')),
+                      Text(LocalizationHelper.getLocalizedString(loc, recipe['difficulty'])),
                       SizedBox(width: 20),
                       Text(
                         '${recipe['ingredients'].length} ${loc.ingredients}',
@@ -340,10 +383,12 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
                     ],
                   ),
                   SizedBox(height: 20),
-                    ElevatedButton(
-                    onPressed: () => _saveRecipeToMyRecipes(recipe),
-                    child: Text(loc.saveRecipe),
-                  ),
+                    Center(
+                      child: ElevatedButton(
+                        onPressed: () => _saveRecipeToMyRecipes(recipe),
+                        child: Text(loc.saveRecipe),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -412,21 +457,36 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 8),
-                ...recipe['steps'].map<Widget>((step) {
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: CircleAvatar(
-                      radius: 12,
-                      child: Text('${step['order']}'),
-                    ),
-                    title: Text(step['text']),
-                  );
-                }).toList(),
+                // ...recipe['steps'].map<Widget>((step) {
+                //   return ListTile(
+                //     contentPadding: EdgeInsets.zero,
+                //     leading: CircleAvatar(
+                //       radius: 12,
+                //       child: Text('${step['order']}'),
+                //     ),
+                //     title: Text(step['text']),
+                //   );
+                // }).toList(),
+                ...List.generate(recipe['steps'].length * 2 - 1, (index) {
+                  if (index.isEven) {
+                    final step = recipe['steps'][index ~/ 2];
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: CircleAvatar(
+                        radius: 12,
+                        child: Text('${step['order']}'),
+                      ),
+                      title: Text(step['text']),
+                    );
+                  } else {
+                    return const Divider(thickness: 1.0, height: 24);
+                  }
+                }),
                 SizedBox(height: 16),
                 Center(
                   child: ElevatedButton(
                     onPressed: () => _saveRecipeToMyRecipes(recipe),
-                    child: Text('Save to My Recipes'),
+                    child: Text(AppLocalizations.of(context)!.saveToMyRecipes),
                   ),
                 ),
               ],

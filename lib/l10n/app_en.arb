@@ -377,6 +377,16 @@
   "friendRemovedBody": "{username} removed you from their friends list.",
   "confirmRemoveFriend": "Are you sure you want to remove {username}?",
   "yes": "Yes",
-  "enterFamilyMemberName": "Please enter a name for the family member."
+  "enterFamilyMemberName": "Please enter a name for the family member.",
+  "saveToMyRecipes": "Save to My Recipes",
+  "fetchRecipesFailed": "Failed to fetch recipes: {error}",
+  "noRecipesFoundFor": "No recipes found for \"{query}\"",
+  "searchFailed": "Search failed: {error}",
+  "recipeAlreadySaved": "Recipe already saved",
+  "recipeSaved": "Recipe saved successfully!",
+  "saveRecipeFailed": "Failed to save recipe: {error}",
+  "easy": "Easy",
+  "medium": "Medium",
+  "hard": "Hard"
 
 }

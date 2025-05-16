@@ -617,5 +617,15 @@
   "enterFamilyMemberName": "قم بإدخال اسم للفرد",
   "browseRecipes": "تصفح الوصفات",
   "saveRecipe": "حفظ الوصفة",
-  "cannotDeleteMainList": "لا يمكنك إلغاء قائمة التسوق الرئيسية"
+  "cannotDeleteMainList": "لا يمكنك إلغاء قائمة التسوق الرئيسية",
+  "saveToMyRecipes": "الحفظ في وصفاتي",
+  "fetchRecipesFailed": "خلل في البحث عن الوصفات: {error}",
+  "noRecipesFoundFor": "لم يتم العثور على وصفات لكلمة \"{query}\"",
+  "searchFailed": "فشل في البحث: {error}",
+  "recipeAlreadySaved": "الوصفة محفوظة سابقًا",
+  "recipeSaved": "تم حفظ الوصفة بنجاح!",
+  "saveRecipeFailed": "خلل في حفظ الوصفة: {error}",
+  "easy": "سهل",
+  "medium": "متوسط",
+  "hard": "صعب"
 }

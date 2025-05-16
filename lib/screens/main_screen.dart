@@ -5,6 +5,7 @@ import 'package:kitchenly/screens/inventory_screen.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:kitchenly/screens/shopping_list_screen.dart';
 import '../utils/colors.dart';
+import 'browse_recipe_screen.dart';
 import 'myrecipes_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -27,8 +28,8 @@ class _MainScreenState extends State<MainScreen> {
     _pages.add(InventoryScreen());
     _pages.add(ShoppingListScreen());
     _pages.add(MyRecipesScreen());
-    _pages.add(Container()); // Placeholder for Browsing
-    _pages.add(MealPlanScreen()); // Placeholder for Meal Plan
+    _pages.add(RecipeBrowserPage());
+    _pages.add(MealPlanScreen());
   }
 
   void _onItemTapped(int index) {

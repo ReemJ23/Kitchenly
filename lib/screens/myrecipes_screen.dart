@@ -560,9 +560,13 @@ class _RecipeDetailsSheetState extends State<RecipeDetailsSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                data['name'] ?? localizations.untitledRecipe,
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              Container(
+                width: MediaQuery.of(context).size.width*0.67,
+                child: Text(
+                  data['name'] ?? localizations.untitledRecipe,
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  softWrap: true,
+                ),
               ),
               Row(
                 children: [

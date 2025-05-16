@@ -354,6 +354,10 @@
 "loginError": "Login failed. Please try again.",
 "readOnlyMode": "View mode",
 "scaleIngredients": "Scale ingredients",
+"browseRecipes": "Browse Recipes",
+"saveRecipe": "Save Recipe",
+"cannotDeleteMainList": "You cannot delete the main list."
+"scaleIngredients": "Scale ingredients",
   "codeGeneration": "Code Generation",
   "copiedToClipboard": "Copied to clipboard.",
   "addFamilyMembers": "Add Family Members",

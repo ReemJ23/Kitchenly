@@ -59,7 +59,7 @@ class _OnboardingInventoryScreenState extends State<OnboardingInventoryScreen> {
         await FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
-            .collection('inventory.dart')
+            .collection('inventory')
             .add({
           'name': itemName,
           'quantity': itemData['quantity'],

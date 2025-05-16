@@ -441,7 +441,7 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
     final ingredientsQuery = await recipe.reference.collection('ingredients').get();
     final totalIngredients = ingredientsQuery.docs.length;
 
-    // 2. Check inventory.dart for available ingredients
+    // 2. Check inventory for available ingredients
     int availableIngredients = 0;
 
     for (final ingredientDoc in ingredientsQuery.docs) {
@@ -449,7 +449,7 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
       final inventoryItem = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
-          .collection('inventory.dart')
+          .collection('inventory')
           .where('name', isEqualTo: ingredient['name'])
           .where('unit', isEqualTo: ingredient['unit'])
           .get();
@@ -531,17 +531,25 @@ void _confirmDeleteRecipe(BuildContext context, DocumentSnapshot recipe) {
   );
 }
 
-class RecipeDetailsSheet extends StatelessWidget {
+class RecipeDetailsSheet extends StatefulWidget {
   final DocumentSnapshot recipe;
 
-  const RecipeDetailsSheet({Key? key, required this.recipe}) : super(key: key);
+  RecipeDetailsSheet({Key? key, required this.recipe}) : super(key: key);
+
+  @override
+  State<RecipeDetailsSheet> createState() => _RecipeDetailsSheetState();
+}
+
+class _RecipeDetailsSheetState extends State<RecipeDetailsSheet> {
+  double _multiplier = 1.0;
+  final List<double> _multiplierOptions = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0];
 
   @override
   Widget build(BuildContext context) {
     final localizations = lang != null
         ? lookupAppLocalizations(Locale(lang!))
         : AppLocalizations.of(context)!;
-    final data = recipe.data() as Map<String, dynamic>;
+    final data = widget.recipe.data() as Map<String, dynamic>;
 
     return Container(
       padding: EdgeInsets.all(16),
@@ -562,13 +570,13 @@ class RecipeDetailsSheet extends StatelessWidget {
                     icon: Icon(Icons.edit),
                     onPressed: () {
                       Navigator.pop(context);
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => EditRecipePage(recipe: recipe)));
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => EditRecipePage(recipe: widget.recipe)));
                     },
                   ),
                   IconButton(
                     icon: Icon(Icons.delete),
                     color: Colors.red,
-                    onPressed: () => _confirmDeleteRecipe(context, recipe),
+                    onPressed: () => _confirmDeleteRecipe(context, widget.recipe),
                   ),
                 ],
               ),
@@ -610,6 +618,26 @@ class RecipeDetailsSheet extends StatelessWidget {
             ],
           ),
           SizedBox(height: 16),
+          Row(
+            children: [
+              Text('${localizations.scaleIngredients}: '),
+              DropdownButton<double>(
+                value: _multiplier,
+                items: _multiplierOptions.map((value) {
+                  return DropdownMenuItem<double>(
+                    value: value,
+                    child: Text('x$value'),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _multiplier = value!;
+                  });
+                },
+              ),
+            ],
+          ),
+          SizedBox(height: 16),
           // Ingredients section
           Text(
             localizations.ingredients,
@@ -618,7 +646,7 @@ class RecipeDetailsSheet extends StatelessWidget {
           SizedBox(height: 8),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: recipe.reference.collection('ingredients').snapshots(),
+              stream: widget.recipe.reference.collection('ingredients').snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) return CircularProgressIndicator();
                 return ListView.builder(
@@ -630,7 +658,8 @@ class RecipeDetailsSheet extends StatelessWidget {
                       contentPadding: EdgeInsets.zero,
                       leading: Icon(Icons.circle, size: 8),
                       title: Text(
-                        '${ingredient['quantity']} ${ingredient['unit']} ${ingredient['name']}',
+                        '${(double.parse(ingredient['quantity'].toString()) * _multiplier).toStringAsFixed(2)} '
+                            '${ingredient['unit']} ${ingredient['name']}',
                         softWrap: true,
                       ),
                     );
@@ -648,7 +677,7 @@ class RecipeDetailsSheet extends StatelessWidget {
           SizedBox(height: 8),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: recipe.reference.collection('steps').orderBy('order').snapshots(),
+              stream: widget.recipe.reference.collection('steps').orderBy('order').snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) return CircularProgressIndicator();
                 return ListView.builder(
@@ -674,6 +703,7 @@ class RecipeDetailsSheet extends StatelessWidget {
             ),
           ),
           ElevatedButton(
+            // In RecipeDetailsSheet's button onPressed:
             onPressed: () async {
               final user = FirebaseAuth.instance.currentUser;
               if (user == null) return;
@@ -685,14 +715,12 @@ class RecipeDetailsSheet extends StatelessWidget {
               );
 
               try {
-                // 1. Get reference to the user's specific recipe document
                 final recipeRef = FirebaseFirestore.instance
                     .collection('users')
                     .doc(user.uid)
                     .collection('recipes')
-                    .doc(recipe.id);
+                    .doc(widget.recipe.id);
 
-                // 2. Fetch all ingredients from the recipe's ingredients subcollection
                 final ingredientsSnapshot = await recipeRef
                     .collection('ingredients')
                     .get();
@@ -702,17 +730,14 @@ class RecipeDetailsSheet extends StatelessWidget {
                     doc.id: doc.data()
                 };
 
-                // 3. Fetch steps from the recipe's steps subcollection
                 final stepsSnapshot = await recipeRef
                     .collection('steps')
                     .orderBy('order')
                     .get();
 
-                // 4. Build steps with their ingredients
                 List<RecipeStep> steps = [];
                 for (var stepDoc in stepsSnapshot.docs) {
                   final stepData = stepDoc.data();
-
                   List<Ingredient> stepIngredients = [];
                   if (stepData['ingredients'] != null) {
                     for (var id in List<String>.from(stepData['ingredients'])) {
@@ -721,7 +746,7 @@ class RecipeDetailsSheet extends StatelessWidget {
                         stepIngredients.add(Ingredient(
                           id: id,
                           name: ing['name'] ?? 'Unknown',
-                          quantity: ing['quantity'] ?? 0,
+                          quantity: double.parse(ing['quantity'].toString()),
                           unit: ing['unit'] ?? '',
                         ));
                       }
@@ -735,13 +760,14 @@ class RecipeDetailsSheet extends StatelessWidget {
                   ));
                 }
 
-                Navigator.pop(context); // Close loading dialog
+                Navigator.pop(context);
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => RecipeStepper(
                       steps: steps,
                       recipeName: data['name'] ?? localizations.untitledRecipe,
+                      multiplier: _multiplier, // Pass the selected multiplier
                     ),
                   ),
                 );

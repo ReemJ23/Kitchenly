@@ -353,7 +353,7 @@ class _EditableRecipesScreenState extends State<EditableRecipesScreen> {
       final inventoryItem = await FirebaseFirestore.instance
           .collection('users')
           .doc(widget.familyOwnerId)
-          .collection('inventory.dart')
+          .collection('inventory')
           .where('name', isEqualTo: ingredient['name'])
           .where('unit', isEqualTo: ingredient['unit'])
           .get();

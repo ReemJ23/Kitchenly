@@ -593,5 +593,6 @@
 "currentSyncCode": "رمز المزامنة الحالي",
 "fillAllFields": "يرجى ملء جميع الحقول",
 "loginError": "فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.",
-"readOnlyMode": "وضع القراءة فقط"
+"readOnlyMode": "وضع القراءة فقط",
+"scaleIngredients": "قياس المكونات"
 }

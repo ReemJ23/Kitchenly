@@ -199,7 +199,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final ingredientsSnapshot = await FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
-        .collection('inventory.dart')
+        .collection('inventory')
         .get();
 
     for (final doc in ingredientsSnapshot.docs) {
@@ -579,7 +579,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     switch (key) {
       case 'shoppingList':
         return localizations.permissionShoppingList;
-      case 'inventory.dart':
+      case 'inventory':
         return localizations.permissionInventory;
       case 'recipes':
         return localizations.permissionRecipes;

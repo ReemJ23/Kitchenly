@@ -352,5 +352,6 @@
 "currentSyncCode": "Current Sync Code",
 "fillAllFields": "Please fill all fields",
 "loginError": "Login failed. Please try again.",
-"readOnlyMode": "View mode"
+"readOnlyMode": "View mode",
+"scaleIngredients": "Scale ingredients"
 }

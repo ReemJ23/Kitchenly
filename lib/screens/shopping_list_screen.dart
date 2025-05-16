@@ -388,7 +388,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
     final inventoryRef = FirebaseFirestore.instance
         .collection('users')
         .doc(user!.uid)
-        .collection('inventory.dart');
+        .collection('inventory');
 
     final inventoryQuery = await inventoryRef
         .where('name', isEqualTo: data['name'])

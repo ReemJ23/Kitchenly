@@ -9,11 +9,13 @@ import '../utils/colors.dart';
 class RecipeStepper extends StatefulWidget {
   final List<RecipeStep> steps;
   final String recipeName;
+  final double multiplier;
 
   const RecipeStepper({
     Key? key,
     required this.steps,
     required this.recipeName,
+    this.multiplier = 1.0,
   }) : super(key: key);
 
   @override
@@ -64,7 +66,7 @@ class _RecipeStepperState extends State<RecipeStepper> {
           ),
           ...step.ingredients.map((ingredient) => ListTile(
             title: Text(ingredient.name),
-            subtitle: Text('${ingredient.quantity} ${ingredient.unit}'),
+            subtitle: Text('${(ingredient.quantity * widget.multiplier).toStringAsFixed(2)} ${ingredient.unit}'),
           )).toList(),
         ],
       ),
@@ -72,7 +74,6 @@ class _RecipeStepperState extends State<RecipeStepper> {
   }
 
   Widget _buildCompletionScreen(AppLocalizations loc) {
-    // Aggregate all ingredients from all steps
     final allIngredients = <String, Ingredient>{};
     for (final step in widget.steps) {
       for (final ingredient in step.ingredients) {
@@ -81,13 +82,17 @@ class _RecipeStepperState extends State<RecipeStepper> {
           allIngredients[ingredient.id] = Ingredient(
             id: ingredient.id,
             name: ingredient.name,
-            quantity: existing.quantity + ingredient.quantity,
+            quantity: existing.quantity + (ingredient.quantity * widget.multiplier), // Apply multiplier
             unit: ingredient.unit,
           );
         } else {
-          allIngredients[ingredient.id] = ingredient;
-          // Initialize quantities and selection state if not already set
-          _ingredientQuantities.putIfAbsent(ingredient.id, () => ingredient.quantity);
+          allIngredients[ingredient.id] = Ingredient(
+            id: ingredient.id,
+            name: ingredient.name,
+            quantity: ingredient.quantity * widget.multiplier, // Apply multiplier
+            unit: ingredient.unit,
+          );
+          _ingredientQuantities.putIfAbsent(ingredient.id, () => ingredient.quantity * widget.multiplier);
           _selectedIngredients.putIfAbsent(ingredient.id, () => false);
         }
       }
@@ -257,7 +262,7 @@ class _RecipeStepperState extends State<RecipeStepper> {
       final inventoryRef = FirebaseFirestore.instance
           .collection('users')
           .doc(_user!.uid)
-          .collection('inventory.dart');
+          .collection('inventory');
 
       for (final entry in _selectedIngredients.entries) {
         if (!entry.value) continue;
@@ -268,7 +273,7 @@ class _RecipeStepperState extends State<RecipeStepper> {
         final quantity = _ingredientQuantities[entry.key] ?? 0;
         if (quantity <= 0) continue;
 
-        // Find matching inventory.dart item
+        // Find matching inventory item
         final inventoryItem = await inventoryRef
             .where('name', isEqualTo: ingredient.name)
             .where('unit', isEqualTo: ingredient.unit)

@@ -343,7 +343,7 @@ class _EditableShoppingListScreenState extends State<EditableShoppingListScreen>
     final inventoryRef = FirebaseFirestore.instance
         .collection('users')
         .doc(widget.familyOwnerId)
-        .collection('inventory.dart');
+        .collection('inventory');
 
     final inventoryQuery = await inventoryRef
         .where('name', isEqualTo: data['name'])

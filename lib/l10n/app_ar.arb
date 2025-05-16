@@ -572,7 +572,7 @@
 "errorSavingMealPlan": "حدث خطأ أثناء حفظ خطة الوجبات: {error}",
 "syncSettings": "إعدادات المزامنة",
 "currentSyncCode": "رمز المزامنة الحالي",
-"regenerateCode": "إعادة إنشاء الرمز",
+"regenerateCode": "إعادة توليد الرمز",
 "addFamilyMember": "إضافة فرد من العائلة",
 "familyMemberName": "اسم فرد العائلة",
 "viewPermission": "عرض فقط",
@@ -594,7 +594,7 @@
 "fillAllFields": "يرجى ملء جميع الحقول",
 "loginError": "فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.",
 "readOnlyMode": "وضع القراءة فقط",
-"scaleIngredients": "قياس المكونات",
+"scaleIngredients": "مضاعفة المكونات",
   "codeGeneration": "إنشاء الرمز",
   "copiedToClipboard": "تم النسخ",
   "addFamilyMembers": "إضافة أفراد العائلة",
@@ -614,8 +614,8 @@
   "friendRemovedBody": "{username} أزالك من قائمة أصدقائه.",
   "confirmRemoveFriend": "هل أنت متأكد أنك تريد إزالة {username}؟",
   "yes": "نعم",
-  "enterFamilyMemberName": "قم بإدخال اسم للفرد"
-
-
-
+  "enterFamilyMemberName": "قم بإدخال اسم للفرد",
+  "browseRecipes": "تصفح الوصفات",
+  "saveRecipe": "حفظ الوصفة",
+  "cannotDeleteMainList": "لا يمكنك إلغاء قائمة التسوق الرئيسية"
 }

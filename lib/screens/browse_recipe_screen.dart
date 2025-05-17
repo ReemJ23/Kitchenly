@@ -266,6 +266,8 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final height = MediaQuery.of(context).size.height;
     final localizations = _userLanguage != null
         ? lookupAppLocalizations(Locale(_userLanguage!))
         : AppLocalizations.of(context)!;
@@ -369,6 +371,7 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
                   Row(
                     children: [
                       Icon(Icons.timer, size: 16),
+
                       SizedBox(width: 4),
                       Text('${recipe['preparationTime']} ${loc.minutes}'),
                       SizedBox(width: 16),
@@ -399,6 +402,9 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
   }
 
   void _showRecipeDetails(Map<String, dynamic> recipe) {
+    final width = MediaQuery.of(context).size.width;
+    final height = MediaQuery.of(context).size.height;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -414,7 +420,7 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      width: MediaQuery.of(context).size.width*0.75,
+                      width: width*0.75,
                       child: Text(
                         recipe['name'],
                         style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),

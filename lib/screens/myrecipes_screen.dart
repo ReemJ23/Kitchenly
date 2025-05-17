@@ -406,7 +406,29 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
 
                   return true;
                 }).toList();
-
+                if (filteredRecipes.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.restaurant_menu_rounded,
+                          size: 85,
+                          color: AppColors.iconColor,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          localizations.noRecipesFound,
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: AppColors.heading2,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  );
+                }
                 return ListView.builder(
                   itemCount: filteredRecipes.length,
                   itemBuilder: (context, index) {

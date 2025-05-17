@@ -285,6 +285,10 @@ class _EditableMealPlanScreenState extends State<EditableMealPlanScreen> {
                 color: AppColors.focusedDayBg,
                 shape: BoxShape.circle,
               ),
+              todayTextStyle: TextStyle(
+                color: AppColors.focusedDayText,
+                fontWeight: FontWeight.bold,
+              ),
               withinRangeTextStyle: TextStyle(),
               selectedDecoration: BoxDecoration(
                 color: AppColors.focusedDayBg,
@@ -295,6 +299,7 @@ class _EditableMealPlanScreenState extends State<EditableMealPlanScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
+
           ),
           Expanded(
             child: _buildMealsForSelectedDay(),

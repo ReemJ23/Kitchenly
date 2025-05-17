@@ -26,6 +26,7 @@ class _ViewOnlyRecipeScreenState extends State<ViewOnlyRecipeScreen> {
   String _selectedCuisine = 'all';
   String _selectedDifficulty = 'all';
   String _selectedTime = 'all';
+  String _selectedAvailability = 'all';
   late AppLocalizations localizations;
 
   @override
@@ -126,7 +127,29 @@ class _ViewOnlyRecipeScreenState extends State<ViewOnlyRecipeScreen> {
 
                   return true;
                 }).toList();
-
+                if (filteredRecipes.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.restaurant_menu_rounded,
+                          size: 85,
+                          color: AppColors.iconColor,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          localizations.noRecipesFound,
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: AppColors.heading2,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  );
+                }
                 return ListView.builder(
                   itemCount: filteredRecipes.length,
                   itemBuilder: (context, index) {
@@ -147,7 +170,7 @@ class _ViewOnlyRecipeScreenState extends State<ViewOnlyRecipeScreen> {
     final List<String> _cuisineTypes = ['all', 'italian', 'mexican', 'indian', 'chinese', 'mediterranean'];
     final List<String> _difficultyLevels = ['all', 'easy', 'medium', 'hard'];
     final List<String> _timeCategories = ['all', 'quick', 'medium', 'long'];
-
+    final List<String> _availabilityOptions = ['all', 'full', 'partial', 'low'];
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Padding(
@@ -163,10 +186,7 @@ class _ViewOnlyRecipeScreenState extends State<ViewOnlyRecipeScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  localizations.cuisine,
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                ),
+                Text(localizations.cuisine, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
                 DropdownButton<String>(
                   value: _selectedCuisine,
                   isDense: true,
@@ -184,10 +204,25 @@ class _ViewOnlyRecipeScreenState extends State<ViewOnlyRecipeScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  localizations.preparationTime,
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                Text(localizations.difficulty, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                DropdownButton<String>(
+                  value: _selectedDifficulty,
+                  isDense: true,
+                  items: _difficultyLevels.map((level) {
+                    return DropdownMenuItem(
+                      value: level,
+                      child: Text(LocalizationHelper.getLocalizedString(localizations, level)),
+                    );
+                  }).toList(),
+                  onChanged: (value) => setState(() => _selectedDifficulty = value!),
                 ),
+              ],
+            ),
+            SizedBox(width: 4),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(localizations.preparationTime, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
                 DropdownButton<String>(
                   value: _selectedTime,
                   isDense: true,
@@ -198,6 +233,24 @@ class _ViewOnlyRecipeScreenState extends State<ViewOnlyRecipeScreen> {
                     );
                   }).toList(),
                   onChanged: (value) => setState(() => _selectedTime = value!),
+                ),
+              ],
+            ),
+            SizedBox(width: 4),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(localizations.ingredientAvailability, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                DropdownButton<String>(
+                  value: _selectedAvailability,
+                  isDense: true,
+                  items: _availabilityOptions.map((avail) {
+                    return DropdownMenuItem(
+                      value: avail,
+                      child: Text(LocalizationHelper.getLocalizedString(localizations, avail)),
+                    );
+                  }).toList(),
+                  onChanged: (value) => setState(() => _selectedAvailability = value!),
                 ),
               ],
             ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:kitchenly/screens/myrecipes_screen.dart';
 import 'package:kitchenly/screens/notifications_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kitchenly/utils/colors.dart';
@@ -10,6 +11,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'family_sync_screen.dart';
 import 'friends_screen.dart';
+import 'main_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -31,13 +33,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = false;
   bool _hasNotifications = false;
   bool _obscurePassword = true;
+  String? _selectedThemeName;
+  int _selectedColorValue = 0x99BF8E73;
+  final List<Map<String, dynamic>> _colorOptions = [
+    {'value': 0xFF9CAF88, 'name': 'green'},
+    {'value': 0xDD607D8B, 'name': 'blue'},
+    {'value': 0xFFDCA06D, 'name': 'orange'},
+    {'value': 0xDD8174A0, 'name': 'purple'},
+    {'value': 0xFFBF7E73, 'name': 'red'},
+  ];
 
   @override
   void initState() {
     super.initState();
+    _loadUserTheme();
     _fetchUserData();
     _checkExpiredIngredients();
     _checkForNotifications();
+  }
+  Future<void> _loadUserTheme() async {
+    if (user == null) return;
+
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .get();
+
+    if (doc.exists) {
+      final themeName = doc.data()?['theme'] as String?;
+      if (themeName != null) {
+        final colorData = _colorOptions.firstWhere(
+              (color) => color['name'] == themeName,
+          orElse: () => _colorOptions[0],
+        );
+
+        setState(() {
+          _selectedThemeName = themeName;
+          _selectedColorValue = colorData['value'];
+        });
+      }
+    }
   }
   Future<void> _checkForNotifications() async {
     final hasNotifications = await _hasUnreadNotifications();
@@ -45,6 +80,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _hasNotifications = hasNotifications;
     });
   }
+
   Future<void> _fetchUserData() async {
     if (user == null) return;
 
@@ -64,6 +100,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _usernameController.text = userDoc['username'] ?? '';
 
           _imageBase64 = userDoc['profilePicture'];
+          _selectedColorValue = userDoc.data()!.containsKey('themeColor')
+              ? userDoc['themeColor']
+              : 0xFF51271D;
         });
       }
     } catch (e) {
@@ -111,10 +150,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } finally {
       setState(() => _isLoading = false);
     }
-    if (mounted) setState(() {
-      _isEditingUsername = false;
-    });
-
+    if (mounted)
+      setState(() {
+        _isEditingUsername = false;
+      });
   }
 
   Future<void> _updatePassword() async {
@@ -163,6 +202,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     }
   }
+
   Future<bool> _hasUnreadNotifications() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return false;
@@ -187,7 +227,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // Only run once per day — optional (can be removed if not needed)
     final prefs = await SharedPreferences.getInstance();
     final lastCheckStr = prefs.getString('last_expiration_check');
-    final lastCheck = lastCheckStr != null ? DateTime.tryParse(lastCheckStr) : null;
+    final lastCheck =
+        lastCheckStr != null ? DateTime.tryParse(lastCheckStr) : null;
 
     if (lastCheck != null &&
         lastCheck.year == now.year &&
@@ -231,10 +272,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await prefs.setString('last_expiration_check', now.toIso8601String());
   }
 
-
   Future<void> _logout() async {
     await FirebaseAuth.instance.signOut();
     Navigator.pushNamedAndRemoveUntil(context, '/welcome', (route) => false);
+  }
+
+  Future<void> _changeThemeColor(int colorValue, String colorName) async {
+    if (user == null) return;
+
+    setState(() {
+      _selectedColorValue = colorValue;
+      _selectedThemeName = colorName;
+    });
+
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .update({'theme': colorName});
+      }
+
+      // Update app colors
+      setState(() {
+        AppColors.setTheme(colorName);
+      });
+
+
+      // Refresh the UI
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation1, animation2) => MainScreen(language: _userLanguage!,),
+            transitionDuration: Duration.zero,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update theme: ${e.toString()}')),
+      );
+    }
   }
 
   @override
@@ -248,50 +328,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         title: Text(localizations.profile),
         centerTitle: true,
-          actions: [
-            StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(user!.uid)
-                  .collection('notifications')
-                  .where('read', isEqualTo: false)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                bool hasUnread = snapshot.hasData && snapshot.data!.docs.isNotEmpty;
+        actions: [
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .doc(user!.uid)
+                .collection('notifications')
+                .where('read', isEqualTo: false)
+                .snapshots(),
+            builder: (context, snapshot) {
+              bool hasUnread =
+                  snapshot.hasData && snapshot.data!.docs.isNotEmpty;
 
-                return Stack(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.notifications),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => NotificationsPage()),
-                        );
-                      },
-                    ),
-                    if (hasUnread)
-                      Positioned(
-                        right: 12,
-                        top: 12,
-                        child: Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
+              return Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => NotificationsPage()),
+                      );
+                    },
+                  ),
+                  if (hasUnread)
+                    Positioned(
+                      right: 12,
+                      top: 12,
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
                         ),
                       ),
-                  ],
-                );
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.logout),
-              onPressed: _logout,
-            ),
-          ],
+                    ),
+                ],
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _logout,
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -311,6 +393,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _buildPasswordSection(),
                     const Divider(),
                     _buildConnectionsSection(),
+                    const Divider(),
+                    _buildThemeSection(),
                   ],
                 ),
               ),
@@ -335,12 +419,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         : null),
                 child: _imageBase64 == null && user?.photoURL == null
                     ? Image.asset(
-                  'assets/images/icons/profile_chef_icon.png',
-                  width: 60,
-                  height: 60,
-                )
+                        'assets/images/icons/profile_chef_icon.png',
+                        width: 60,
+                        height: 60,
+                      )
                     : null,
-
               ),
             ),
             const SizedBox(width: 16),
@@ -370,7 +453,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     ),
-
                   if (_isEditingUsername)
                     TextFormField(
                       controller: _usernameController,
@@ -386,7 +468,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   Text(
                     user?.email ?? 'No email',
-                    style: const TextStyle(fontSize: 14, color: AppColors.heading2),
+                    style: const TextStyle(
+                        fontSize: 14, color: AppColors.heading2),
                   ),
                 ],
               ),
@@ -401,16 +484,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      width: MediaQuery.of(context).size.width*0.4,
+                      width: MediaQuery.of(context).size.width * 0.4,
                       child: ElevatedButton(
                         onPressed: () =>
                             setState(() => _isEditingUsername = false),
                         child: Text(localizations.cancel),
                       ),
                     ),
-                    SizedBox(width: MediaQuery.of(context).size.width*0.1,),
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.1,
+                    ),
                     Container(
-                      width: MediaQuery.of(context).size.width*0.4,
+                      width: MediaQuery.of(context).size.width * 0.4,
                       child: ElevatedButton(
                         onPressed: _updateUsername,
                         child: Text(localizations.save),
@@ -473,7 +558,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           TextFormField(
             controller: _passwordController,
             obscureText: _obscurePassword,
-
             decoration: InputDecoration(
               labelText: localizations.newPassword,
               suffixIcon: IconButton(
@@ -496,22 +580,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
               }
               return null;
             },
-
           ),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Container(
-                width: MediaQuery.of(context).size.width*0.4,
+                width: MediaQuery.of(context).size.width * 0.4,
                 child: ElevatedButton(
                   onPressed: () => setState(() => _isChangingPassword = false),
                   child: Text(localizations.cancel),
                 ),
               ),
-              SizedBox(width: MediaQuery.of(context).size.width*0.1),
+              SizedBox(width: MediaQuery.of(context).size.width * 0.1),
               Container(
-                width: MediaQuery.of(context).size.width*0.4,
+                width: MediaQuery.of(context).size.width * 0.4,
                 child: ElevatedButton(
                   onPressed: _updatePassword,
                   child: Text(localizations.save),
@@ -529,7 +612,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ],
     );
   }
-
+  Widget _buildThemeSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(localizations.theme,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        SizedBox(height: MediaQuery.of(context).size.height * 0.03),
+        Center(
+          child: Wrap(
+            spacing: MediaQuery.of(context).size.width * 0.055,
+            children: _colorOptions.map((colorData) {
+              final isSelected = _selectedThemeName == colorData['name'];
+              return GestureDetector(
+                onTap: () => _changeThemeColor(
+                  colorData['value'],
+                  colorData['name'],
+                ),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Color(colorData['value']),
+                    shape: BoxShape.circle,
+                    border: isSelected
+                        ? Border.all(
+                      color: Colors.white,
+                      width: 2,
+                    )
+                        : null,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
   Widget _buildConnectionsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -547,7 +667,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const FriendsPage()),
+                      MaterialPageRoute(
+                          builder: (context) => const FriendsPage()),
                     );
                   },
                 ),
@@ -562,7 +683,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) =>  SyncCodePage()),
+                      MaterialPageRoute(builder: (context) => SyncCodePage()),
                     );
                   },
                 ),
@@ -573,7 +694,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ],
     );
   }
-
 
   String getPermissionLabel(AppLocalizations localizations, String key) {
     switch (key) {

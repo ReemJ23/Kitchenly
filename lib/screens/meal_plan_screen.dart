@@ -279,7 +279,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             return Stack(
               children: [
                 IconButton(
-                  icon: const CircleAvatar(
+                  icon: CircleAvatar(
                       backgroundImage: AssetImage('assets/images/icons/profile_chef_icon.png'),
                       backgroundColor: AppColors.profileIconBg,),
                   tooltip: AppLocalizations.of(context)!.profile,

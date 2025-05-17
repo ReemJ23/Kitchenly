@@ -344,7 +344,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
             return Stack(
               children: [
                 IconButton(
-                  icon: const CircleAvatar(
+                  icon:  CircleAvatar(
                 backgroundImage: AssetImage('assets/images/icons/profile_chef_icon.png'),
                     backgroundColor: AppColors.profileIconBg,
             ),

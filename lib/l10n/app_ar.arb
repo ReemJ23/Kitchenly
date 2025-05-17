@@ -633,5 +633,6 @@
 "saveRecipeFailed": "خلل في حفظ الوصفة: {error}",
 "easy": "سهل",
 "medium": "متوسط",
-"hard": "صعب"
+"hard": "صعب",
+"theme": "المظهر"
 }

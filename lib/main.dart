@@ -30,7 +30,7 @@ void main() async {
   User? user = FirebaseAuth.instance.currentUser;
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? selectedLanguage = prefs.getString('language') ?? 'en';
-
+  AppColors.initialize();
   runApp(MyApp(isLoggedIn: user != null, language: selectedLanguage));
 }
 
@@ -69,95 +69,117 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Kitchenly',
-      debugShowCheckedModeBanner: false,
-      locale: _locale, // Apply the saved language preference
-      localizationsDelegates: [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('en'),
-        Locale('ar'),
-      ],
-      theme: ThemeData(
-        textTheme: TextTheme(
-          bodyLarge: TextStyle(fontFamily: FontHelper.getDefaultFontFamily(_locale), fontSize: 18),
-          bodyMedium: TextStyle(fontFamily: FontHelper.getDefaultFontFamily(_locale), fontSize: 16),
-          bodySmall: TextStyle(fontFamily: FontHelper.getDefaultFontFamily(_locale), fontSize: 14),
-          titleLarge: TextStyle(fontFamily: FontHelper.getDefaultFontFamily(_locale), fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          labelStyle: TextStyle(color: AppColors.defaultLabel), // Default label color
-          enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: AppColors.bottomBorder), // Bottom border
-          ),
-          focusedBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: AppColors.focusedBorder, width: 2), // Blue border when focused
-          ),
-          errorBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: AppColors.error), // Red border when there's an error
-          ),
-          focusedErrorBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: AppColors.error, width: 2), // Thicker red border on focus
-          ),
-          hintStyle: TextStyle(color: AppColors.hint),
-    ),
+    return ValueListenableBuilder<int>(
+        valueListenable: AppColors.themeVersion,
+        builder: (context, _, __) {
+          return MaterialApp(
+            title: 'Kitchenly',
+            debugShowCheckedModeBanner: false,
+            locale: _locale,
+            // Apply the saved language preference
+            localizationsDelegates: [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en'),
+              Locale('ar'),
+            ],
+            theme: ThemeData(
+              textTheme: TextTheme(
+                bodyLarge: TextStyle(
+                    fontFamily: FontHelper.getDefaultFontFamily(_locale),
+                    fontSize: 18),
+                bodyMedium: TextStyle(
+                    fontFamily: FontHelper.getDefaultFontFamily(_locale),
+                    fontSize: 16),
+                bodySmall: TextStyle(
+                    fontFamily: FontHelper.getDefaultFontFamily(_locale),
+                    fontSize: 14),
+                titleLarge: TextStyle(
+                    fontFamily: FontHelper.getDefaultFontFamily(_locale),
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold),
+              ),
+              inputDecorationTheme: InputDecorationTheme(
+                labelStyle: TextStyle(color: AppColors.defaultLabel),
+                // Default label color
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(
+                      color: AppColors.bottomBorder), // Bottom border
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: AppColors.focusedBorder,
+                      width: 2), // Blue border when focused
+                ),
+                errorBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(
+                      color: AppColors
+                          .error), // Red border when there's an error
+                ),
+                focusedErrorBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: AppColors.error,
+                      width: 2), // Thicker red border on focus
+                ),
+                hintStyle: TextStyle(color: AppColors.hint),
+              ),
 
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.toggleActive,
-          primary: AppColors.toggleActive,
-        ),
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: AppColors.toggleActive,
+                primary: AppColors.toggleActive,
+              ),
 
 
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            minimumSize: Size(350, 55),
-            backgroundColor: AppColors.buttonBg,
-            textStyle: TextStyle(
-              fontFamily: FontHelper.getDefaultFontFamily(_locale),
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+              elevatedButtonTheme: ElevatedButtonThemeData(
+                style: ElevatedButton.styleFrom(
+                    minimumSize: Size(350, 55),
+                    backgroundColor: AppColors.buttonBg,
+                    textStyle: TextStyle(
+                      fontFamily: FontHelper.getDefaultFontFamily(_locale),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    foregroundColor: AppColors.buttonText,
+                    overlayColor: AppColors.buttonBgOnPressed
+                ),
+              ),
+
+              textButtonTheme: TextButtonThemeData(
+                style: TextButton.styleFrom(
+                    minimumSize: Size(350, 55),
+                    textStyle: TextStyle(
+                      fontFamily: FontHelper.getDefaultFontFamily(_locale),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    foregroundColor: AppColors.buttonText,
+                    overlayColor: AppColors.buttonBgOnPressed
+                ),
+              ),
+
+              outlinedButtonTheme: OutlinedButtonThemeData(
+                style: OutlinedButton.styleFrom(
+                    minimumSize: Size(350, 55),
+                    textStyle: TextStyle(
+                      fontFamily: FontHelper.getDefaultFontFamily(_locale),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    foregroundColor: AppColors.buttonText,
+                    overlayColor: AppColors.buttonBgOnPressed
+                ),
+              ),
             ),
-            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            foregroundColor: AppColors.buttonText,
-             overlayColor: AppColors.buttonBgOnPressed
-          ),
-        ),
-
-        textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(
-            minimumSize: Size(350, 55),
-            textStyle: TextStyle(
-              fontFamily: FontHelper.getDefaultFontFamily(_locale),
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            foregroundColor: AppColors.buttonText,
-              overlayColor: AppColors.buttonBgOnPressed
-          ),
-        ),
-
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-            minimumSize: Size(350, 55),
-            textStyle: TextStyle(
-              fontFamily: FontHelper.getDefaultFontFamily(_locale),
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            foregroundColor: AppColors.buttonText,
-            overlayColor: AppColors.buttonBgOnPressed
-          ),
-        ),
-      ),
-      home: InitialScreen(isLoggedIn: widget.isLoggedIn, language: widget.language),
-      onGenerateRoute: AppRoutes.generateRoute,
+            home: InitialScreen(
+                isLoggedIn: widget.isLoggedIn, language: widget.language),
+            onGenerateRoute: AppRoutes.generateRoute,
+          );
+        }
     );
   }
 }

@@ -389,5 +389,6 @@
 "saveRecipeFailed": "Failed to save recipe: {error}",
 "easy": "Easy",
 "medium": "Medium",
-"hard": "Hard"
+"hard": "Hard",
+"theme": "Theme"
 }

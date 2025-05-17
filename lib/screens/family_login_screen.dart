@@ -113,7 +113,9 @@ class _FamilyLoginScreenState extends State<FamilyLoginScreen> {
     final loc = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: Text(loc.loginAsFamily)),
+      appBar: AppBar(title: Text(loc.loginAsFamily),
+      centerTitle: true,
+      ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),

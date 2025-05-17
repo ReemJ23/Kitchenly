@@ -169,10 +169,23 @@ class _ViewOnlyMealPlanScreenState extends State<ViewOnlyMealPlanScreen> {
             ),
             calendarStyle: CalendarStyle(
               rangeHighlightColor: AppColors.transparent,
+              rangeStartDecoration: BoxDecoration(
+                color: AppColors.transparent,
+                shape: BoxShape.circle,
+              ),
+              rangeEndDecoration: BoxDecoration(
+                color: AppColors.transparent,
+                shape: BoxShape.circle,
+              ),
               todayDecoration: BoxDecoration(
                 color: AppColors.focusedDayBg,
                 shape: BoxShape.circle,
               ),
+              todayTextStyle: TextStyle(
+                color: AppColors.focusedDayText,
+                fontWeight: FontWeight.bold,
+              ),
+              withinRangeTextStyle: TextStyle(),
               selectedDecoration: BoxDecoration(
                 color: AppColors.focusedDayBg,
                 shape: BoxShape.circle,
@@ -182,6 +195,7 @@ class _ViewOnlyMealPlanScreenState extends State<ViewOnlyMealPlanScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
+ 
           ),
           Expanded(
             child: _buildMealsForSelectedDay(),

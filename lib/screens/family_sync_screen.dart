@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter/services.dart';
+import '../utils/colors.dart';
 
 class SyncCodePage extends StatefulWidget {
   @override
@@ -67,7 +69,15 @@ class _SyncCodePageState extends State<SyncCodePage> {
 
   Future<void> _addFamilyMember() async {
     final name = _nameController.text.trim().toLowerCase();
-    if (name.isEmpty) return;
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.enterFamilyMemberName),
+        ),
+      );
+      return;
+    }
+
 
     await FirebaseFirestore.instance
         .collection('users')
@@ -153,50 +163,142 @@ class _SyncCodePageState extends State<SyncCodePage> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final localization = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: Text(loc.syncSettings)),
+      appBar: AppBar(title: Text(localization.syncSettings),
+        centerTitle: true,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Text('${loc.currentSyncCode}: $syncCode'),
+           /* Text('${localization.currentSyncCode}: $syncCode'),
             const SizedBox(height: 10),
             ElevatedButton(
               onPressed: _regenerateCode,
-              child: Text(loc.regenerateCode),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _nameController,
-              decoration: InputDecoration(
-                labelText: loc.familyMemberName,
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 10),
-            DropdownButton<String>(
-              value: selectedPermission,
-              items: [
-                DropdownMenuItem(value: 'view', child: Text(loc.viewPermission)),
-                DropdownMenuItem(value: 'edit', child: Text(loc.editPermission)),
+              child: Text(localization.regenerateCode),
+            ),*/
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  localization.codeGeneration,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          syncCode,
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.copy, size: 18),
+                          onPressed: () {
+                            Clipboard.setData(ClipboardData(text: syncCode));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(localization.copiedToClipboard)),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    ElevatedButton(
+                      onPressed: _regenerateCode,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        minimumSize: const Size(0, 40),
+                      ),
+                      child: Text(localization.regenerateCode),
+                    ),
+                  ],
+                ),
               ],
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() {
-                    selectedPermission = value;
-                  });
-                }
-              },
-            ),
-            ElevatedButton(
-              onPressed: _addFamilyMember,
-              child: Text(loc.addMember),
             ),
             const SizedBox(height: 20),
-            Text(loc.addedFamilyMembers,
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+            const Divider(thickness: 1.2),
+
+            const SizedBox(height: 20),
+
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+
+                Text(
+                  localization.addFamilyMembers,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: TextField(
+                        controller: _nameController,
+                        decoration: InputDecoration(
+                          labelText: localization.familyMemberName,
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 1,
+                      child: DropdownButtonFormField<String>(
+                        value: selectedPermission,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                        ),
+                        items: [
+                          DropdownMenuItem(value: 'view', child: Text(localization.viewPermission)),
+                          DropdownMenuItem(value: 'edit', child: Text(localization.editPermission)),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              selectedPermission = value;
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      onPressed: _addFamilyMember,
+                      child: Text(localization.addMember),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            const Divider(thickness: 1.2),
+
+            const SizedBox(height: 20),
+            Column(
+              crossAxisAlignment: Directionality.of(context) == TextDirection.ltr
+                  ? CrossAxisAlignment.start
+                  : CrossAxisAlignment.end,
+              children: [
+                Text(
+                  localization.addedFamilyMembers,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+              ],
+            ),
             const SizedBox(height: 10),
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
@@ -211,7 +313,18 @@ class _SyncCodePageState extends State<SyncCodePage> {
                   }
                   final members = snapshot.data!.docs;
                   if (members.isEmpty) {
-                    return Text(loc.noFamilyMembers);
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.group_outlined, size: 95, color: AppColors.iconColor),
+                        const SizedBox(height: 12),
+                        Text(
+                          localization.noFamilyMembers,
+                          style: const TextStyle(color: AppColors.heading2, fontSize: 16),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    );
                   }
                   return ListView.builder(
                     itemCount: members.length,
@@ -235,7 +348,7 @@ class _SyncCodePageState extends State<SyncCodePage> {
                               ? TextField(
                             controller: _editNameControllers[docId]!,
                             decoration: InputDecoration(
-                              hintText: loc.familyMemberName,
+                              hintText: localization.familyMemberName,
                             ),
                           )
                               : Text(capitalizeFirst(name)),
@@ -245,11 +358,11 @@ class _SyncCodePageState extends State<SyncCodePage> {
                             items: [
                               DropdownMenuItem(
                                 value: 'view',
-                                child: Text(loc.viewPermission),
+                                child: Text(localization.viewPermission),
                               ),
                               DropdownMenuItem(
                                 value: 'edit',
-                                child: Text(loc.editPermission),
+                                child: Text(localization.editPermission),
                               ),
                             ],
                             onChanged: (value) {
@@ -261,8 +374,8 @@ class _SyncCodePageState extends State<SyncCodePage> {
                             },
                           )
                               : Text(permission == 'edit'
-                              ? loc.editPermission
-                              : loc.viewPermission),
+                              ? localization.editPermission
+                              : localization.viewPermission),
                           trailing: isEditing
                               ? Row(
                             mainAxisSize: MainAxisSize.min,

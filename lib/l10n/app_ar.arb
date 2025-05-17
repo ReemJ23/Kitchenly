@@ -597,5 +597,7 @@
 "scaleIngredients": "قياس المكونات",
 "browseRecipes": "تصفح الوصفات",
 "saveRecipe": "حفظ الوصفة",
-"cannotDeleteMainList": "لا يمكنك حذف القائمة الرئيسية."
+"cannotDeleteMainList": "لا يمكنك حذف القائمة الرئيسية.",
+"processingImage": "جارٍ معالجة الصورة...",
+"errorProcessingImage": "فشل في معالجة الصورة."
 }

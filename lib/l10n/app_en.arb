@@ -356,5 +356,7 @@
 "scaleIngredients": "Scale ingredients",
 "browseRecipes": "Browse Recipes",
 "saveRecipe": "Save Recipe",
-"cannotDeleteMainList": "You cannot delete the main list."
+"cannotDeleteMainList": "You cannot delete the main list.",
+"processingImage": "Processing image...",
+"errorProcessingImage": "Failed to process image."
 }

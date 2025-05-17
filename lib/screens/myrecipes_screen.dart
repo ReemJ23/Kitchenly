@@ -1,15 +1,40 @@
+import 'dart:io';
+
+import 'package:dart_openai/dart_openai.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:kitchenly/screens/profile_screen.dart';
 import 'package:kitchenly/screens/recipe_stepper.dart';
+import '../models/dummy_document_snapshot.dart';
 import '../models/recipeStep.dart';
 import '../utils/localization_helper.dart';
 import 'edit_add_recipe_screen.dart';
 import 'dart:convert';
 import '../utils/colors.dart';
+const String SYSTEM_PROMPT = """
+You are a helpful chef AI that extracts structured recipe information from messy or scanned text.
+
+Return ONLY a JSON object in this format:
+{
+  "name": String,
+  "servingSize": int,
+  "preparationTime": int, // in minutes
+  "ingredients": [{"quantity": Number, "unit": String, "name": String}],
+  "steps": [{"order": Number, "text": String, "ingredientIds": [String]}]
+}
+
+- Try to infer reasonable defaults if any value is missing.
+- Do not include any markdown, explanations, or code blocks — only return the JSON object.
+""";
+
+
+
+
 
 String? lang;
 class _RecipeCardData {
@@ -66,6 +91,115 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
     }
     return 'en'; // Default to 'en' if the user document doesn't exist
   }
+
+  String cleanJson(String response) {
+    final regex = RegExp(r'```(?:json)?\s*([\s\S]*?)\s*```');
+    final match = regex.firstMatch(response);
+    return match != null ? match.group(1)! : response;
+  }
+  Future<(Map<String, dynamic>, DocumentReference?)> processImageForRecipe(XFile imageFile) async {
+    // 1. Initialize OpenAI
+    OpenAI.apiKey = "sk-7d0d0c01152346a288aba518e6c2de58";
+    OpenAI.baseUrl = "https://dashscope-intl.aliyuncs.com/compatible-mode";
+
+    // 2. Perform OCR
+    final inputImage = InputImage.fromFile(File(imageFile.path));
+    final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
+    final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
+    final String extractedText = recognizedText.text;
+    textRecognizer.close();
+
+    // 3. Process with OpenAI
+    try {
+      final chatCompletion = await OpenAI.instance.chat.create(
+        model: "qwen2.5-72b-instruct",
+        messages: [
+          OpenAIChatCompletionChoiceMessageModel(
+            role: OpenAIChatMessageRole.system,
+            content: [
+              OpenAIChatCompletionChoiceMessageContentItemModel.text(SYSTEM_PROMPT),
+            ],
+          ),
+          OpenAIChatCompletionChoiceMessageModel(
+            role: OpenAIChatMessageRole.user,
+            content: [
+              OpenAIChatCompletionChoiceMessageContentItemModel.text(extractedText),
+            ],
+          ),
+        ],
+      );
+
+      final responseContent = chatCompletion.choices.first.message.content;
+      final textContent = responseContent?.first.text ?? '';
+      print("AI Raw Response: $textContent");
+
+      // ✅ Clean response by stripping triple backticks and 'json'
+      final cleanedJson = _stripMarkdown(textContent);
+
+      // ✅ Parse JSON
+      final recipeData = jsonDecode(cleanedJson) as Map<String, dynamic>;
+      return (recipeData, null);
+    } catch (e) {
+      print("AI Processing Error: $e");
+      final fallback = await fallbackOcrParsing('');
+      return fallback;
+    }
+  }
+
+// ✅ Helper function to remove markdown formatting
+  String _stripMarkdown(String input) {
+    final regex = RegExp(r'```(?:json)?\s*([\s\S]*?)\s*```');
+    final match = regex.firstMatch(input);
+    return match != null ? match.group(1)! : input;
+  }
+
+
+  Future<(Map<String, dynamic>, DocumentReference?)> fallbackOcrParsing(String extractedText) async {
+    List<String> lines = extractedText.split('\n');
+    String name = '';
+    int servings = 0;
+    int prepTime = 0;
+    List<String> ingredients = [];
+    List<String> steps = [];
+    bool inIngredients = false;
+    bool inSteps = false;
+
+    for (int i = 0; i < lines.length; i++) {
+      final line = lines[i].toLowerCase().trim();
+
+      if (line.contains('name') || line == 'ame') {
+        name = i + 1 < lines.length ? lines[i + 1].trim() : '';
+      } else if (line.contains('serving')) {
+        servings = int.tryParse(RegExp(r'\d+').firstMatch(lines[i])?.group(0) ?? '0') ?? 0;
+      } else if (line.contains('prep')) {
+        prepTime = int.tryParse(RegExp(r'\d+').firstMatch(lines[i])?.group(0) ?? '0') ?? 0;
+      } else if (line.contains('ingredient')) {
+        inIngredients = true;
+        inSteps = false;
+      } else if (line.contains('instruction') || line.contains('step') || line.contains('method')) {
+        inIngredients = false;
+        inSteps = true;
+      } else if (inIngredients && line.isNotEmpty) {
+        ingredients.add(lines[i].trim());
+      } else if (inSteps && line.isNotEmpty) {
+        steps.add(lines[i].trim());
+      }
+    }
+
+    final fallbackData = {
+      'name': name,
+      'preparationTime': prepTime,
+      'servingSize': servings,
+      'category': '',
+      'notes': '',
+      'ingredients': ingredients,
+      'steps': steps,
+    };
+
+    return (fallbackData, null); // ✅ Return plain data, no document reference
+  }
+
+
   Stream<bool> hasUnreadNotifications(String uid) {
     return FirebaseFirestore.instance
         .collection('users')
@@ -75,6 +209,7 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
         .snapshots()
         .map((snapshot) => snapshot.docs.isNotEmpty);
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -125,14 +260,66 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
           },
         ),
         actions: [
-          IconButton(
+          PopupMenuButton<String>(
+            onSelected: (value) async {
+              if (value == 'manual') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const EditRecipePage()),
+                );
+              } else {
+                final XFile? image = await ImagePicker().pickImage(source: ImageSource.gallery);
+                if (image != null) {
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => AlertDialog(
+                      content: Row(
+                        children: [
+                          const CircularProgressIndicator(),
+                          const SizedBox(width: 20),
+                          Text(localizations.processingImage ?? 'Processing image...'),
+                        ],
+                      ),
+                    ),
+                  );
+
+                  try {
+                    final (recipeData, recipeRef) = await processImageForRecipe(image);
+
+                    if (!mounted) return;
+                    Navigator.pop(context); // Close the loading dialog
+
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EditRecipePage(
+                          recipeData: recipeData,
+                          recipeRef: recipeRef,
+                        ),
+                      ),
+                    );
+                  } catch (e) {
+                    if (mounted) Navigator.pop(context); // Close the dialog
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(localizations.errorProcessingImage ?? 'Failed to process image.'),
+                      ),
+                    );
+                  }
+                }
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: 'manual', child: Text('Enter Manually')),
+              const PopupMenuItem(value: 'gallery', child: Text('Upload from Gallery')),
+              const PopupMenuItem(value: 'camera', child: Text('Take a Picture')),
+            ],
             icon: const Icon(Icons.add),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const EditRecipePage()),
-            ),
           ),
         ],
+
       ),
       body: Column(
         children: [
@@ -574,7 +761,11 @@ class _RecipeDetailsSheetState extends State<RecipeDetailsSheet> {
                     icon: Icon(Icons.edit),
                     onPressed: () {
                       Navigator.pop(context);
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => EditRecipePage(recipe: widget.recipe)));
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => EditRecipePage(
+                        recipeData: widget.recipe.data() as Map<String, dynamic>?,
+                        recipeRef: widget.recipe.reference,
+                      )
+                      ));
                     },
                   ),
                   IconButton(
@@ -819,3 +1010,5 @@ class _RecipeDetailsSheetState extends State<RecipeDetailsSheet> {
       ],
     );
   }
+
+

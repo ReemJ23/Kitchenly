@@ -9,9 +9,10 @@ import '../utils/localization_helper.dart';
 import '../utils/colors.dart';
 
 class EditRecipePage extends StatefulWidget {
-  final DocumentSnapshot? recipe;
+  final Map<String, dynamic>? recipeData;
+  final DocumentReference? recipeRef;
 
-  const EditRecipePage({Key? key, this.recipe}) : super(key: key);
+  const EditRecipePage({Key? key, this.recipeData, this.recipeRef}) : super(key: key);
 
   @override
   _EditRecipePageState createState() => _EditRecipePageState();
@@ -32,8 +33,6 @@ class _EditRecipePageState extends State<EditRecipePage> {
   String? _cuisineType;
   List<String> _labels = [];
   List<String> _equipment = [];
-
-  // Temporary lists for ingredients and steps (would be managed in state)
   List<Map<String, dynamic>> _ingredients = [];
   List<Map<String, dynamic>> _steps = [];
   String? _userLanguage;
@@ -46,9 +45,17 @@ class _EditRecipePageState extends State<EditRecipePage> {
   @override
   void initState() {
     super.initState();
-    if (widget.recipe != null) {
-      // Load existing recipe data
-      final data = widget.recipe!.data() as Map<String, dynamic>;
+    _initializeRecipeData();
+    _fetchUserLanguage().then((language) {
+      setState(() {
+        _userLanguage = language;
+      });
+    });
+  }
+
+  void _initializeRecipeData() {
+    if (widget.recipeData != null) {
+      final data = widget.recipeData!;
       _nameController.text = data['name'] ?? '';
       _prepTimeController.text = data['preparationTime']?.toString() ?? '';
       _servingSizeController.text = data['servingSize']?.toString() ?? '';
@@ -58,18 +65,48 @@ class _EditRecipePageState extends State<EditRecipePage> {
       _cuisineType = data['cuisineType'];
       _labels = List<String>.from(data['labels'] ?? []);
       _equipment = List<String>.from(data['equipment'] ?? []);
-      if (data['imageBase64'] != null) {
-        _imageBase64 = data['imageBase64'];
-      }
-      // Load existing ingredients and steps
-      _loadExistingIngredientsAndSteps();
+      _imageBase64 = data['imageBase64'] ?? '';
+      _ingredients = List<Map<String, dynamic>>.from(
+          (data['ingredients'] ?? []).map((item) => item is Map<String, dynamic> ? item : {'name': item})
+      );
+      _steps = List<Map<String, dynamic>>.from(
+          (data['steps'] ?? []).map((item) => item is Map<String, dynamic> ? item : {'description': item})
+      );
     }
-    _fetchUserLanguage().then((language) {
-      setState(() {
-        _userLanguage = language;
-      });
+  }
+
+  Future<String?> _fetchUserLanguage() async {
+    try {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
+      return userDoc.data()?['language'] ?? 'en';
+    } catch (e) {
+      debugPrint('Error fetching user language: $e');
+      return 'en';
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _prepTimeController.dispose();
+    _servingSizeController.dispose();
+    _categoryController.dispose();
+    _notesController.dispose();
+    _newLabelController.dispose();
+    _newEquipmentController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadIngredientsAndStepsFromFirestore(DocumentReference ref) async {
+    final ingredientsSnapshot = await ref.collection('ingredients').get();
+    final stepsSnapshot = await ref.collection('steps').get();
+
+    setState(() {
+      _ingredients = ingredientsSnapshot.docs.map((doc) => doc.data()).cast<Map<String, dynamic>>().toList();
+      _steps = stepsSnapshot.docs.map((doc) => doc.data()).cast<Map<String, dynamic>>().toList();
     });
   }
+
 
   Future<void> _pickImage() async {
     try {
@@ -108,25 +145,10 @@ class _EditRecipePageState extends State<EditRecipePage> {
     }
   }
 
-
-  // Fetch the user's preferred language from Firestore
-  Future<String> _fetchUserLanguage() async {
-    final userDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user!.uid)
-        .get();
-
-    if (userDoc.exists) {
-      return userDoc['language'] ??
-          'en'; // Default to 'en' if language is not set
-    }
-    return 'en'; // Default to 'en' if the user document doesn't exist
-  }
-
   Future<void> _loadExistingIngredientsAndSteps() async {
-    final ingredientsSnapshot = await widget.recipe!.reference.collection(
+    final ingredientsSnapshot = await widget.recipeRef!.collection(
         'ingredients').get();
-    final stepsSnapshot = await widget.recipe!.reference.collection('steps')
+    final stepsSnapshot = await widget.recipeRef!.collection('steps')
         .get();
 
     setState(() {
@@ -165,8 +187,8 @@ class _EditRecipePageState extends State<EditRecipePage> {
     final localizations = _userLanguage != null
         ? lookupAppLocalizations(Locale(_userLanguage!))
         : AppLocalizations.of(context)!;
-    final isEditing = widget.recipe != null;
-    final recipeData = isEditing ? widget.recipe!.data() as Map<String, dynamic> : {};
+    final isEditing = widget.recipeRef != null;
+    final recipeData = isEditing ? widget.recipeData as Map<String, dynamic> : {};
 
     return Scaffold(
       appBar: AppBar(
@@ -426,7 +448,7 @@ class _EditRecipePageState extends State<EditRecipePage> {
                   height: 200,
                   fit: BoxFit.cover,
                 )
-              else if (widget.recipe != null&&recipeData['imageBase64'] != null)
+              else if (widget.recipeRef != null&&recipeData['imageBase64'] != null)
                   Image.memory(
                     base64Decode(recipeData['imageBase64']),
                     height: 200,
@@ -741,7 +763,7 @@ class _EditRecipePageState extends State<EditRecipePage> {
       };
 
       DocumentReference recipeRef;
-      if (widget.recipe == null) {
+      if (widget.recipeRef == null) {
         // Create new recipe
         recipeRef = await FirebaseFirestore.instance
             .collection('users')
@@ -750,9 +772,10 @@ class _EditRecipePageState extends State<EditRecipePage> {
             .add(recipeData);
       } else {
         // Update existing recipe
-        recipeRef = widget.recipe!.reference;
+        recipeRef = widget.recipeRef!;
         await recipeRef.update(recipeData);
       }
+
       final ingredientIds = await _saveIngredients(recipeRef);
       await _saveSteps(recipeRef, ingredientIds);
 
@@ -769,7 +792,7 @@ class _EditRecipePageState extends State<EditRecipePage> {
     final ingredientsCollection = recipeRef.collection('ingredients');
 
     // Delete old ingredients if editing
-    if (widget.recipe != null) {
+    if (widget.recipeRef != null) {
       final existingIngredients = await ingredientsCollection.get();
       for (final doc in existingIngredients.docs) {
         await doc.reference.delete();
@@ -796,7 +819,7 @@ class _EditRecipePageState extends State<EditRecipePage> {
     final stepsCollection = recipeRef.collection('steps');
 
     // Delete old steps if editing
-    if (widget.recipe != null) {
+    if (widget.recipeRef != null) {
       final existingSteps = await stepsCollection.get();
       for (final doc in existingSteps.docs) {
         await doc.reference.delete();

@@ -210,7 +210,96 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
         .map((snapshot) => snapshot.docs.isNotEmpty);
   }
 
+  Widget _buildRecipeListWithAvailability(List<DocumentSnapshot> recipes, AppLocalizations localizations) {
+    return ListView.builder(
+      itemCount: recipes.length,
+      itemBuilder: (context, index) {
+        final recipe = recipes[index];
+        final data = recipe.data() as Map<String, dynamic>;
 
+        return FutureBuilder<_RecipeCardData>(
+          future: _getRecipeCardData(recipe),
+          builder: (context, snapshot) {
+            // Show skeleton loader while waiting for availability data
+            if (!snapshot.hasData) {
+              return _buildRecipeCardSkeleton();
+            }
+
+            // Apply availability filter if needed
+            if (_selectedAvailability != 'all') {
+              final cardData = snapshot.data!;
+              final availabilityRatio = cardData.totalIngredients > 0
+                  ? cardData.availableIngredients / cardData.totalIngredients
+                  : 0;
+
+              if (_selectedAvailability == 'full' && availabilityRatio < 1) {
+                return SizedBox.shrink(); // Hide if doesn't match filter
+              }
+              if (_selectedAvailability == 'partial' &&
+                  (availabilityRatio == 1 || availabilityRatio < 0.5)) {
+                return SizedBox.shrink(); // Hide if doesn't match filter
+              }
+              if (_selectedAvailability == 'low' && availabilityRatio >= 0.5) {
+                return SizedBox.shrink(); // Hide if doesn't match filter
+              }
+            }
+
+            return _buildRecipeCard(
+                context,
+                recipe,
+                data,
+                localizations,
+                snapshot.data! // Pass the pre-loaded availability data
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildRecipeCardSkeleton() {
+    return Card(
+      margin: EdgeInsets.all(8),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Row(
+          children: [
+          Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(8),
+          ),),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: 16,
+                  color: Colors.grey[200],
+                ),
+                SizedBox(height: 8),
+                Container(
+                  width: 100,
+                  height: 12,
+                  color: Colors.grey[200],
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 40,
+            height: 16,
+            color: Colors.grey[200],
+          ),
+          ],
+        ),
+      ),
+    );
+  }
   @override
   Widget build(BuildContext context) {
     final localizations = _userLanguage != null
@@ -350,30 +439,10 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
 
                 final recipes = snapshot.data!.docs;
                 if (recipes.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.restaurant_menu_rounded,
-                          size: 95,
-                          color: AppColors.iconColor,
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          localizations.noRecipesFound,
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: AppColors.heading2,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  );
+                  return Center(child: Text(localizations.noRecipesFound));
                 }
 
-                // Apply filters
+                // Apply synchronous filters first
                 var filteredRecipes = recipes.where((recipe) {
                   final data = recipe.data() as Map<String, dynamic>;
                   final name = data['name']?.toString().toLowerCase() ?? '';
@@ -400,45 +469,20 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
                   if (_selectedTime != 'all') {
                     final prepTime = data['preparationTime'] as int? ?? 0;
                     if (_selectedTime == 'quick' && prepTime > 30) return false;
-                    if (_selectedTime == 'tmedium' && (prepTime <= 30 || prepTime > 60)) return false;
+                    if (_selectedTime == 'medium' && (prepTime <= 30 || prepTime > 60)) return false;
                     if (_selectedTime == 'long' && prepTime <= 60) return false;
                   }
 
                   return true;
                 }).toList();
+
                 if (filteredRecipes.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.restaurant_menu_rounded,
-                          size: 85,
-                          color: AppColors.iconColor,
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          localizations.noRecipesFound,
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: AppColors.heading2,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  );
+                  return Center(child: Text(localizations.noRecipesFound));
                 }
-                return ListView.builder(
-                  itemCount: filteredRecipes.length,
-                  itemBuilder: (context, index) {
-                    final recipe = filteredRecipes[index];
-                    final data = recipe.data() as Map<String, dynamic>;
-                    return _buildRecipeCard(context, recipe, data, localizations);
-                  },
-                );
+
+                return _buildRecipeListWithAvailability(filteredRecipes, localizations);
               },
-            ),
+            )
           ),
         ],
       ),
@@ -528,19 +572,7 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
   }
 
   Widget _buildRecipeCard(BuildContext context, DocumentSnapshot recipe,
-      Map<String, dynamic> data, AppLocalizations localizations) {
-    return FutureBuilder(
-      future: _getRecipeCardData(recipe),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData) {
-          return Center(child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: CircularProgressIndicator(),
-          ));
-        }
-
-        final cardData = snapshot.data!;
-
+      Map<String, dynamic> data, AppLocalizations localizations, _RecipeCardData cardData) {
         return Card(
           margin: EdgeInsets.all(8),
           child: InkWell(
@@ -603,6 +635,7 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
                               data['difficulty']?.toString().toUpperCase() ?? '?',
                               style: TextStyle(fontSize: 12, color: Colors.grey),
                             ),
+
                           ],
                         ),
                       ],
@@ -638,8 +671,6 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
             ),
           ),
         );
-      },
-    );
   }
 
   Future<_RecipeCardData> _getRecipeCardData(DocumentSnapshot recipe) async {

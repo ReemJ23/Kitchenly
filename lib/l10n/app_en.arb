@@ -397,5 +397,6 @@
 "understand": "I understand",
 "allergyAlertTitle": "Warning: Potential Allergens",
 "allergies": "Allergies",
-"enterNewAllergy": "Enter new allergy"
+"enterNewAllergy": "Enter new allergy",
+  "pleaseEnterAllergy": "Please enter allergy."
 }

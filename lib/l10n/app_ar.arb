@@ -641,5 +641,7 @@
 "understand": "أنا أتفهم",
 "allergyAlertTitle": "تحذير: مسببات الحساسية المحتملة",
 "allergies": "حساسيات",
-"enterNewAllergy": "أدخل حساسية جديدة"
+"enterNewAllergy": "أدخل حساسية جديدة",
+  "pleaseEnterAllergy": "قم بإدخال نوع الحساسية"
+
 }

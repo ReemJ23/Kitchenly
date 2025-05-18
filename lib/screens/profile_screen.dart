@@ -35,6 +35,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _obscurePassword = true;
   String? _selectedThemeName;
   int _selectedColorValue = 0x99BF8E73;
+  List<String> _allergies = [];
+  final TextEditingController _allergyController = TextEditingController();
   final List<Map<String, dynamic>> _colorOptions = [
     {'value': 0xFF9CAF88, 'name': 'green'},
     {'value': 0xDD607D8B, 'name': 'blue'},
@@ -100,6 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _usernameController.text = userDoc['username'] ?? '';
 
           _imageBase64 = userDoc['profilePicture'];
+          _allergies = List<String>.from(userDoc['allergies'] ?? []);
           _selectedColorValue = userDoc.data()!.containsKey('themeColor')
               ? userDoc['themeColor']
               : 0xFF51271D;
@@ -111,6 +114,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() => _isLoading = false);
     }
   }
+  Future<void> _updateAllergies() async {
+    if (user == null) return;
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .update({'allergies': _allergies});
+  }
+  void _addAllergy(String allergy) {
+    final lowerAllergy = allergy.trim().toLowerCase();
+
+    if (lowerAllergy.isNotEmpty && !_allergies.contains(lowerAllergy)) {
+      setState(() {
+        _allergies.add(lowerAllergy);
+      });
+      _updateAllergies();
+      _allergyController.clear();
+    }
+  }
+
+
+  void _removeAllergy(String allergy) {
+    setState(() {
+      _allergies.remove(allergy);
+    });
+    _updateAllergies();
+  }
+
 
   Future<void> _updateLanguage(String newLanguage) async {
     if (user == null) return;
@@ -395,6 +426,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _buildConnectionsSection(),
                     const Divider(),
                     _buildThemeSection(),
+                    const Divider(),
+                    _buildAllergiesSection(),
                   ],
                 ),
               ),
@@ -612,6 +645,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ],
     );
   }
+  Widget _buildAllergiesSection(){
+    return  Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            localizations.allergies,
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _allergies.map((allergy) {
+              return Chip(
+                label: Text(allergy[0].toUpperCase() + allergy.substring(1)),
+                deleteIcon: Icon(Icons.close),
+                onDeleted: () => _removeAllergy(allergy),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 10),
+
+              TextField(
+                  controller: _allergyController,
+                  decoration: InputDecoration(
+                    labelText: localizations.enterNewAllergy,
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              const SizedBox(height: 15),
+              ElevatedButton.icon(
+                icon: Icon(Icons.add),
+                label: Text(localizations.add),
+                onPressed: () => _addAllergy(_allergyController.text.trim()),
+              ),
+        ],
+    );
+  }
   Widget _buildThemeSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -637,8 +708,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     shape: BoxShape.circle,
                     border: isSelected
                         ? Border.all(
-                      color: Colors.white,
-                      width: 2,
+                      color: Colors.white70,
+                      width: 3,
                     )
                         : null,
                   ),
@@ -647,6 +718,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             }).toList(),
           ),
         ),
+        const SizedBox(height: 12),
       ],
     );
   }

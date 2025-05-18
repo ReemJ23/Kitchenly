@@ -263,7 +263,55 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
       );
     }
   }
+  Future<void> _checkAllergiesAndShowWarning(Map<String, dynamic> recipe) async {
+    if (user == null) return;
 
+    // Get user's allergies
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .get();
+
+    final allergies = List<String>.from(userDoc['allergies'] ?? []);
+    if (allergies.isEmpty) return;
+
+    // Check recipe ingredients against allergies
+    final ingredients = List<Map<String, dynamic>>.from(recipe['ingredients'] ?? []);
+    final allergicIngredients = ingredients.where((ingredient) {
+      final ingredientName = ingredient['name'].toString().toLowerCase();
+      return allergies.any((allergy) =>
+          ingredientName.contains(allergy.toLowerCase()));
+    }).toList();
+
+    if (allergicIngredients.isNotEmpty) {
+      // Show warning dialog
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(AppLocalizations.of(context)!.allergyWarning),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(AppLocalizations.of(context)!.allergyWarningMessage),
+              const SizedBox(height: 16),
+              Text(AppLocalizations.of(context)!.allergicIngredientsFound),
+              ...allergicIngredients.map((ingredient) =>
+                  Text('- ${ingredient['name']}')
+              ).toList(),
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: Text(AppLocalizations.of(context)!.understand),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      );
+    }
+  }
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
@@ -342,66 +390,120 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
       ),
     );
   }
+  Future<List<String>> _getUserAllergies() async {
+    if (user == null) return [];
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .get();
+    return List<String>.from(userDoc['allergies'] ?? []);
+  }
 
+  bool _recipeContainsAllergens(Map<String, dynamic> recipe, List<String> allergies) {
+    if (allergies.isEmpty) return false;
+
+    final ingredients = List<Map<String, dynamic>>.from(recipe['ingredients'] ?? []);
+    return ingredients.any((ingredient) {
+      final ingredientName = ingredient['name'].toString().toLowerCase();
+      return allergies.any((allergy) =>
+          ingredientName.contains(allergy.toLowerCase()));
+    });
+  }
   Widget _buildRecipeCard(Map<String, dynamic> recipe, AppLocalizations loc) {
-    return Card(
-      margin: EdgeInsets.all(8),
-      child: InkWell(
-        onTap: () => _showRecipeDetails(recipe),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (recipe['imageBase64'] != null)
-              Image.network(
-                recipe['imageBase64'],
-                height: 200,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
-            Padding(
-              padding: EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    recipe['name'] ?? loc.untitledRecipe,
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 8),
-                  Row(
+    return FutureBuilder<List<String>>(
+        future: _getUserAllergies(),
+        builder: (context, snapshot) {
+          final allergies = snapshot.data ?? [];
+          final hasAllergyWarning = _recipeContainsAllergens(recipe, allergies);
+          return Card(
+              margin: EdgeInsets.all(8),
+              child: InkWell(
+                onTap: () => _showRecipeDetails(recipe),
+                child: Stack(
                     children: [
-                      Icon(Icons.timer, size: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (recipe['imageBase64'] != null)
+                            Image.network(
+                              recipe['imageBase64'],
+                              height: 200,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                          Padding(
+                            padding: EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  recipe['name'] ?? loc.untitledRecipe,
+                                  style: TextStyle(fontSize: 18,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Icon(Icons.timer, size: 16),
 
-                      SizedBox(width: 4),
-                      Text('${recipe['preparationTime']} ${loc.minutes}'),
-                      SizedBox(width: 16),
-                      Icon(Icons.star, size: 16),
-                      SizedBox(width: 4),
-                      Text(LocalizationHelper.getLocalizedString(loc, recipe['difficulty'])),
-                      SizedBox(width: 20),
-                      Text(
-                        '${recipe['ingredients'].length} ${loc.ingredients}',
-                        style: TextStyle(color: Colors.grey),
+                                    SizedBox(width: 4),
+                                    Text('${recipe['preparationTime']} ${loc
+                                        .minutes}'),
+                                    SizedBox(width: 16),
+                                    Icon(Icons.star, size: 16),
+                                    SizedBox(width: 4),
+                                    Text(LocalizationHelper.getLocalizedString(
+                                        loc, recipe['difficulty'])),
+                                    SizedBox(width: 20),
+                                    Text(
+                                      '${recipe['ingredients'].length} ${loc
+                                          .ingredients}',
+                                      style: TextStyle(color: Colors.grey),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 20),
+                                Center(
+                                  child: ElevatedButton(
+                                    onPressed: () =>
+                                        _saveRecipeToMyRecipes(recipe),
+                                    child: Text(loc.saveRecipe),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  SizedBox(height: 20),
-                    Center(
-                      child: ElevatedButton(
-                        onPressed: () => _saveRecipeToMyRecipes(recipe),
-                        child: Text(loc.saveRecipe),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+                      if (hasAllergyWarning)
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Container(
+                            padding: EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              AppLocalizations.of(context)!.allergies,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ]
+                ),
+              )
+          );
+        } );
   }
 
   void _showRecipeDetails(Map<String, dynamic> recipe) {
+    _checkAllergiesAndShowWarning(recipe);
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
 

@@ -390,5 +390,12 @@
 "easy": "Easy",
 "medium": "Medium",
 "hard": "Hard",
-"theme": "Theme"
+"theme": "Theme",
+"allergyWarning": "Allergy Warning!",
+"allergyWarningMessage": "This recipe contains ingredients you may be allergic to:",
+"allergicIngredientsFound": "Found these ingredients matching your allergies:",
+"understand": "I understand",
+"allergyAlertTitle": "Warning: Potential Allergens",
+"allergies": "Allergies",
+"enterNewAllergy": "Enter new allergy"
 }

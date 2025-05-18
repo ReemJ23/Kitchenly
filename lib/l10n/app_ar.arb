@@ -634,5 +634,12 @@
 "easy": "سهل",
 "medium": "متوسط",
 "hard": "صعب",
-"theme": "المظهر"
+"theme": "المظهر",
+"allergyWarning": "تحذير من الحساسية!",
+"allergyWarningMessage": "هذه الوصفة تحتوي على مكونات قد تكون لديك حساسية منها:",
+"allergicIngredientsFound": "تم العثور على هذه المكونات التي تطابق حساسياتك:",
+"understand": "أنا أتفهم",
+"allergyAlertTitle": "تحذير: مسببات الحساسية المحتملة",
+"allergies": "حساسيات",
+"enterNewAllergy": "أدخل حساسية جديدة"
 }

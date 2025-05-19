@@ -80,7 +80,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   }
 
   void _selectMealPlan() async {
-    final localizations = AppLocalizations.of(context)!;
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
 
     final plans = await FirebaseFirestore.instance
         .collection('users')
@@ -145,7 +147,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   }
 
   void _confirmDeleteMealPlan() async {
-    final localizations = AppLocalizations.of(context)!;
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     final plans = await FirebaseFirestore.instance
         .collection('users')
         .doc(user!.uid)
@@ -193,7 +197,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(
-                          AppLocalizations.of(context)!.mealPlanDeleted)),
+                          localizations.mealPlanDeleted)),
                     );
                   },
                 ),
@@ -206,7 +210,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   }
 
   void _navigateToEditMealPlan() async {
-    final localizations = AppLocalizations.of(context)!;
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
 
     final plans = await FirebaseFirestore.instance
         .collection('users')
@@ -282,7 +288,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                   icon: CircleAvatar(
                       backgroundImage: AssetImage('assets/images/icons/profile_chef_icon.png'),
                       backgroundColor: AppColors.profileIconBg,),
-                  tooltip: AppLocalizations.of(context)!.profile,
+                  tooltip: localizations.profile,
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -390,38 +396,6 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ),
-                  // ToggleButtons(
-                  //   isSelected: [
-                  //     _calendarFormat == CalendarFormat.week,
-                  //     _calendarFormat == CalendarFormat.twoWeeks,
-                  //     _calendarFormat == CalendarFormat.month,
-                  //   ],
-                  //   onPressed: (index) {
-                  //     setState(() {
-                  //       _calendarFormat = [
-                  //         CalendarFormat.week,
-                  //         CalendarFormat.twoWeeks,
-                  //         CalendarFormat.month,
-                  //       ][index];
-                  //     });
-                  //   },
-                  //   constraints: BoxConstraints(minWidth: 36),
-                  //   borderRadius: BorderRadius.circular(6),
-                  //   children: [
-                  //     Padding(
-                  //       padding: EdgeInsets.symmetric(horizontal: 12),
-                  //       child: Text(localizations.oneWeek),
-                  //     ),
-                  //     Padding(
-                  //       padding: EdgeInsets.symmetric(horizontal: 12),
-                  //       child: Text(localizations.twoWeeks),
-                  //     ),
-                  //     Padding(
-                  //       padding: EdgeInsets.symmetric(horizontal: 12),
-                  //       child: Text(localizations.month),
-                  //     ),
-                  //   ],
-                  // ),
                 ),
               ),
               ],
@@ -546,6 +520,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
 
   Widget _buildMealsForSelectedDay() {
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     if (_selectedMealPlanId == null) {
       return Center(
         child: Column(
@@ -558,7 +535,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             ),
             SizedBox(height: 16), // Space between icon and text
             Text(
-              AppLocalizations.of(context)!.noRecipesSelected,
+              localizations.noRecipesSelected,
               style: TextStyle(
                 fontSize: 18,
                 color: AppColors.heading2,
@@ -584,7 +561,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         if (!snapshot.hasData)
           return Center(child: CircularProgressIndicator());
         if (!snapshot.data!.exists)
-          return Center(child: Text(AppLocalizations.of(context)!.noMealPlans));
+          return Center(child: Text(localizations.noMealPlans));
 
         final data = snapshot.data!.data() as Map<String, dynamic>;
         final recipeDates = data['recipeDates'] as Map<String, dynamic>;
@@ -602,7 +579,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
         if (recipeIdsForDay.isEmpty) {
           return Center(
-              child: Text(AppLocalizations.of(context)!.noRecipesSelected));
+              child: Text(localizations.noRecipesSelected));
         }
 
         return FutureBuilder<QuerySnapshot>(
@@ -665,7 +642,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
 
   void _deleteMealPlanItem(String mealId) async {
-    final localizations = AppLocalizations.of(context)!;
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     await FirebaseFirestore.instance
         .collection('users')
         .doc(user!.uid)
@@ -679,8 +658,6 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   }
 
   void _showCreateMealPlanDialog(BuildContext context) {
-    final localizations = AppLocalizations.of(context)!;
-
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -893,9 +870,12 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
   }
 
   Widget _buildRecipeSelectionStep() {
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     if (_startDate == null || _endDate == null) {
       return Center(
-          child: Text(AppLocalizations.of(context)!.selectPeriodFirst));
+          child: Text(localizations.selectPeriodFirst));
     }
 
     return StreamBuilder<QuerySnapshot>(
@@ -911,7 +891,7 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
         final recipes = snapshot.data!.docs;
         if (recipes.isEmpty) {
           return Center(
-              child: Text(AppLocalizations.of(context)!.noRecipesFound));
+              child: Text(localizations.noRecipesFound));
         }
 
         return ListView.builder(
@@ -928,6 +908,9 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
                 if (!snapshot.hasData) return SizedBox.shrink();
 
                 final cardData = snapshot.data!;
+                final localizations = _userLanguage != null
+                    ? lookupAppLocalizations(Locale(_userLanguage!))
+                    : AppLocalizations.of(context)!;
                 return CheckboxListTile(
                   value: isSelected,
                   onChanged: (value) {
@@ -939,8 +922,7 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
                           _selectedRecipes[recipe.id] = recipe;
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(AppLocalizations.of(context)!
-                                .maxRecipesSelected)),
+                            SnackBar(content: Text(localizations.maxRecipesSelected)),
                           );
                         }
                       } else {
@@ -953,7 +935,7 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
                   title: Text(data['name'] ?? 'Unknown Recipe'),
                   subtitle: Text(
                     '${cardData.availableIngredients}/${cardData
-                        .totalIngredients} ${AppLocalizations.of(context)!
+                        .totalIngredients} ${localizations
                         .ingredients}',
                     style: TextStyle(color: cardData.availabilityColor),
                   ),
@@ -1055,7 +1037,9 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
   }
 
   void _continue() {
-    final localizations = AppLocalizations.of(context)!;
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
 
     switch (_currentStep) {
       case 0:
@@ -1158,7 +1142,9 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
   }
 
   Future<void> _generateShoppingList() async {
-    final localizations = AppLocalizations.of(context)!;
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     setState(() {
       _isGeneratingShoppingList = true;
       _shoppingListItems.clear();
@@ -1248,7 +1234,9 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
   }
 
   Future<void> _saveMealPlan() async {
-    final localizations = AppLocalizations.of(context)!;
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
 
     try {
       final mealPlansRef = FirebaseFirestore.instance
@@ -1282,12 +1270,12 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
             'unit': item['unit'],
             'category': item['category'],
             'checked': false,
-            'addedFromMealPlanId': newMealPlanDoc.id, // optional: to track where it came from
+            'addedFromMealPlanId': newMealPlanDoc.id,
           });
         }
       }
 
-      await batch.commit(); // ✅ Upload all at once
+      await batch.commit();
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(localizations.shoppingListGenerated)),

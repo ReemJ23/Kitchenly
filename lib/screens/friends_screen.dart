@@ -14,8 +14,30 @@ class FriendsPage extends StatefulWidget {
 class _FriendsPageState extends State<FriendsPage> {
   final user = FirebaseAuth.instance.currentUser!;
   final TextEditingController _searchController = TextEditingController();
+  String? _userLanguage;
 
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserLanguage().then((language) {
+      setState(() {
+        _userLanguage = language;
+      });
+    });
+  }
+  Future<String?> _fetchUserLanguage() async {
+    try {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
+      return userDoc.data()?['language'] ?? 'en';
+    } catch (e) {
+      debugPrint('Error fetching user language: $e');
+      return 'en';
+    }
+  }
   Future<void> _sendFriendRequest(String username) async {
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     final query = await FirebaseFirestore.instance
         .collection('users')
         .where('username', isEqualTo: username)
@@ -24,7 +46,7 @@ class _FriendsPageState extends State<FriendsPage> {
 
     if (query.docs.isEmpty || query.docs.first.id == user.uid) {
       ScaffoldMessenger.of(context).showSnackBar(
-         SnackBar(content: Text(AppLocalizations.of(context)!.userNotFoundOrInvalid)),
+         SnackBar(content: Text(localizations.userNotFoundOrInvalid)),
       );
       return;
     }
@@ -43,7 +65,7 @@ class _FriendsPageState extends State<FriendsPage> {
 
     if (currentFriends.contains(targetId)) {
       ScaffoldMessenger.of(context).showSnackBar(
-         SnackBar(content: Text(AppLocalizations.of(context)!.alreadyYourFriend)),
+         SnackBar(content: Text(localizations.alreadyYourFriend)),
       );
       return;
     }
@@ -61,7 +83,7 @@ class _FriendsPageState extends State<FriendsPage> {
 
     if (existing.docs.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-         SnackBar(content: Text(AppLocalizations.of(context)!.friendRequestAlreadySent)),
+         SnackBar(content: Text(localizations.friendRequestAlreadySent)),
 
       );
       return;
@@ -81,8 +103,8 @@ class _FriendsPageState extends State<FriendsPage> {
         .doc(targetId)
         .collection('notifications')
         .add({
-      'title': AppLocalizations.of(context)!.friendRequestTitle,
-      'body': AppLocalizations.of(context)!.friendRequestBody(senderUsername),
+      'title': localizations.friendRequestTitle,
+      'body': localizations.friendRequestBody(senderUsername),
       'type': 'friend_request',
       'fromUid': user.uid,
       'fromUsername': senderUsername,
@@ -93,7 +115,7 @@ class _FriendsPageState extends State<FriendsPage> {
 
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppLocalizations.of(context)!.friendRequestSent)),
+      SnackBar(content: Text(localizations.friendRequestSent)),
     );
 
     _searchController.clear();
@@ -101,9 +123,11 @@ class _FriendsPageState extends State<FriendsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final localization = AppLocalizations.of(context)!;
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: Text(localization.friends),
+      appBar: AppBar(title: Text(localizations.friends),
       centerTitle: true,
       ),
       body: Padding(
@@ -113,7 +137,7 @@ class _FriendsPageState extends State<FriendsPage> {
             TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                labelText: localization.searchUsername,
+                labelText: localizations.searchUsername,
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.send),
                   onPressed: () =>
@@ -149,7 +173,7 @@ class _FriendsPageState extends State<FriendsPage> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            localization.youHaveNoFriendsYet,
+                            localizations.youHaveNoFriendsYet,
                             style: TextStyle(fontSize: 16, color: AppColors.heading2),
                             textAlign: TextAlign.center,
                           ),
@@ -169,12 +193,12 @@ class _FriendsPageState extends State<FriendsPage> {
                             .get(),
                         builder: (context, friendSnapshot) {
                           if (!friendSnapshot.hasData) {
-                            return ListTile(title: Text(localization.unknown));
+                            return ListTile(title: Text(localizations.unknown));
                           }
                           final friendData = friendSnapshot.data!.data()
                               as Map<String, dynamic>;
                           return ListTile(
-                            title: Text(friendData['username'] ?? localization.unknown),
+                            title: Text(friendData['username'] ?? localizations.unknown),
                             trailing: IconButton(
                               icon: const Icon(Icons.remove_circle_outline,
                                   color: Colors.red),
@@ -183,8 +207,8 @@ class _FriendsPageState extends State<FriendsPage> {
                                 final confirm = await showDialog<bool>(
                                   context: context,
                                   builder: (ctx) => AlertDialog(
-                                    title: Text(localization.removeFriend),
-                                    content: Text(localization.confirmRemoveFriend(friendData['username'])),
+                                    title: Text(localizations.removeFriend),
+                                    content: Text(localizations.confirmRemoveFriend(friendData['username'])),
                                     actions: [
                                       Column(
                                         mainAxisSize: MainAxisSize.min,
@@ -192,12 +216,12 @@ class _FriendsPageState extends State<FriendsPage> {
                                         children: [
                                           ElevatedButton(
                                             onPressed: () => Navigator.pop(ctx, false),
-                                            child: Text(localization.yes),
+                                            child: Text(localizations.yes),
                                           ),
                                           const SizedBox(height: 10),
                                           TextButton(
                                             onPressed: () => Navigator.pop(ctx, true),
-                                            child: Text(localization.cancel),
+                                            child: Text(localizations.cancel),
                                           ),
                                         ],
                                       ),
@@ -242,8 +266,8 @@ class _FriendsPageState extends State<FriendsPage> {
                                     .doc(friendUid)
                                     .collection('notifications')
                                     .add({
-                                  'title': localization.friendRemoved,
-                                  'body': localization.friendRemovedBody(currentUsername),
+                                  'title': localizations.friendRemoved,
+                                  'body': localizations.friendRemovedBody(currentUsername),
                                   'type': 'system',
                                   'timestamp': FieldValue.serverTimestamp(),
                                   'read': false,
@@ -251,7 +275,7 @@ class _FriendsPageState extends State<FriendsPage> {
 
                                 ScaffoldMessenger.of(context).showSnackBar(
                                    SnackBar(
-                                      content: Text(localization.friendRemoved)),
+                                      content: Text(localizations.friendRemoved)),
                                 );
 
                                 setState(() {}); // Refresh UI

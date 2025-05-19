@@ -416,6 +416,7 @@ class _EditableRecipesScreenState extends State<EditableRecipesScreen> {
           recipe: recipe,
           familyOwnerId: widget.familyOwnerId,
           localizations: _localizations!,
+          language: widget.language,
         );
       },
     );
@@ -434,12 +435,14 @@ class RecipeDetailsSheet extends StatelessWidget {
   final DocumentSnapshot recipe;
   final String familyOwnerId;
   final AppLocalizations localizations;
+  final String language;
 
   const RecipeDetailsSheet({
     Key? key,
     required this.recipe,
     required this.familyOwnerId,
     required this.localizations,
+    required this.language
   }) : super(key: key);
 
   @override
@@ -619,6 +622,7 @@ class RecipeDetailsSheet extends StatelessWidget {
                     builder: (context) => RecipeStepper(
                       steps: steps,
                       recipeName: data['name'] ?? localizations.untitledRecipe,
+                      language: language
                     ),
                   ),
                 );

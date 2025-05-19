@@ -27,11 +27,19 @@ class _ViewOnlyMealPlanScreenState extends State<ViewOnlyMealPlanScreen> {
   List<DateTime> _mealPlanRanges = [];
   String? _selectedMealPlanId;
   late AppLocalizations localizations;
+  String? _userLanguage;
+  @override
+  void initState() {
+    super.initState();
+    _userLanguage = widget.language;
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    localizations = AppLocalizations.of(context)!;
+    localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     _selectedDay = _focusedDay;
     _loadMealPlans();
   }
@@ -251,7 +259,6 @@ class _ViewOnlyMealPlanScreenState extends State<ViewOnlyMealPlanScreen> {
         final data = snapshot.data!.data() as Map<String, dynamic>;
         final recipeDates = data['recipeDates'] as Map<String, dynamic>;
 
-        // Filter recipe IDs scheduled for this selected day
         List<String> recipeIdsForDay = [];
 
         recipeDates.forEach((recipeId, ts) {

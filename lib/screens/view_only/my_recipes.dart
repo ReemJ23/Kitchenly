@@ -28,11 +28,19 @@ class _ViewOnlyRecipeScreenState extends State<ViewOnlyRecipeScreen> {
   String _selectedTime = 'all';
   String _selectedAvailability = 'all';
   late AppLocalizations localizations;
+  String? _userLanguage;
+  @override
+  void initState() {
+    super.initState();
+    _userLanguage = widget.language;
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    localizations = AppLocalizations.of(context)!;
+    localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
   }
 
   @override

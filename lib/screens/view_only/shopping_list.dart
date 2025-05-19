@@ -23,11 +23,19 @@ class _ViewOnlyShoppingListScreenState extends State<ViewOnlyShoppingListScreen>
   TabController? _tabController;
   Set<String> expandedCategories = {};
   late AppLocalizations localizations;
+  String? _userLanguage;
+  @override
+  void initState() {
+    super.initState();
+    _userLanguage = widget.language;
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    localizations = AppLocalizations.of(context)!;
+    localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     _loadSublistNames();
   }
 

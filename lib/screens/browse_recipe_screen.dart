@@ -25,12 +25,15 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
   @override
   void initState() {
     super.initState();
-    _fetchRandomRecipes();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchRandomRecipes(); // Now safe to access context
+    });
     _fetchUserLanguage().then((language) {
       setState(() {
         _userLanguage = language;
       });
     });
+
   }
 
   Future<String> _fetchUserLanguage() async {
@@ -40,12 +43,15 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
         .get();
 
     if (userDoc.exists) {
-      return userDoc['language'] ?? 'en'; // Default to 'en' if language is not set
+      return userDoc['language'] ?? 'en';
     }
-    return 'en'; // Default to 'en' if the user document doesn't exist
+    return 'en';
   }
 
   Future<void> _fetchRandomRecipes() async {
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     setState(() => _isLoading = true);
     try {
       final futures = List.generate(5, (_) => http.get(
@@ -64,7 +70,7 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
       setState(() => _recipes = recipes);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.fetchRecipesFailed(e.toString()))),
+        SnackBar(content: Text(localizations.fetchRecipesFailed(e.toString()))),
       );
     } finally {
       setState(() => _isLoading = false);
@@ -73,6 +79,9 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
 
 
   Future<void> _searchRecipes() async {
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     if (_searchQuery.isEmpty) return;
 
     setState(() => _isLoading = true);
@@ -90,12 +99,12 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
       } else {
         setState(() => _recipes = []);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.noRecipesFoundFor(_searchQuery))),
+          SnackBar(content: Text(localizations.noRecipesFoundFor(_searchQuery))),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.searchFailed(e.toString()))),
+        SnackBar(content: Text(localizations.searchFailed(e.toString()))),
       );
     } finally {
       setState(() => _isLoading = false);
@@ -183,7 +192,9 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
 
   Future<void> _saveRecipeToMyRecipes(Map<String, dynamic> recipe) async {
     if (user == null) return;
-
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -203,7 +214,7 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
       if (existingRecipe.docs.isNotEmpty) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.recipeAlreadySaved)),
+          SnackBar(content: Text(localizations.recipeAlreadySaved)),
         );
         return;
       }
@@ -242,7 +253,7 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
               Icon(Icons.check_circle, color: Colors.green, size: 48), // larger icon
               const SizedBox(height: 12),
               Text(
-                AppLocalizations.of(context)!.recipeSaved,
+              localizations.recipeSaved,
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 16),
               ),
@@ -259,13 +270,15 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
     } catch (e) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.saveRecipeFailed(e.toString()))),
+        SnackBar(content: Text(localizations.saveRecipeFailed(e.toString()))),
       );
     }
   }
   Future<void> _checkAllergiesAndShowWarning(Map<String, dynamic> recipe) async {
     if (user == null) return;
-
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     // Get user's allergies
     final userDoc = await FirebaseFirestore.instance
         .collection('users')
@@ -289,14 +302,14 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text(AppLocalizations.of(context)!.allergyWarning),
+          title: Text(localizations.allergyWarning),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(AppLocalizations.of(context)!.allergyWarningMessage),
+              Text(localizations.allergyWarningMessage),
               const SizedBox(height: 16),
-              Text(AppLocalizations.of(context)!.allergicIngredientsFound),
+              Text(localizations.allergicIngredientsFound),
               ...allergicIngredients.map((ingredient) =>
                   Text('- ${ingredient['name']}')
               ).toList(),
@@ -304,7 +317,7 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
           ),
           actions: [
             TextButton(
-              child: Text(AppLocalizations.of(context)!.understand),
+              child: Text(localizations.understand),
               onPressed: () => Navigator.pop(context),
             ),
           ],
@@ -410,6 +423,9 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
     });
   }
   Widget _buildRecipeCard(Map<String, dynamic> recipe, AppLocalizations loc) {
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     return FutureBuilder<List<String>>(
         future: _getUserAllergies(),
         builder: (context, snapshot) {
@@ -486,7 +502,7 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              AppLocalizations.of(context)!.allergies,
+                              localizations.allergies,
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 10,
@@ -506,7 +522,9 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
     _checkAllergiesAndShowWarning(recipe);
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
-
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -565,16 +583,6 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 8),
-                // ...recipe['steps'].map<Widget>((step) {
-                //   return ListTile(
-                //     contentPadding: EdgeInsets.zero,
-                //     leading: CircleAvatar(
-                //       radius: 12,
-                //       child: Text('${step['order']}'),
-                //     ),
-                //     title: Text(step['text']),
-                //   );
-                // }).toList(),
                 ...List.generate(recipe['steps'].length * 2 - 1, (index) {
                   if (index.isEven) {
                     final step = recipe['steps'][index ~/ 2];
@@ -594,7 +602,7 @@ class _RecipeBrowserPageState extends State<RecipeBrowserPage> {
                 Center(
                   child: ElevatedButton(
                     onPressed: () => _saveRecipeToMyRecipes(recipe),
-                    child: Text(AppLocalizations.of(context)!.saveToMyRecipes),
+                    child: Text(localizations.saveToMyRecipes),
                   ),
                 ),
               ],

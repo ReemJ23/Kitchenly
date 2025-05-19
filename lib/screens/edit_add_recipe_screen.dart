@@ -109,13 +109,16 @@ class _EditRecipePageState extends State<EditRecipePage> {
 
 
   Future<void> _pickImage() async {
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     try {
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 800, // Limit image size
+        maxWidth: 800,
         maxHeight: 800,
-        imageQuality: 85, // Reduce quality to save space
+        imageQuality: 85,
       );
 
       if (pickedFile == null) return;
@@ -126,7 +129,7 @@ class _EditRecipePageState extends State<EditRecipePage> {
       // Check image size (limit to 1MB)
       if (imageBytes.length > 1024 * 1024) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.imageTooLarge)),
+          SnackBar(content: Text(localizations.imageTooLarge)),
         );
         return;
       }
@@ -138,7 +141,7 @@ class _EditRecipePageState extends State<EditRecipePage> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text
-          (AppLocalizations.of(context)!.imagePickFailed(e.toString()),
+          (localizations.imagePickFailed(e.toString()),
         )
         ),
       );
@@ -562,7 +565,7 @@ class _EditRecipePageState extends State<EditRecipePage> {
     );
   }
 
-// Show ingredient selection dialog
+
   Future<void> _showIngredientSelectionDialog(Map<String, dynamic> step) async {
     final localizations = _userLanguage != null
         ? lookupAppLocalizations(Locale(_userLanguage!))
@@ -587,7 +590,7 @@ class _EditRecipePageState extends State<EditRecipePage> {
                   itemBuilder: (context, index) {
                     final ingredient = _ingredients[index];
                     final ingredientId = index
-                        .toString(); // Using index as ID for simplicity
+                        .toString();
                     final isSelected = selectedIngredients.contains(
                         ingredientId);
 
@@ -695,6 +698,9 @@ class _EditRecipePageState extends State<EditRecipePage> {
   }
 
   void _addIngredient() {
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     if (_ingredients.isNotEmpty) {
       final last = _ingredients.last;
       if ((last['name'] as String).trim().isEmpty ||
@@ -703,7 +709,7 @@ class _EditRecipePageState extends State<EditRecipePage> {
           last['unit'] == null ||
           (last['unit'] as String).trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.fillPreviousIngredient)),
+          SnackBar(content: Text(localizations.fillPreviousIngredient)),
         );
         return;
       }
@@ -718,11 +724,14 @@ class _EditRecipePageState extends State<EditRecipePage> {
   }
 
   void _addStep() {
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     if (_steps.isNotEmpty) {
       final last = _steps.last;
       if ((last['text'] as String).trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.fillPreviousStep)),
+          SnackBar(content: Text(localizations.fillPreviousStep)),
         );
         return;
       }
@@ -739,6 +748,9 @@ class _EditRecipePageState extends State<EditRecipePage> {
 
   // Modified save method
   Future<void> _saveRecipe() async {
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     if (!_formKey.currentState!.validate()) return;
 
     showDialog(
@@ -784,7 +796,7 @@ class _EditRecipePageState extends State<EditRecipePage> {
     } catch (e) {
       Navigator.pop(context); // Close loading
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.errorSavingRecipe(e.toString())),)
+        SnackBar(content: Text(localizations.errorSavingRecipe(e.toString())),)
       );
     }
   }
@@ -809,7 +821,7 @@ class _EditRecipePageState extends State<EditRecipePage> {
         'quantity': ingredient['quantity'],
         'unit': ingredient['unit'],
       });
-      ingredientIds[i] = docRef.id; // Map local index to Firestore ID
+      ingredientIds[i] = docRef.id;
     }
 
     return ingredientIds;

@@ -4,23 +4,29 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../utils/colors.dart';
 
-
 class NotificationsPage extends StatelessWidget {
-  const NotificationsPage({Key? key}) : super(key: key);
+  final Locale locale;
+
+  const NotificationsPage({Key? key, required this.locale}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context)!;
-    final User? user = FirebaseAuth.instance.currentUser;
+    return Localizations.override(
+      context: context,
+      locale: locale,
+      child: Builder(
+        builder: (context) {
+          final localizations = AppLocalizations.of(context)!;
+          final User? user = FirebaseAuth.instance.currentUser;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(localizations.notifications
-      ), centerTitle: true,
-
-      ),
-      body: user == null
-          ? Center(child: Text(localizations.notSignedIn))
-          : StreamBuilder<QuerySnapshot>(
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(localizations.notifications),
+              centerTitle: true,
+            ),
+            body: user == null
+                ? Center(child: Text(localizations.notSignedIn))
+                : StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('users')
                   .doc(user.uid)
@@ -78,7 +84,7 @@ class NotificationsPage extends StatelessWidget {
                           title: Text(
                             _formatTimestamp(data['timestamp']),
                             style:
-                                const TextStyle(fontSize: 12, color: AppColors.heading2),
+                            const TextStyle(fontSize: 12, color: AppColors.heading2),
                           ),
                           onTap: () async {
                             if (data['read'] != true) {
@@ -110,7 +116,7 @@ class NotificationsPage extends StatelessWidget {
                                               .doc(user.uid)
                                               .update({
                                             'friends':
-                                                FieldValue.arrayUnion([fromUid])
+                                            FieldValue.arrayUnion([fromUid])
                                           });
 
                                           await FirebaseFirestore.instance
@@ -118,7 +124,7 @@ class NotificationsPage extends StatelessWidget {
                                               .doc(fromUid)
                                               .update({
                                             'friends':
-                                                FieldValue.arrayUnion([user.uid])
+                                            FieldValue.arrayUnion([user.uid])
                                           });
 
                                           await doc.reference.update({
@@ -126,7 +132,7 @@ class NotificationsPage extends StatelessWidget {
                                             'read': true,
                                             'title': localizations.friendRequestAccepted,
                                             'body':
-                                                '${localizations.youAcceptedRequest} ${data['fromUsername']}',
+                                            '${localizations.youAcceptedRequest} ${data['fromUsername']}',
                                           });
                                           // Notify the sender that their request was accepted
                                           final currentUserDoc = await FirebaseFirestore.instance
@@ -164,7 +170,7 @@ class NotificationsPage extends StatelessWidget {
                                             'read': true,
                                             'title': localizations.friendRequestDeclined,
                                             'body':
-                                                '${localizations.youDeclinedRequest} ${data['fromUsername']}',
+                                            '${localizations.youDeclinedRequest} ${data['fromUsername']}',
                                           });
 
                                           // Notify the sender that their request was declined
@@ -202,6 +208,9 @@ class NotificationsPage extends StatelessWidget {
                 );
               },
             ),
+          );
+        },
+      ),
     );
   }
 

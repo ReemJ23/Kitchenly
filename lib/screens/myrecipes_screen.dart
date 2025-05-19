@@ -10,12 +10,12 @@ import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:kitchenly/screens/profile_screen.dart';
 import 'package:kitchenly/screens/recipe_stepper.dart';
-import '../models/dummy_document_snapshot.dart';
 import '../models/recipeStep.dart';
 import '../utils/localization_helper.dart';
 import 'edit_add_recipe_screen.dart';
 import 'dart:convert';
 import '../utils/colors.dart';
+
 const String SYSTEM_PROMPT = """
 You are a helpful chef AI that extracts structured recipe information from messy or scanned text.
 
@@ -32,18 +32,17 @@ Return ONLY a JSON object in this format:
 - Do not include any markdown, explanations, or code blocks — only return the JSON object.
 """;
 
-
-
-
-
 String? lang;
+
 class _RecipeCardData {
   final int availableIngredients;
   final int totalIngredients;
   final Color availabilityColor;
 
-  _RecipeCardData(this.availableIngredients, this.totalIngredients, this.availabilityColor);
+  _RecipeCardData(
+      this.availableIngredients, this.totalIngredients, this.availabilityColor);
 }
+
 class MyRecipesScreen extends StatefulWidget {
   const MyRecipesScreen({Key? key}) : super(key: key);
 
@@ -61,12 +60,18 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
   String _selectedAvailability = 'all';
 
   // Filter options (these should be populated from your recipes data)
-  final List<String> _cuisineTypes = ['all', 'italian', 'mexican', 'indian', 'chinese', 'mediterranean'];
+  final List<String> _cuisineTypes = [
+    'all',
+    'italian',
+    'mexican',
+    'indian',
+    'chinese',
+    'mediterranean'
+  ];
   final List<String> _difficultyLevels = ['all', 'easy', 'medium', 'hard'];
   final List<String> _timeCategories = ['all', 'quick', 'medium', 'long'];
   final List<String> _availabilityOptions = ['all', 'full', 'partial', 'low'];
   String? _userLanguage;
-
 
   @override
   void initState() {
@@ -74,7 +79,7 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
     _fetchUserLanguage().then((language) {
       setState(() {
         _userLanguage = language;
-        lang=language;
+        lang = language;
       });
     });
   }
@@ -87,9 +92,9 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
         .get();
 
     if (userDoc.exists) {
-      return userDoc['language'] ?? 'en'; // Default to 'en' if language is not set
+      return userDoc['language'] ?? 'en';
     }
-    return 'en'; // Default to 'en' if the user document doesn't exist
+    return 'en';
   }
 
   String cleanJson(String response) {
@@ -97,7 +102,9 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
     final match = regex.firstMatch(response);
     return match != null ? match.group(1)! : response;
   }
-  Future<(Map<String, dynamic>, DocumentReference?)> processImageForRecipe(XFile imageFile) async {
+
+  Future<(Map<String, dynamic>, DocumentReference?)> processImageForRecipe(
+      XFile imageFile) async {
     // 1. Initialize OpenAI
     OpenAI.apiKey = "sk-7d0d0c01152346a288aba518e6c2de58";
     OpenAI.baseUrl = "https://dashscope-intl.aliyuncs.com/compatible-mode";
@@ -105,7 +112,8 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
     // 2. Perform OCR
     final inputImage = InputImage.fromFile(File(imageFile.path));
     final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
-    final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
+    final RecognizedText recognizedText =
+        await textRecognizer.processImage(inputImage);
     final String extractedText = recognizedText.text;
     textRecognizer.close();
 
@@ -117,13 +125,15 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
           OpenAIChatCompletionChoiceMessageModel(
             role: OpenAIChatMessageRole.system,
             content: [
-              OpenAIChatCompletionChoiceMessageContentItemModel.text(SYSTEM_PROMPT),
+              OpenAIChatCompletionChoiceMessageContentItemModel.text(
+                  SYSTEM_PROMPT),
             ],
           ),
           OpenAIChatCompletionChoiceMessageModel(
             role: OpenAIChatMessageRole.user,
             content: [
-              OpenAIChatCompletionChoiceMessageContentItemModel.text(extractedText),
+              OpenAIChatCompletionChoiceMessageContentItemModel.text(
+                  extractedText),
             ],
           ),
         ],
@@ -133,10 +143,8 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
       final textContent = responseContent?.first.text ?? '';
       print("AI Raw Response: $textContent");
 
-      // ✅ Clean response by stripping triple backticks and 'json'
       final cleanedJson = _stripMarkdown(textContent);
 
-      // ✅ Parse JSON
       final recipeData = jsonDecode(cleanedJson) as Map<String, dynamic>;
       return (recipeData, null);
     } catch (e) {
@@ -146,15 +154,14 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
     }
   }
 
-// ✅ Helper function to remove markdown formatting
   String _stripMarkdown(String input) {
     final regex = RegExp(r'```(?:json)?\s*([\s\S]*?)\s*```');
     final match = regex.firstMatch(input);
     return match != null ? match.group(1)! : input;
   }
 
-
-  Future<(Map<String, dynamic>, DocumentReference?)> fallbackOcrParsing(String extractedText) async {
+  Future<(Map<String, dynamic>, DocumentReference?)> fallbackOcrParsing(
+      String extractedText) async {
     List<String> lines = extractedText.split('\n');
     String name = '';
     int servings = 0;
@@ -170,13 +177,19 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
       if (line.contains('name') || line == 'ame') {
         name = i + 1 < lines.length ? lines[i + 1].trim() : '';
       } else if (line.contains('serving')) {
-        servings = int.tryParse(RegExp(r'\d+').firstMatch(lines[i])?.group(0) ?? '0') ?? 0;
+        servings = int.tryParse(
+                RegExp(r'\d+').firstMatch(lines[i])?.group(0) ?? '0') ??
+            0;
       } else if (line.contains('prep')) {
-        prepTime = int.tryParse(RegExp(r'\d+').firstMatch(lines[i])?.group(0) ?? '0') ?? 0;
+        prepTime = int.tryParse(
+                RegExp(r'\d+').firstMatch(lines[i])?.group(0) ?? '0') ??
+            0;
       } else if (line.contains('ingredient')) {
         inIngredients = true;
         inSteps = false;
-      } else if (line.contains('instruction') || line.contains('step') || line.contains('method')) {
+      } else if (line.contains('instruction') ||
+          line.contains('step') ||
+          line.contains('method')) {
         inIngredients = false;
         inSteps = true;
       } else if (inIngredients && line.isNotEmpty) {
@@ -196,9 +209,8 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
       'steps': steps,
     };
 
-    return (fallbackData, null); // ✅ Return plain data, no document reference
+    return (fallbackData, null);
   }
-
 
   Stream<bool> hasUnreadNotifications(String uid) {
     return FirebaseFirestore.instance
@@ -210,7 +222,8 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
         .map((snapshot) => snapshot.docs.isNotEmpty);
   }
 
-  Widget _buildRecipeListWithAvailability(List<DocumentSnapshot> recipes, AppLocalizations localizations) {
+  Widget _buildRecipeListWithAvailability(
+      List<DocumentSnapshot> recipes, AppLocalizations localizations) {
     return ListView.builder(
       itemCount: recipes.length,
       itemBuilder: (context, index) {
@@ -220,12 +233,10 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
         return FutureBuilder<_RecipeCardData>(
           future: _getRecipeCardData(recipe),
           builder: (context, snapshot) {
-            // Show skeleton loader while waiting for availability data
             if (!snapshot.hasData) {
               return _buildRecipeCardSkeleton();
             }
 
-            // Apply availability filter if needed
             if (_selectedAvailability != 'all') {
               final cardData = snapshot.data!;
               final availabilityRatio = cardData.totalIngredients > 0
@@ -233,24 +244,19 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
                   : 0;
 
               if (_selectedAvailability == 'full' && availabilityRatio < 1) {
-                return SizedBox.shrink(); // Hide if doesn't match filter
+                return SizedBox.shrink();
               }
               if (_selectedAvailability == 'partial' &&
                   (availabilityRatio == 1 || availabilityRatio < 0.5)) {
-                return SizedBox.shrink(); // Hide if doesn't match filter
+                return SizedBox.shrink();
               }
               if (_selectedAvailability == 'low' && availabilityRatio >= 0.5) {
-                return SizedBox.shrink(); // Hide if doesn't match filter
+                return SizedBox.shrink();
               }
             }
 
             return _buildRecipeCard(
-                context,
-                recipe,
-                data,
-                localizations,
-                snapshot.data! // Pass the pre-loaded availability data
-            );
+                context, recipe, data, localizations, snapshot.data!);
           },
         );
       },
@@ -264,42 +270,44 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
         padding: const EdgeInsets.all(12.0),
         child: Row(
           children: [
-          Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            color: Colors.grey[200],
-            borderRadius: BorderRadius.circular(8),
-          ),),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: double.infinity,
-                  height: 16,
-                  color: Colors.grey[200],
-                ),
-                SizedBox(height: 8),
-                Container(
-                  width: 100,
-                  height: 12,
-                  color: Colors.grey[200],
-                ),
-              ],
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-          ),
-          Container(
-            width: 40,
-            height: 16,
-            color: Colors.grey[200],
-          ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    height: 16,
+                    color: Colors.grey[200],
+                  ),
+                  SizedBox(height: 8),
+                  Container(
+                    width: 100,
+                    height: 12,
+                    color: Colors.grey[200],
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              width: 40,
+              height: 16,
+              color: Colors.grey[200],
+            ),
           ],
         ),
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     final localizations = _userLanguage != null
@@ -318,20 +326,23 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
               .where('read', isEqualTo: false)
               .snapshots(),
           builder: (context, snapshot) {
-            final hasUnread = snapshot.hasData && snapshot.data!.docs.isNotEmpty;
+            final hasUnread =
+                snapshot.hasData && snapshot.data!.docs.isNotEmpty;
 
             return Stack(
               children: [
                 IconButton(
-                    icon: CircleAvatar(
-                      backgroundImage: AssetImage('assets/images/icons/profile_chef_icon.png'),
-                      backgroundColor: AppColors.profileIconBg,
-                      ),
-                  tooltip: AppLocalizations.of(context)!.profile,
+                  icon: CircleAvatar(
+                    backgroundImage:
+                        AssetImage('assets/images/icons/profile_chef_icon.png'),
+                    backgroundColor: AppColors.profileIconBg,
+                  ),
+                  tooltip: localizations.profile,
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => const ProfileScreen()),
                     );
                   },
                 ),
@@ -354,10 +365,12 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
               if (value == 'manual') {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const EditRecipePage()),
+                  MaterialPageRoute(
+                      builder: (context) => const EditRecipePage()),
                 );
               } else {
-                final XFile? image = await ImagePicker().pickImage(source: ImageSource.gallery);
+                final XFile? image =
+                    await ImagePicker().pickImage(source: ImageSource.gallery);
                 if (image != null) {
                   showDialog(
                     context: context,
@@ -367,17 +380,19 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
                         children: [
                           const CircularProgressIndicator(),
                           const SizedBox(width: 20),
-                          Text(localizations.processingImage ?? 'Processing image...'),
+                          Text(localizations.processingImage ??
+                              'Processing image...'),
                         ],
                       ),
                     ),
                   );
 
                   try {
-                    final (recipeData, recipeRef) = await processImageForRecipe(image);
+                    final (recipeData, recipeRef) =
+                        await processImageForRecipe(image);
 
                     if (!mounted) return;
-                    Navigator.pop(context); // Close the loading dialog
+                    Navigator.pop(context);
 
                     Navigator.push(
                       context,
@@ -393,7 +408,8 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
 
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(localizations.errorProcessingImage ?? 'Failed to process image.'),
+                        content: Text(localizations.errorProcessingImage ??
+                            'Failed to process image.'),
                       ),
                     );
                   }
@@ -401,14 +417,22 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(value: 'manual', child: Text('Enter Manually')),
-              const PopupMenuItem(value: 'gallery', child: Text('Upload from Gallery')),
-              const PopupMenuItem(value: 'camera', child: Text('Take a Picture')),
+              PopupMenuItem(
+                value: 'manual',
+                child: Text(localizations.enterManually),
+              ),
+              PopupMenuItem(
+                value: 'gallery',
+                child: Text(localizations.uploadImage),
+              ),
+              PopupMenuItem(
+                value: 'camera',
+                child: Text(localizations.takePicture),
+              ),
             ],
             icon: const Icon(Icons.add),
           ),
         ],
-
       ),
       body: Column(
         children: [
@@ -426,64 +450,68 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
           ),
           _buildFilterChips(localizations),
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(user!.uid)
-                  .collection('recipes')
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData) {
-                  return Center(child: CircularProgressIndicator());
+              child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .doc(user!.uid)
+                .collection('recipes')
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting ||
+                  !snapshot.hasData) {
+                return Center(child: CircularProgressIndicator());
+              }
+
+              final recipes = snapshot.data!.docs;
+              if (recipes.isEmpty) {
+                return Center(child: Text(localizations.noRecipesFound));
+              }
+
+              // Apply synchronous filters first
+              var filteredRecipes = recipes.where((recipe) {
+                final data = recipe.data() as Map<String, dynamic>;
+                final name = data['name']?.toString().toLowerCase() ?? '';
+                final searchTerm = _searchController.text.toLowerCase();
+
+                // Search filter
+                if (searchTerm.isNotEmpty && !name.contains(searchTerm)) {
+                  return false;
                 }
 
-                final recipes = snapshot.data!.docs;
-                if (recipes.isEmpty) {
-                  return Center(child: Text(localizations.noRecipesFound));
+                // Cuisine filter
+                if (_selectedCuisine != 'all' &&
+                    (data['cuisineType']?.toString().toLowerCase() ?? '') !=
+                        _selectedCuisine) {
+                  return false;
                 }
 
-                // Apply synchronous filters first
-                var filteredRecipes = recipes.where((recipe) {
-                  final data = recipe.data() as Map<String, dynamic>;
-                  final name = data['name']?.toString().toLowerCase() ?? '';
-                  final searchTerm = _searchController.text.toLowerCase();
-
-                  // Search filter
-                  if (searchTerm.isNotEmpty && !name.contains(searchTerm)) {
-                    return false;
-                  }
-
-                  // Cuisine filter
-                  if (_selectedCuisine != 'all' &&
-                      (data['cuisineType']?.toString().toLowerCase() ?? '') != _selectedCuisine) {
-                    return false;
-                  }
-
-                  // Difficulty filter
-                  if (_selectedDifficulty != 'all' &&
-                      (data['difficulty']?.toString().toLowerCase() ?? '') != _selectedDifficulty) {
-                    return false;
-                  }
-
-                  // Time filter
-                  if (_selectedTime != 'all') {
-                    final prepTime = data['preparationTime'] as int? ?? 0;
-                    if (_selectedTime == 'quick' && prepTime > 30) return false;
-                    if (_selectedTime == 'medium' && (prepTime <= 30 || prepTime > 60)) return false;
-                    if (_selectedTime == 'long' && prepTime <= 60) return false;
-                  }
-
-                  return true;
-                }).toList();
-
-                if (filteredRecipes.isEmpty) {
-                  return Center(child: Text(localizations.noRecipesFound));
+                // Difficulty filter
+                if (_selectedDifficulty != 'all' &&
+                    (data['difficulty']?.toString().toLowerCase() ?? '') !=
+                        _selectedDifficulty) {
+                  return false;
                 }
 
-                return _buildRecipeListWithAvailability(filteredRecipes, localizations);
-              },
-            )
-          ),
+                // Time filter
+                if (_selectedTime != 'all') {
+                  final prepTime = data['preparationTime'] as int? ?? 0;
+                  if (_selectedTime == 'quick' && prepTime > 30) return false;
+                  if (_selectedTime == 'medium' &&
+                      (prepTime <= 30 || prepTime > 60)) return false;
+                  if (_selectedTime == 'long' && prepTime <= 60) return false;
+                }
+
+                return true;
+              }).toList();
+
+              if (filteredRecipes.isEmpty) {
+                return Center(child: Text(localizations.noRecipesFound));
+              }
+
+              return _buildRecipeListWithAvailability(
+                  filteredRecipes, localizations);
+            },
+          )),
         ],
       ),
     );
@@ -497,7 +525,8 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
         child: Row(
           children: [
             FilterChip(
-              label: Text(LocalizationHelper.getLocalizedString(localizations, 'all')),
+              label: Text(
+                  LocalizationHelper.getLocalizedString(localizations, 'all')),
               selected: _selectedFilter == 'all',
               onSelected: (selected) => setState(() => _selectedFilter = 'all'),
             ),
@@ -515,10 +544,12 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
                   items: _cuisineTypes.map((type) {
                     return DropdownMenuItem(
                       value: type,
-                      child: Text(LocalizationHelper.getLocalizedString(localizations, type)),
+                      child: Text(LocalizationHelper.getLocalizedString(
+                          localizations, type)),
                     );
                   }).toList(),
-                  onChanged: (value) => setState(() => _selectedCuisine = value!),
+                  onChanged: (value) =>
+                      setState(() => _selectedCuisine = value!),
                 ),
               ],
             ),
@@ -536,7 +567,8 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
                   items: _timeCategories.map((time) {
                     return DropdownMenuItem(
                       value: time,
-                      child: Text(LocalizationHelper.getLocalizedString(localizations, time)),
+                      child: Text(LocalizationHelper.getLocalizedString(
+                          localizations, time)),
                     );
                   }).toList(),
                   onChanged: (value) => setState(() => _selectedTime = value!),
@@ -557,120 +589,154 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
                   items: _availabilityOptions.map((avail) {
                     return DropdownMenuItem(
                       value: avail,
-                      child: Text(LocalizationHelper.getLocalizedString(localizations, avail)),
+                      child: Text(LocalizationHelper.getLocalizedString(
+                          localizations, avail)),
                     );
                   }).toList(),
-                  onChanged: (value) => setState(() => _selectedAvailability = value!),
+                  onChanged: (value) =>
+                      setState(() => _selectedAvailability = value!),
                 ),
               ],
             ),
-
+            SizedBox(width: 4),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  localizations.difficulty,
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                ),
+                DropdownButton<String>(
+                  value: _selectedDifficulty,
+                  isDense: true,
+                  items: _difficultyLevels.map((diff) {
+                    return DropdownMenuItem(
+                      value: diff,
+                      child: Text(LocalizationHelper.getLocalizedString(
+                          localizations, diff)),
+                    );
+                  }).toList(),
+                  onChanged: (value) =>
+                      setState(() => _selectedDifficulty = value!),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildRecipeCard(BuildContext context, DocumentSnapshot recipe,
-      Map<String, dynamic> data, AppLocalizations localizations, _RecipeCardData cardData) {
-        return Card(
-          margin: EdgeInsets.all(8),
-          child: InkWell(
-            onTap: () => _viewRecipeDetails(recipe),
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Row(
-                children: [
-                  // Recipe image or placeholder
-                  if (data['imageBase64'] != null && data['imageBase64'].toString().isNotEmpty)
-                    Center(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: data['imageBase64'].toString().startsWith('http')
-                            ? CachedNetworkImage(
-                          imageUrl: data['imageBase64'],
-                          height: 60,
-                          fit: BoxFit.cover,
-                          errorWidget: (context, url, error) => Icon(Icons.error),
-                        )
-                            : Image.memory(
-                          base64Decode(data['imageBase64'].split(',').last),
-                          height: 60,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Icon(Icons.error),
-                        ),
-                      ),
-                    )
-                    else Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(Icons.fastfood, size: 30, color: Colors.grey[600]),
+  Widget _buildRecipeCard(
+      BuildContext context,
+      DocumentSnapshot recipe,
+      Map<String, dynamic> data,
+      AppLocalizations localizations,
+      _RecipeCardData cardData) {
+    return Card(
+      margin: EdgeInsets.all(8),
+      child: InkWell(
+        onTap: () => _viewRecipeDetails(recipe),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            children: [
+              // Recipe image or placeholder
+              if (data['imageBase64'] != null &&
+                  data['imageBase64'].toString().isNotEmpty)
+                Center(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: data['imageBase64'].toString().startsWith('http')
+                        ? CachedNetworkImage(
+                            imageUrl: data['imageBase64'],
+                            height: 60,
+                            fit: BoxFit.cover,
+                            errorWidget: (context, url, error) =>
+                                Icon(Icons.error),
+                          )
+                        : Image.memory(
+                            base64Decode(data['imageBase64'].split(',').last),
+                            height: 60,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Icon(Icons.error),
+                          ),
+                  ),
+                )
+              else
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child:
+                      Icon(Icons.fastfood, size: 30, color: Colors.grey[600]),
+                ),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      data['name'] ?? localizations.untitledRecipe,
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    SizedBox(height: 4),
+                    Row(
                       children: [
+                        Icon(Icons.timer, size: 14, color: Colors.grey),
+                        SizedBox(width: 4),
                         Text(
-                          data['name'] ?? localizations.untitledRecipe,
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          '${data['preparationTime'] ?? '?'} ${localizations.minutes}',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
                         ),
-                        SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(Icons.timer, size: 14, color: Colors.grey),
-                            SizedBox(width: 4),
-                            Text(
-                              '${data['preparationTime'] ?? '?'} ${localizations.minutes}',
-                              style: TextStyle(fontSize: 12, color: Colors.grey),
-                            ),
-                            SizedBox(width: 12),
-                            Icon(Icons.star, size: 14, color: Colors.grey),
-                            SizedBox(width: 4),
-                            Text(
-                              data['difficulty']?.toString().toUpperCase() ?? '?',
-                              style: TextStyle(fontSize: 12, color: Colors.grey),
-                            ),
-
-                          ],
+                        SizedBox(width: 12),
+                        Icon(Icons.star, size: 14, color: Colors.grey),
+                        SizedBox(width: 4),
+                        Text(
+                          data['difficulty']?.toString().toUpperCase() ?? '?',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
                         ),
                       ],
                     ),
+                  ],
+                ),
+              ),
+              Column(
+                children: [
+                  Text(
+                    '${cardData.availableIngredients}/${cardData.totalIngredients}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: cardData.availabilityColor,
+                    ),
                   ),
-                  Column(
-                    children: [
-                      Text(
-                        '${cardData.availableIngredients}/${cardData.totalIngredients}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: cardData.availabilityColor,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      if (data['labels'] != null && (data['labels'] as List).isNotEmpty)
-                        Wrap(
-                          spacing: 4,
-                          children: (data['labels'] as List).take(2).map((label) {
-                            return Chip(
-                              label: Text(label.toString()),
-                              backgroundColor: Colors.blue[50],
-                              labelStyle: TextStyle(fontSize: 10),
-                              visualDensity: VisualDensity.compact,
-                            );
-                          }).toList(),
-                        ),
-                    ],
-                  ),
+                  SizedBox(height: 4),
+                  if (data['labels'] != null &&
+                      (data['labels'] as List).isNotEmpty)
+                    Wrap(
+                      spacing: 4,
+                      children: (data['labels'] as List).take(2).map((label) {
+                        return Chip(
+                          label: Text(label.toString()),
+                          backgroundColor: Colors.blue[50],
+                          labelStyle: TextStyle(fontSize: 10),
+                          visualDensity: VisualDensity.compact,
+                        );
+                      }).toList(),
+                    ),
                 ],
               ),
-            ),
+            ],
           ),
-        );
+        ),
+      ),
+    );
   }
 
   Future<_RecipeCardData> _getRecipeCardData(DocumentSnapshot recipe) async {
@@ -678,7 +744,8 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
     if (user == null) return _RecipeCardData(0, 0, Colors.grey);
 
     // 1. Get all ingredients from the recipe
-    final ingredientsQuery = await recipe.reference.collection('ingredients').get();
+    final ingredientsQuery =
+        await recipe.reference.collection('ingredients').get();
     final totalIngredients = ingredientsQuery.docs.length;
 
     // 2. Check inventory for available ingredients
@@ -706,9 +773,8 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
     }
 
     // Calculate availability ratio
-    final availabilityRatio = totalIngredients > 0
-        ? availableIngredients / totalIngredients
-        : 0;
+    final availabilityRatio =
+        totalIngredients > 0 ? availableIngredients / totalIngredients : 0;
 
     // Determine availability color
     Color availabilityColor;
@@ -720,23 +786,26 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
       availabilityColor = Colors.red;
     }
 
-    return _RecipeCardData(availableIngredients, totalIngredients, availabilityColor);
+    return _RecipeCardData(
+        availableIngredients, totalIngredients, availabilityColor);
   }
-
 
   void _viewRecipeDetails(DocumentSnapshot recipe) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (context) {
-        return RecipeDetailsSheet(recipe: recipe);
+        return RecipeDetailsSheet(
+          recipe: recipe,
+          language: _userLanguage!,
+        );
       },
     );
   }
 }
-void _confirmDeleteRecipe(BuildContext context, DocumentSnapshot recipe) {
-  final localizations = AppLocalizations.of(context)!;
 
+void _confirmDeleteRecipe(BuildContext context, DocumentSnapshot recipe,
+    AppLocalizations localizations) {
   showDialog(
     context: context,
     builder: (context) {
@@ -755,15 +824,19 @@ void _confirmDeleteRecipe(BuildContext context, DocumentSnapshot recipe) {
                 Navigator.pop(context); // Close recipe details bottom sheet
                 await recipe.reference.delete();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(localizations.recipeDeletedSuccessfully)),
+                  SnackBar(
+                      content: Text(localizations.recipeDeletedSuccessfully)),
                 );
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('${localizations.failedToDeleteRecipe}: $e')),
+                  SnackBar(
+                      content:
+                          Text('${localizations.failedToDeleteRecipe}: $e')),
                 );
               }
             },
-            child: Text(localizations.delete, style: TextStyle(color: Colors.red)),
+            child:
+                Text(localizations.delete, style: TextStyle(color: Colors.red)),
           ),
         ],
       );
@@ -773,8 +846,9 @@ void _confirmDeleteRecipe(BuildContext context, DocumentSnapshot recipe) {
 
 class RecipeDetailsSheet extends StatefulWidget {
   final DocumentSnapshot recipe;
-
-  RecipeDetailsSheet({Key? key, required this.recipe}) : super(key: key);
+  final String language;
+  RecipeDetailsSheet({Key? key, required this.recipe, required this.language})
+      : super(key: key);
 
   @override
   State<RecipeDetailsSheet> createState() => _RecipeDetailsSheetState();
@@ -801,7 +875,7 @@ class _RecipeDetailsSheetState extends State<RecipeDetailsSheet> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                width: MediaQuery.of(context).size.width*0.67,
+                width: MediaQuery.of(context).size.width * 0.67,
                 child: Text(
                   data['name'] ?? localizations.untitledRecipe,
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
@@ -814,39 +888,45 @@ class _RecipeDetailsSheetState extends State<RecipeDetailsSheet> {
                     icon: Icon(Icons.edit),
                     onPressed: () {
                       Navigator.pop(context);
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => EditRecipePage(
-                        recipeData: widget.recipe.data() as Map<String, dynamic>?,
-                        recipeRef: widget.recipe.reference,
-                      )
-                      ));
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => EditRecipePage(
+                                    recipeData: widget.recipe.data()
+                                        as Map<String, dynamic>?,
+                                    recipeRef: widget.recipe.reference,
+                                  )));
                     },
                   ),
                   IconButton(
                     icon: Icon(Icons.delete),
                     color: Colors.red,
-                    onPressed: () => _confirmDeleteRecipe(context, widget.recipe),
+                    onPressed: () => _confirmDeleteRecipe(
+                        context, widget.recipe, localizations),
                   ),
                 ],
               ),
             ],
           ),
-          if (data['imageBase64'] != null && data['imageBase64'].toString().isNotEmpty)
+          if (data['imageBase64'] != null &&
+              data['imageBase64'].toString().isNotEmpty)
             Center(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: data['imageBase64'].toString().startsWith('http')
                     ? CachedNetworkImage(
-                  imageUrl: data['imageBase64'],
-                  height: 150,
-                  fit: BoxFit.cover,
-                  errorWidget: (context, url, error) => Icon(Icons.error),
-                )
+                        imageUrl: data['imageBase64'],
+                        height: 150,
+                        fit: BoxFit.cover,
+                        errorWidget: (context, url, error) => Icon(Icons.error),
+                      )
                     : Image.memory(
-                  base64Decode(data['imageBase64'].split(',').last),
-                  height: 150,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Icon(Icons.error),
-                ),
+                        base64Decode(data['imageBase64'].split(',').last),
+                        height: 150,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            Icon(Icons.error),
+                      ),
               ),
             ),
           SizedBox(height: 16),
@@ -856,11 +936,16 @@ class _RecipeDetailsSheetState extends State<RecipeDetailsSheet> {
             runSpacing: 8,
             children: [
               if (data['preparationTime'] != null)
-                _buildMetadataItem(Icons.timer, '${data['preparationTime']} ${localizations.minutes}'),
+                _buildMetadataItem(Icons.timer,
+                    '${data['preparationTime']} ${localizations.minutes}'),
               if (data['difficulty'] != null)
-                _buildMetadataItem(Icons.star, LocalizationHelper.getLocalizedString(localizations, 'difficulty')),
+                _buildMetadataItem(
+                    Icons.star,
+                    LocalizationHelper.getLocalizedString(
+                        localizations, 'difficulty')),
               if (data['servingSize'] != null)
-                _buildMetadataItem(Icons.people, '${data['servingSize']} ${localizations.servings}'),
+                _buildMetadataItem(Icons.people,
+                    '${data['servingSize']} ${localizations.servings}'),
               if (data['category'] != null)
                 _buildMetadataItem(Icons.category, data['category']),
             ],
@@ -894,20 +979,22 @@ class _RecipeDetailsSheetState extends State<RecipeDetailsSheet> {
           SizedBox(height: 8),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: widget.recipe.reference.collection('ingredients').snapshots(),
+              stream:
+                  widget.recipe.reference.collection('ingredients').snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) return CircularProgressIndicator();
                 return ListView.builder(
                   itemCount: snapshot.data!.docs.length,
                   itemBuilder: (context, index) {
                     final ingredientDoc = snapshot.data!.docs[index];
-                    final ingredient = ingredientDoc.data() as Map<String, dynamic>;
+                    final ingredient =
+                        ingredientDoc.data() as Map<String, dynamic>;
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: Icon(Icons.circle, size: 8),
                       title: Text(
                         '${(double.parse(ingredient['quantity'].toString()) * _multiplier).toStringAsFixed(2)} '
-                            '${ingredient['unit']} ${ingredient['name']}',
+                        '${ingredient['unit']} ${ingredient['name']}',
                         softWrap: true,
                       ),
                     );
@@ -925,7 +1012,10 @@ class _RecipeDetailsSheetState extends State<RecipeDetailsSheet> {
           SizedBox(height: 8),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: widget.recipe.reference.collection('steps').orderBy('order').snapshots(),
+              stream: widget.recipe.reference
+                  .collection('steps')
+                  .orderBy('order')
+                  .snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) return CircularProgressIndicator();
                 return ListView.builder(
@@ -938,11 +1028,12 @@ class _RecipeDetailsSheetState extends State<RecipeDetailsSheet> {
                       leading: CircleAvatar(
                         radius: 12,
                         backgroundColor: Theme.of(context).primaryColor,
-                        child: Text('${index + 1}', style: TextStyle(color: Colors.white)),
+                        child: Text('${index + 1}',
+                            style: TextStyle(color: Colors.white)),
                       ),
                       title: Text(
-                          stepData['text'] ?? '',
-                          softWrap: true, // Enable text wrapping
+                        stepData['text'] ?? '',
+                        softWrap: true, // Enable text wrapping
                       ),
                     );
                   },
@@ -959,7 +1050,8 @@ class _RecipeDetailsSheetState extends State<RecipeDetailsSheet> {
               showDialog(
                 context: context,
                 barrierDismissible: false,
-                builder: (context) => Center(child: CircularProgressIndicator()),
+                builder: (context) =>
+                    Center(child: CircularProgressIndicator()),
               );
 
               try {
@@ -969,19 +1061,15 @@ class _RecipeDetailsSheetState extends State<RecipeDetailsSheet> {
                     .collection('recipes')
                     .doc(widget.recipe.id);
 
-                final ingredientsSnapshot = await recipeRef
-                    .collection('ingredients')
-                    .get();
+                final ingredientsSnapshot =
+                    await recipeRef.collection('ingredients').get();
 
                 final ingredientsMap = {
-                  for (var doc in ingredientsSnapshot.docs)
-                    doc.id: doc.data()
+                  for (var doc in ingredientsSnapshot.docs) doc.id: doc.data()
                 };
 
-                final stepsSnapshot = await recipeRef
-                    .collection('steps')
-                    .orderBy('order')
-                    .get();
+                final stepsSnapshot =
+                    await recipeRef.collection('steps').orderBy('order').get();
 
                 List<RecipeStep> steps = [];
                 for (var stepDoc in stepsSnapshot.docs) {
@@ -1015,7 +1103,8 @@ class _RecipeDetailsSheetState extends State<RecipeDetailsSheet> {
                     builder: (context) => RecipeStepper(
                       steps: steps,
                       recipeName: data['name'] ?? localizations.untitledRecipe,
-                      multiplier: _multiplier, // Pass the selected multiplier
+                      multiplier: _multiplier,
+                      language: widget.language,
                     ),
                   ),
                 );
@@ -1034,34 +1123,32 @@ class _RecipeDetailsSheetState extends State<RecipeDetailsSheet> {
   }
 
   List<RecipeStep> _parseSteps(Map<String, dynamic> recipeData) {
-    // Implement parsing logic based on your database structure
-    // Example:
     List<RecipeStep> steps = [];
     for (var step in recipeData['steps']) {
       steps.add(RecipeStep(
         stepNumber: step['stepNumber'],
         instructions: step['instructions'],
-        ingredients: step['ingredients'].map<Ingredient>((ing) => Ingredient(
-          id: ing['id'],
-          name: ing['name'],
-          quantity: ing['quantity'],
-          unit: ing['unit'],
-        )).toList(),
+        ingredients: step['ingredients']
+            .map<Ingredient>((ing) => Ingredient(
+                  id: ing['id'],
+                  name: ing['name'],
+                  quantity: ing['quantity'],
+                  unit: ing['unit'],
+                ))
+            .toList(),
       ));
     }
     return steps;
   }
 }
 
-  Widget _buildMetadataItem(IconData icon, String text) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 16, color: Colors.grey),
-        SizedBox(width: 4),
-        Text(text, style: TextStyle(color: Colors.grey)),
-      ],
-    );
-  }
-
-
+Widget _buildMetadataItem(IconData icon, String text) {
+  return Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Icon(icon, size: 16, color: Colors.grey),
+      SizedBox(width: 4),
+      Text(text, style: TextStyle(color: Colors.grey)),
+    ],
+  );
+}

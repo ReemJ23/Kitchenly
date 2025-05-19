@@ -13,6 +13,8 @@ import 'package:kitchenly/screens/view_only/meal_plan.dart';
 import 'editable/my_recipes.dart';
 
 class FamilyLoginScreen extends StatefulWidget {
+  final String language;
+  const FamilyLoginScreen({Key? key, required this.language}) : super(key: key);
   @override
   _FamilyLoginScreenState createState() => _FamilyLoginScreenState();
 }

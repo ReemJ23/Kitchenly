@@ -641,5 +641,8 @@
 "understand": "أنا أتفهم",
 "allergyAlertTitle": "تحذير: مسببات الحساسية المحتملة",
 "allergies": "حساسيات",
-"enterNewAllergy": "أدخل حساسية جديدة"
+"enterNewAllergy": "أدخل حساسية جديدة",
+"enterManually": "إدخال يدوي",
+"uploadFromGallery": "رفع من المعرض",
+"takePicture": "التقاط صورة"
 }

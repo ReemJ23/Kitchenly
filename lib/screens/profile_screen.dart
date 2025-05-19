@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kitchenly/utils/colors.dart';
 import 'dart:convert';
 import 'dart:io';
+import '../main.dart';
 import 'family_sync_screen.dart';
 import 'friends_screen.dart';
 import 'main_screen.dart';
@@ -97,8 +98,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (userDoc.exists) {
         setState(() {
           _userLanguage = userDoc['language'] ?? 'en';
-          // _usernameController.text =
-          //     userDoc['username'] ?? user?.displayName ?? '';
           _usernameController.text = userDoc['username'] ?? '';
 
           _imageBase64 = userDoc['profilePicture'];
@@ -149,12 +148,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isLoading = true);
 
     try {
+      //Update the user’s preferred language in Firestore
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user!.uid)
           .update({'language': newLanguage});
 
-      setState(() => _userLanguage = newLanguage);
+      //Persist the choice locally so it survives next launch
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('language', newLanguage);
+
+      //Tell the root MyApp to rebuild with the new locale
+      MyApp.of(context)?.changeLanguage(newLanguage);
+
+      if (mounted) {
+        setState(() => _userLanguage = newLanguage);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) => MainScreen(language: _userLanguage!,)),
+        );
+      }
     } catch (e) {
       print("Error updating language: $e");
     } finally {
@@ -255,7 +269,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final now = DateTime.now();
 
-    // Only run once per day — optional (can be removed if not needed)
+    // Only run once per day
     final prefs = await SharedPreferences.getInstance();
     final lastCheckStr = prefs.getString('last_expiration_check');
     final lastCheck =
@@ -379,7 +393,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => NotificationsPage()),
+                            builder: (context) => NotificationsPage(locale: Locale(_userLanguage!))),
                       );
                     },
                   ),
@@ -465,13 +479,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (!_isEditingUsername)
-                    // Text(
-                    //   _usernameController.text.isEmpty
-                    //       ? localizations.addUsername
-                    //       : _usernameController.text,
-                    //   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    // )
-                    // ,
                     GestureDetector(
                       onTap: () => setState(() => _isEditingUsername = true),
                       child: Text(

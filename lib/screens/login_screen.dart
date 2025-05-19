@@ -8,7 +8,7 @@ import '../utils/colors.dart';
 import 'family_login_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  final String language;  // Accept language as a parameter
+  final String language;
 
   const LoginScreen({Key? key, required this.language}) : super(key: key);
 
@@ -33,6 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<void> _login() async {
+    final localizations = AppLocalizations.of(context)!;
     setState(() {
       usernameOrEmailError = null;
       passwordError = null;
@@ -63,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (userQuery.docs.isEmpty) {
           setState(() {
-            usernameOrEmailError = AppLocalizations.of(context)!.userNotFound;
+            usernameOrEmailError = localizations.userNotFound;
           });
           return;
         }
@@ -87,11 +88,11 @@ class _LoginScreenState extends State<LoginScreen> {
     }  on FirebaseAuthException catch (e) {
       setState(() {
         if (e.code == 'user-not-found') {
-          usernameOrEmailError = AppLocalizations.of(context)!.userNotFound;
+          usernameOrEmailError = localizations.userNotFound;
         } else if (e.code == 'invalid-credential') {
-          passwordError = AppLocalizations.of(context)!.wrongPassword;
+          passwordError = localizations.wrongPassword;
         } else {
-          passwordError = AppLocalizations.of(context)!.loginErrorGeneric;
+          passwordError = localizations.loginErrorGeneric;
         }
       });
     }
@@ -121,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 ),
               ),
-              SizedBox(height: 5), // Small spacing between texts
+              SizedBox(height: 5),
               Text(
                 localizations.loginSubMessage,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -152,7 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
-                        labelText: AppLocalizations.of(context)!.password,
+                        labelText: localizations.password,
                         errorText: passwordError,
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -178,10 +179,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => FamilyLoginScreen()),
+                          MaterialPageRoute(builder: (context) => FamilyLoginScreen(language: widget.language)),
                         );
                       },
-                      child: Text(AppLocalizations.of(context)!.loginAsFamily),
+                      child: Text(localizations.loginAsFamily),
                     ),
 
                     TextButton(

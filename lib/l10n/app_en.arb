@@ -397,5 +397,8 @@
 "understand": "I understand",
 "allergyAlertTitle": "Warning: Potential Allergens",
 "allergies": "Allergies",
-"enterNewAllergy": "Enter new allergy"
+"enterNewAllergy": "Enter new allergy",
+"enterManually": "Enter Manually",
+"uploadFromGallery": "Upload from Gallery",
+"takePicture": "Take a Picture"
 }

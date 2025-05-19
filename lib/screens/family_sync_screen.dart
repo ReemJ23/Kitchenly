@@ -12,12 +12,15 @@ class SyncCodePage extends StatefulWidget {
 }
 
 class _SyncCodePageState extends State<SyncCodePage> {
+  final User? user = FirebaseAuth.instance.currentUser;
   String syncCode = '';
   final _nameController = TextEditingController();
   String selectedPermission = 'view';
   final currentUser = FirebaseAuth.instance.currentUser;
   final Map<String, TextEditingController> _editNameControllers = {};
   final Map<String, String> _editPermissions = {};
+  String? _userLanguage;
+
 
   @override
   void dispose() {
@@ -30,8 +33,21 @@ class _SyncCodePageState extends State<SyncCodePage> {
   void initState() {
     super.initState();
     _loadSyncCode();
+    _fetchUserLanguage().then((language) {
+      setState(() {
+        _userLanguage = language;
+      });
+    });
   }
-
+  Future<String?> _fetchUserLanguage() async {
+    try {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
+      return userDoc.data()?['language'] ?? 'en';
+    } catch (e) {
+      debugPrint('Error fetching user language: $e');
+      return 'en';
+    }
+  }
   String capitalizeFirst(String input) {
     if (input.isEmpty) return input;
     return input[0].toUpperCase() + input.substring(1);
@@ -68,11 +84,14 @@ class _SyncCodePageState extends State<SyncCodePage> {
   }
 
   Future<void> _addFamilyMember() async {
+    final localization = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     final name = _nameController.text.trim().toLowerCase();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context)!.enterFamilyMemberName),
+          content: Text(localization.enterFamilyMemberName),
         ),
       );
       return;
@@ -91,17 +110,18 @@ class _SyncCodePageState extends State<SyncCodePage> {
 
     _nameController.clear();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppLocalizations.of(context)!.memberAdded)),
+      SnackBar(content: Text(localization.memberAdded)),
     );
   }
 
   Future<void> _updateFamilyMember(String docId, String currentName) async {
     final newName = _editNameControllers[docId]!.text.trim().toLowerCase();
     final newPermission = _editPermissions[docId]!;
-
+    final localization = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     if (newName.isEmpty) return;
 
-    // If name changed, we need to delete old doc and create new one
     if (newName != currentName.toLowerCase()) {
       final batch = FirebaseFirestore.instance.batch();
 
@@ -144,11 +164,14 @@ class _SyncCodePageState extends State<SyncCodePage> {
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppLocalizations.of(context)!.memberUpdated)),
+      SnackBar(content: Text(localization.memberUpdated)),
     );
   }
 
   Future<void> _deleteFamilyMember(String name) async {
+    final localization = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     await FirebaseFirestore.instance
         .collection('users')
         .doc(currentUser!.uid)
@@ -157,13 +180,15 @@ class _SyncCodePageState extends State<SyncCodePage> {
         .delete();
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppLocalizations.of(context)!.memberDeleted)),
+      SnackBar(content: Text(localization.memberDeleted)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final localization = AppLocalizations.of(context)!;
+    final localization = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(title: Text(localization.syncSettings),
@@ -173,12 +198,6 @@ class _SyncCodePageState extends State<SyncCodePage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-           /* Text('${localization.currentSyncCode}: $syncCode'),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: _regenerateCode,
-              child: Text(localization.regenerateCode),
-            ),*/
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

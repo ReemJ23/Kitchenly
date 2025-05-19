@@ -41,20 +41,31 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
+    final textDirection = localizations.localeName == 'ar'
+        ? TextDirection.rtl
+        : TextDirection.ltr;
 
-    return Scaffold(
-      body: _pages[_selectedIndex], // Display selected page
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed, // Allows more than 3 items
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        items: [
-          BottomNavigationBarItem(icon: Icon(Icons.kitchen), label: localizations.inventory),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: localizations.shoppingList),
-          BottomNavigationBarItem(icon: Icon(Icons.restaurant_menu), label: localizations.recipes),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: localizations.browsing),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: localizations.mealPlan),
-        ],
+    return Directionality(
+      textDirection: textDirection,
+      child: Scaffold(
+        body: _pages[_selectedIndex],
+        bottomNavigationBar: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
+          items: [
+            BottomNavigationBarItem(
+                icon: Icon(Icons.kitchen), label: localizations.inventory),
+            BottomNavigationBarItem(icon: Icon(Icons.shopping_cart),
+                label: localizations.shoppingList),
+            BottomNavigationBarItem(icon: Icon(Icons.restaurant_menu),
+                label: localizations.recipes),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.search), label: localizations.browsing),
+            BottomNavigationBarItem(icon: Icon(Icons.calendar_today),
+                label: localizations.mealPlan),
+          ],
+        ),
       ),
     );
   }

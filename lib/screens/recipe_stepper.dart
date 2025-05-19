@@ -10,11 +10,13 @@ class RecipeStepper extends StatefulWidget {
   final List<RecipeStep> steps;
   final String recipeName;
   final double multiplier;
+  final String language;
 
   const RecipeStepper({
     Key? key,
     required this.steps,
     required this.recipeName,
+    required this.language,
     this.multiplier = 1.0,
   }) : super(key: key);
 
@@ -26,11 +28,14 @@ class _RecipeStepperState extends State<RecipeStepper> {
   int _currentStep = 0;
   final Map<String, double> _ingredientQuantities = {};
   final Map<String, bool> _selectedIngredients = {};
-  User? _user = FirebaseAuth.instance.currentUser;
+  final User? _user = FirebaseAuth.instance.currentUser;
+
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = widget.language != null
+        ? lookupAppLocalizations(Locale(widget.language!))
+        : AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
@@ -188,7 +193,9 @@ class _RecipeStepperState extends State<RecipeStepper> {
   }
 
   Future<void> _addToShoppingList() async {
-    final loc = AppLocalizations.of(context)!;
+    final loc = widget.language != null
+        ? lookupAppLocalizations(Locale(widget.language!))
+        : AppLocalizations.of(context)!;
     if (_user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(loc.notSignedIn)),
@@ -249,7 +256,9 @@ class _RecipeStepperState extends State<RecipeStepper> {
 
 
   Future<void> _updateInventory() async {
-    final loc = AppLocalizations.of(context)!;
+    final loc = widget.language != null
+        ? lookupAppLocalizations(Locale(widget.language!))
+        : AppLocalizations.of(context)!;
     if (_user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(loc.notSignedIn)),

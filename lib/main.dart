@@ -44,7 +44,9 @@ class MyApp extends StatefulWidget {
     final state = context.findAncestorStateOfType<_MyAppState>();
     state?.changeLanguage(languageCode);
   }
-
+  static _MyAppState? of(BuildContext context) {
+    return context.findAncestorStateOfType<_MyAppState>();
+  }
   @override
   _MyAppState createState() => _MyAppState();
 }
@@ -83,6 +85,12 @@ class _MyAppState extends State<MyApp> {
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
+            localeResolutionCallback: (locale, supportedLocales) {
+              return supportedLocales.firstWhere(
+                    (supportedLocale) => supportedLocale.languageCode == _locale.languageCode,
+                orElse: () => supportedLocales.first,
+              );
+            },
             supportedLocales: const [
               Locale('en'),
               Locale('ar'),

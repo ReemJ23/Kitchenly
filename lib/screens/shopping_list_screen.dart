@@ -57,9 +57,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
         .get();
 
     if (userDoc.exists) {
-      return userDoc['language'] ?? 'en'; // Default to 'en' if language is not set
+      return userDoc['language'] ?? 'en';
     }
-    return 'en'; // Default to 'en' if the user document doesn't exist
+    return 'en';
   }
 
   Future<void> _ensureShoppingListExists() async {
@@ -262,56 +262,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
     _quantityController.clear();
     setState(() => _selectedUnit = "g");
   }
-
-  // void _editItem(DocumentSnapshot itemDoc, String currentListKey) {
-  //   var itemData = itemDoc.data() as Map<String, dynamic>;
-  //   _editNameController.text = itemData['name'];
-  //   _editQtyController.text = itemData['quantity'].toString();
-  //   showDialog(
-  //     context: context,
-  //     builder: (_) => AlertDialog(
-  //       title: Text(AppLocalizations.of(context)!.editItem),
-  //     IconButton(
-  //       icon: Icon(Icons.delete, color: AppColors.deleteBg),
-  //       tooltip: localizations.delete,),
-  //       content: Column(
-  //         mainAxisSize: MainAxisSize.min,
-  //         children: [
-  //           TextField(
-  //             controller: _editNameController,
-  //             decoration:
-  //             InputDecoration(labelText: AppLocalizations.of(context)!.itemName),
-  //           ),
-  //           TextField(
-  //             controller: _editQtyController,
-  //             keyboardType: TextInputType.number,
-  //             decoration:
-  //             InputDecoration(labelText: AppLocalizations.of(context)!.quantity),
-  //           ),
-  //         ],
-  //       ),
-  //       actions: [
-  //         TextButton(
-  //           onPressed: () async {
-  //             await itemDoc.reference.delete();
-  //             Navigator.pop(context);
-  //           },
-  //           child: Icon(Icons.delete, color: AppColors.deleteBg),
-  //         ),
-  //         TextButton(
-  //           child: Text(AppLocalizations.of(context)!.save),
-  //           onPressed: () async {
-  //             await itemDoc.reference.update({
-  //               'name': _editNameController.text.trim(),
-  //               'quantity': int.tryParse(_editQtyController.text.trim()) ?? 1
-  //             });
-  //             Navigator.pop(context);
-  //           },
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 
 
   void _editItem(DocumentSnapshot itemDoc, String currentListKey) {
@@ -527,7 +477,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
             ),
           );
         }
-        //final docs = snapshot.data!.docs;
+
         return ListView(
           children: categorizedItems.entries.map((entry) {
             final isExpanded = expandedCategories.contains(entry.key);

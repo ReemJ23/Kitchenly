@@ -94,6 +94,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   // Add an item to a selected or new category
   void _addItem() async {
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     setState(() {
       _isAddingItem = true;
     });
@@ -103,7 +106,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     int quantity = int.tryParse(quantityText) ?? 0;
 
     if (itemName.isEmpty || quantity <= 0 || quantity > 999) {
-      _showErrorDialog(AppLocalizations.of(context)!.invalidQuantity);
+      _showErrorDialog(localizations.invalidQuantity);
       setState(() {
         _isAddingItem = false;
       });
@@ -121,7 +124,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
         .doc(user!.uid)
         .collection('inventory');
 
-    // 🔥 Check if item already exists with same name and unit
     final existingQuery = await inventoryRef
         .where('name', isEqualTo: itemName)
         .where('unit', isEqualTo: _selectedUnit)
@@ -129,7 +131,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
         .get();
 
     if (existingQuery.docs.isNotEmpty) {
-      // 🔥 Item exists → update quantity
       final existingDoc = existingQuery.docs.first;
       int existingQuantity = existingDoc['quantity'] ?? 0;
 
@@ -137,7 +138,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
         'quantity': existingQuantity + quantity,
       });
     } else {
-      // 🔥 No existing item → add new
       await inventoryRef.add({
         'name': itemName,
         'quantity': quantity,
@@ -161,15 +161,18 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   // Show error dialog
   void _showErrorDialog(String message) {
+    final localizations = _userLanguage != null
+        ? lookupAppLocalizations(Locale(_userLanguage!))
+        : AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.error),
+        title: Text(localizations.error),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(AppLocalizations.of(context)!.ok),
+            child: Text(localizations.ok),
           ),
         ],
       ),
@@ -215,7 +218,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               icon: Icon(Icons.delete, color: AppColors.deleteBg),
               tooltip: localizations.delete,
               onPressed: () async {
-                // Show confirmation first
+
                 final confirm = await showDialog<bool>(
                   context: context,
                   builder: (context) => AlertDialog(
@@ -248,7 +251,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
                 if (confirm == true) {
                   await itemDoc.reference.delete();
-                  Navigator.pop(context); // Close the edit dialog too
+                  Navigator.pop(context);
                 }
               },
             ),
@@ -349,7 +352,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     backgroundColor: AppColors.profileIconBg,
             ),
 
-            tooltip: AppLocalizations.of(context)!.profile,
+            tooltip: localizations.profile,
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -418,10 +421,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
             if (data == null || !data.containsKey('name')) {
               continue;
             }
-            // _applySorting(uncategorizedItems);
-            // for (var list in categorizedItems.values) {
-            //   _applySorting(list);
-            // }
+
             String category = data['category'] ?? '';
 
             if (category.isEmpty) {

@@ -652,44 +652,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ],
     );
   }
-  Widget _buildAllergiesSection(){
-    return  Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            localizations.allergies,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+  Widget _buildAllergiesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          localizations.allergies,
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _allergies.map((allergy) {
+            return Chip(
+              label: Text(allergy[0].toUpperCase() + allergy.substring(1)),
+              deleteIcon: Icon(Icons.close),
+              onDeleted: () => _removeAllergy(allergy),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: _allergyController,
+          decoration: InputDecoration(
+            labelText: localizations.enterNewAllergy,
+            border: OutlineInputBorder(),
           ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _allergies.map((allergy) {
-              return Chip(
-                label: Text(allergy[0].toUpperCase() + allergy.substring(1)),
-                deleteIcon: Icon(Icons.close),
-                onDeleted: () => _removeAllergy(allergy),
-              );
-            }).toList(),
+        ),
+        const SizedBox(height: 15),
+        Center(
+          child: ElevatedButton.icon(
+            icon: Icon(Icons.add),
+            label: Text(localizations.add),
+            onPressed: () {
+              final input = _allergyController.text.trim();
+              if (input.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(localizations.pleaseEnterAllergy)),
+                );
+              } else {
+                _addAllergy(input);
+              }
+            },
           ),
-          const SizedBox(height: 10),
-
-              TextField(
-                  controller: _allergyController,
-                  decoration: InputDecoration(
-                    labelText: localizations.enterNewAllergy,
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              const SizedBox(height: 15),
-              ElevatedButton.icon(
-                icon: Icon(Icons.add),
-                label: Text(localizations.add),
-                onPressed: () => _addAllergy(_allergyController.text.trim()),
-              ),
-        ],
+        ),
+      ],
     );
   }
+
   Widget _buildThemeSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

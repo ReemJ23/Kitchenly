@@ -400,5 +400,6 @@
 "enterNewAllergy": "Enter new allergy",
 "enterManually": "Enter Manually",
 "uploadFromGallery": "Upload from Gallery",
-"takePicture": "Take a Picture"
+"takePicture": "Take a Picture",
+"pleaseEnterAllergy": "Please enter allergy."
 }

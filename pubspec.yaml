@@ -66,6 +66,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.13.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -102,6 +103,7 @@ flutter:
     - assets/images/allergies/gluten.png
     - assets/images/allergies/dairy.png
     - assets/images/icons/profile_chef_icon.png
+    - assets/images/icons/app_icon.png
 
   fonts:
     - family: Mulish
@@ -168,3 +170,10 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/icons/app_icon.png"

@@ -170,10 +170,3 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
-
-
-
-flutter_icons:
-  android: true
-  ios: true
-  image_path: "assets/images/icons/app_icon.png"

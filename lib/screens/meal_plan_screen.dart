@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -607,17 +608,26 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                         recipe['imageBase64']
                             .toString()
                             .isNotEmpty
-                        ? ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.memory(
-                        base64Decode(recipe['imageBase64']
-                            .toString()
-                            .split(',')
-                            .last),
-                        width: 48,
-                        height: 48,
+                        ?  SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: (recipe['imageBase64'] != null && recipe['imageBase64'] is String)
+                          ? recipe['imageBase64'].toString().startsWith('http')
+                          ? CachedNetworkImage(
+                        imageUrl: recipe['imageBase64'],
+                        height: 60,
                         fit: BoxFit.cover,
-                      ),
+                        errorWidget: (context, url, error) => Icon(Icons.error),
+                      )
+                          : Image.memory(
+                        base64Decode(
+                            recipe['imageBase64']!.split(',').last), // now safe
+                        height: 60,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Icon(Icons.error),
+                      )
+                          : Icon(Icons.fastfood),
+
                     )
                         : Container(
                       width: 48,
@@ -771,18 +781,29 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
       ),
       body: Stepper(
         controlsBuilder: (context, details) {
+          final isLastStep = _currentStep == 3;
+          final localizations = _userLanguage != null
+              ? lookupAppLocalizations(Locale(_userLanguage!))
+              : AppLocalizations.of(context)!;
+
           return Column(
-            // children: [
-            //   if (details.currentStep > 0)
-            //     // ElevatedButton(
-            //     //   onPressed: details.onStepCancel,
-            //     //   child: Text(AppLocalizations.of(context)!.back),
-            //     // ),
-            //   // ElevatedButton(
-            //   //   onPressed: details.onStepContinue,
-            //   //   child: Text(AppLocalizations.of(context)!.continueText),
-            //   // ),
-            // ],
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (_currentStep > 0)
+                TextButton(
+                  onPressed: details.onStepCancel,
+                  child: Text(localizations.back),
+                ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: details.onStepContinue,
+                child: Text(
+                  isLastStep
+                      ? localizations.saveMealPlan
+                      : localizations.continueText,
+                ),
+              ),
+            ],
           );
         },
         currentStep: _currentStep,
@@ -944,15 +965,28 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
                       .isNotEmpty
                       ? ClipRRect(
                     borderRadius: BorderRadius.circular(8), // Rounded corners
-                    child: Image.memory(
-                      base64Decode(data['imageBase64']
-                          .toString()
-                          .split(',')
-                          .last),
+                    child: SizedBox(
                       width: 48,
                       height: 48,
-                      fit: BoxFit.cover,
+                      child: (data['imageBase64'] != null && data['imageBase64'] is String)
+                          ? data['imageBase64'].toString().startsWith('http')
+                          ? CachedNetworkImage(
+                        imageUrl: data['imageBase64'],
+                        height: 60,
+                        fit: BoxFit.cover,
+                        errorWidget: (context, url, error) => Icon(Icons.error),
+                      )
+                          : Image.memory(
+                        base64Decode(
+                            data['imageBase64']!.split(',').last), // now safe
+                        height: 60,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Icon(Icons.error),
+                      )
+                          : Icon(Icons.fastfood),
+
                     ),
+
                   )
                       : Container(
                     width: 48,
@@ -991,17 +1025,26 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
           leading: data['imageBase64'] != null && data['imageBase64']
               .toString()
               .isNotEmpty
-              ? ClipRRect(
-            borderRadius: BorderRadius.circular(8), // Rounded corners
-            child: Image.memory(
-              base64Decode(data['imageBase64']
-                  .toString()
-                  .split(',')
-                  .last),
-              width: 48,
-              height: 48,
+              ? SizedBox(
+            width: 48,
+            height: 48,
+            child: (data['imageBase64'] != null && data['imageBase64'] is String)
+                ? data['imageBase64'].toString().startsWith('http')
+                ? CachedNetworkImage(
+              imageUrl: data['imageBase64'],
+              height: 60,
               fit: BoxFit.cover,
-            ),
+              errorWidget: (context, url, error) => Icon(Icons.error),
+            )
+                : Image.memory(
+              base64Decode(
+                  data['imageBase64']!.split(',').last), // now safe
+              height: 60,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Icon(Icons.error),
+            )
+                : Icon(Icons.fastfood),
+
           )
               : Container(
             width: 48,
@@ -1036,7 +1079,7 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
     );
   }
 
-  void _continue() {
+  Future<void> _continue() async {
     final localizations = _userLanguage != null
         ? lookupAppLocalizations(Locale(_userLanguage!))
         : AppLocalizations.of(context)!;
@@ -1073,7 +1116,8 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
         }
         break;
       case 3:
-        _saveMealPlan();
+        await _saveMealPlan(); // Wait for save to complete
+        Navigator.of(context).popUntil((route) => route.isFirst);
         return;
     }
 
@@ -1119,7 +1163,7 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
         Text(localizations.ingredientsToBuy),
         const SizedBox(height: 16),
         SizedBox(
-          height: 300, // ✅ Fix here: add a bounded height
+          height: 300,
           child: ListView.builder(
             itemCount: _shoppingListItems.length,
             itemBuilder: (context, index) {
@@ -1253,7 +1297,7 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
         'recipeDates': _recipeDates.map((key, value) => MapEntry(key, Timestamp.fromDate(value))),
       });
 
-      // 🔥 ADD SHOPPING LIST ITEMS TO MAIN SHOPPING LIST
+
       final shoppingListRef = FirebaseFirestore.instance
           .collection('users')
           .doc(user!.uid)
@@ -1281,7 +1325,7 @@ class _CreateMealPlanPageState extends State<CreateMealPlanPage> {
         SnackBar(content: Text(localizations.shoppingListGenerated)),
       );
 
-      Navigator.of(context).popUntil((route) => route.isFirst);
+      //Navigator.of(context).popUntil((route) => route.isFirst);
 
     } catch (e) {
       setState(() => _isGeneratingShoppingList = false);
